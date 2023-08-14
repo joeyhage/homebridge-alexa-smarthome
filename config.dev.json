@@ -1,0 +1,20 @@
+{
+  "accessories": [],
+  "platforms": [
+    {
+      "name": "HomebridgeSpotifySpeaker",
+      "platform": "HomebridgeSpotifySpeaker",
+      "spotifyClientId": "...",
+      "spotifyClientSecret": "...",
+      "spotifyAuthCode": "...",
+      "spotifyRedirectUri": "https://example.com/callback",
+      "devices": [
+        {
+          "deviceName": "A Speaker",
+          "spotifyDeviceId": "...",
+          "spotifyPlaylistUrl": "..."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "displayName": "Homebridge Spotify Speaker",
+  "name": "homebridge-spotify-speaker",
+  "version": "1.3.3",
+  "description": "Homebridge plugin that creates a speaker that plays a specific Spotify playlist",
+  "license": "MIT",
+  "author": "Joey Hage <contact@jmhage.com>",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com:joeyhage/homebridge-spotify-speaker.git"
+  },
+  "bugs": {
+    "url": "https://github.com/joeyhage/homebridge-spotify-speaker/issues"
+  },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/joeyhage"
+  },
+  "engines": {
+    "node": ">=14.18.1",
+    "homebridge": ">=1.3.5"
+  },
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "rimraf ./dist && tsc",
+    "format": "prettier --ignore-path .gitignore --write \"**/*.+(js|ts|json)\"",
+    "lint": "eslint src/**.ts --max-warnings=0",
+    "pre-commit": "lint-staged",
+    "prepare": "husky install",
+    "prepublishOnly": "npm run lint && npm run format && npm run build",
+    "watch": "npm run build && npm link && nodemon",
+    "test": "jest --silent=false --runInBand",
+    "test-ci": "jest --silent=true --runInBand --testPathPattern='test.ts'"
+  },
+  "keywords": [
+    "homebridge-plugin",
+    "homebridge",
+    "spotify",
+    "speaker",
+    "music"
+  ],
+  "dependencies": {
+    "spotify-web-api-node": "^5.0.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/node": "^18.15.11",
+    "@types/spotify-web-api-node": "^5.0.7",
+    "@typescript-eslint/eslint-plugin": "^5.57.0",
+    "@typescript-eslint/parser": "^5.57.0",
+    "dotenv": "^16.0.3",
+    "eslint": "^8.37.0",
+    "eslint-config-prettier": "^8.8.0",
+    "homebridge": "^1.6.0",
+    "husky": "^8.0.3",
+    "jest": "^29.5.0",
+    "lint-staged": "^13.2.0",
+    "nodemon": "^2.0.22",
+    "prettier": "^2.8.8",
+    "rimraf": "^4.4.1",
+    "ts-jest": "^29.1.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.5"
+  }
+}

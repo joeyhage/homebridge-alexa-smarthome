@@ -1,0 +1,44 @@
+name: Build, lint, and test
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '.github/**'
+      - '.husky/**'
+      - '.vscode/**'
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        # the Node.js versions to build on
+        node-version: [15.x, 16.x, 17.x, 18.x]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js ${{ matrix.node-version }} 
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint the project
+        run: npm run lint
+
+      - name: Format the project
+        run: npm run format
+
+      - name: Build the project
+        run: npm run build
+        env:
+          CI: true
+
+      - name: Test the project
+        run: npm run test-ci

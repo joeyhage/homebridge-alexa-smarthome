@@ -1,0 +1,129 @@
+{
+  "pluginAlias": "HomebridgeSpotifySpeaker",
+  "pluginType": "platform",
+  "singular": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Name",
+        "type": "string",
+        "required": true,
+        "default": "HomebridgeSpotifySpeaker"
+      },
+      "spotifyClientId": {
+        "title": "Spotify Client ID",
+        "type": "string",
+        "required": true
+      },
+      "spotifyClientSecret": {
+        "title": "Spotify Client Secret",
+        "type": "string",
+        "required": true
+      },
+      "spotifyRedirectUri": {
+        "title": "Spotify Redirect URI",
+        "type": "string",
+        "default": "https://example.com/callback",
+        "required": true
+      },
+      "spotifyAuthCode": {
+        "title": "Spotify Auth Code",
+        "type": "string",
+        "required": true
+      },
+      "spotifyPollInterval": {
+        "title": "Status polling interval",
+        "type": "integer",
+        "default": 20,
+        "minimum": 20,
+        "maximum": 600,
+        "placeholder": "Get speaker status every __ seconds",
+        "description": "Speaker status does not update live and must be fetched periodically. This is done every 20 seconds by default"
+      },
+      "deviceNotFoundRetry": {
+        "type": "object",
+        "properties": {
+          "enable": {
+            "title": "Enable retry when 'device not found' errors occur",
+            "type": "boolean",
+            "required": false,
+            "default": false,
+            "description": "Wi-Fi enabled Spotify devices may disconnect from Spotify after a period of time causing device not found errors. This setting determines if the current operation (e.g. play/set volume) should be retried."
+          },
+          "retryDelay": {
+            "title": "Device not found retry delay milliseconds",
+            "type": "integer",
+            "default": 2000,
+            "minimum": 500,
+            "maximum": 10000,
+            "placeholder": "Retry operation after __ milliseconds if Spotify reports device was not found.",
+            "description": "Wi-Fi enabled Spotify devices may disconnect from Spotify after a period of time causing device not found errors. This setting determines how long to wait to allow the device to wake (reconnect to Spotify) before retrying once."
+          }
+        }
+      },
+      "devices": {
+        "type": "array",
+        "items": {
+          "title": "Device",
+          "type": "object",
+          "properties": {
+            "deviceName": {
+              "title": "Device Name",
+              "description": "Friendly device name that will be displayed in Homekit.",
+              "type": "string",
+              "required": true
+            },
+            "deviceType": {
+              "title": "Device Type",
+              "description": "Only speaker is supported for now. This tells the plugin to either use a lightbulb (speaker) or smart speaker in Homekit.",
+              "type": "string",
+              "required": false,
+              "default": "speaker",
+              "enum": ["speaker"]
+            },
+            "spotifyDeviceId": {
+              "title": "Spotify Device ID",
+              "description": "The Spotify Device ID. Either spotifyDeviceId or spotifyDeviceName is required. You can find a list of available devices in the plugin's logs when it starts or see the README",
+              "type": "string",
+              "required": false
+            },
+            "spotifyDeviceName": {
+              "title": "Spotify Device Name",
+              "description": "The Spotify Device Name. Either spotifyDeviceId or spotifyDeviceName is required. You can find a list of available devices in the plugin's logs when it starts or see the README",
+              "type": "string",
+              "required": false
+            },
+            "spotifyPlaylistUrl": {
+              "title": "Spotify Playlist URL",
+              "description": "The URL of the Spotify playlist that you want to play when this device will be set to ON in Homekit.",
+              "type": "string",
+              "required": false
+            },
+            "playlistShuffle": {
+              "title": "Spotify playlist shuffle",
+              "description": "Whether to enable shuffle which randomizes the order tracks in the playlist are played",
+              "type": "boolean",
+              "required": false,
+              "default": true
+            },
+            "playlistRepeat": {
+              "title": "Spotify playlist repeat",
+              "description": "Whether to repeat the entire playlist once all tracks have been played.",
+              "type": "boolean",
+              "required": false,
+              "default": false
+            }
+          }
+        }
+      },
+      "debug": {
+        "title": "Debug logging",
+        "description": "Whether to enable debug logging for troubleshooting issues and support.",
+        "type": "boolean",
+        "required": false,
+        "default": false
+      }
+    }
+  }
+}
