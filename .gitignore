@@ -1,6 +1,6 @@
 # Ignore compiled code
 dist
-.homebridge-spotify-speaker
+.homebridge-alexa-smarthome
 
 # ------------- Defaults ------------- #
 

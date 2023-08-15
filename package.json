@@ -1,16 +1,16 @@
 {
-  "displayName": "Homebridge Spotify Speaker",
-  "name": "homebridge-spotify-speaker",
-  "version": "1.3.3",
-  "description": "Homebridge plugin that creates a speaker that plays a specific Spotify playlist",
+  "displayName": "Homebridge Alexa Smart Home",
+  "name": "homebridge-alexa-smarthome",
+  "version": "0.0.1",
+  "description": "Homebridge plugin that can control smart home devices connected to Alexa.",
   "license": "MIT",
   "author": "Joey Hage <contact@jmhage.com>",
   "repository": {
     "type": "git",
-    "url": "git://github.com:joeyhage/homebridge-spotify-speaker.git"
+    "url": "git://github.com:joeyhage/homebridge-alexa-smarthome.git"
   },
   "bugs": {
-    "url": "https://github.com/joeyhage/homebridge-spotify-speaker/issues"
+    "url": "https://github.com/joeyhage/homebridge-alexa-smarthome/issues"
   },
   "funding": {
     "type": "github",
@@ -35,17 +35,16 @@
   "keywords": [
     "homebridge-plugin",
     "homebridge",
-    "spotify",
-    "speaker",
-    "music"
+    "alexa",
+    "echo",
+    "smarthome"
   ],
   "dependencies": {
-    "spotify-web-api-node": "^5.0.2"
+    "alexa-remote2": "^5.10.3"
   },
   "devDependencies": {
     "@types/jest": "^29.5.0",
     "@types/node": "^18.15.11",
-    "@types/spotify-web-api-node": "^5.0.7",
     "@typescript-eslint/eslint-plugin": "^5.57.0",
     "@typescript-eslint/parser": "^5.57.0",
     "dotenv": "^16.0.3",

@@ -1,8 +1,7 @@
-import { PLATFORM_NAME } from './settings';
-import { HomebridgeSpotifySpeakerPlatform } from './platform';
+import { AlexaSmartHomePlatform, PLATFORM_NAME, PLUGIN_NAME } from './platform';
 
 import type { API } from 'homebridge';
 
 export = (api: API) => {
-  api.registerPlatform(PLATFORM_NAME, HomebridgeSpotifySpeakerPlatform);
+  api.registerPlatform(PLUGIN_NAME, PLATFORM_NAME, AlexaSmartHomePlatform);
 };

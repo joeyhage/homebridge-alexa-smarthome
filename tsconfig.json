@@ -13,6 +13,5 @@
     "noImplicitAny": false,
     "strictPropertyInitialization": false
   },
-  "include": ["src/"],
-  "exclude": ["**/*.spec.ts"]
+  "include": ["src/"]
 }

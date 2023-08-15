@@ -2,19 +2,17 @@
   "accessories": [],
   "platforms": [
     {
-      "name": "HomebridgeSpotifySpeaker",
-      "platform": "HomebridgeSpotifySpeaker",
-      "spotifyClientId": "...",
-      "spotifyClientSecret": "...",
-      "spotifyAuthCode": "...",
-      "spotifyRedirectUri": "https://example.com/callback",
-      "devices": [
-        {
-          "deviceName": "A Speaker",
-          "spotifyDeviceId": "...",
-          "spotifyPlaylistUrl": "..."
+      "amazonDomain": "amazon.com",
+      "auth": {
+        "cookie": "",
+        "proxy": {
+          "clientHost": "localhost",
+          "port": 2345
         }
-      ]
+      },
+      "debug": "true",
+      "language": "en-US",
+      "platform": "HomebridgeAlexaSmartHome"
     }
   ]
 }

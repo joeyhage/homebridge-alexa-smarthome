@@ -1,24 +1,28 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { Logger, PlatformConfig } from 'homebridge';
+import { LogLevel, type Logger, type PlatformConfig } from 'homebridge';
 
 export class PluginLogger {
-  constructor(private readonly log: Logger, private readonly config: PlatformConfig) {}
+  constructor(private readonly logger: Logger, private readonly config: PlatformConfig) {}
+
+  log(message: string, ...parameters: any[]): void {
+    this.logger.log(LogLevel.INFO, message, ...parameters);
+  }
 
   debug(message: string, ...parameters: any[]): void {
     if (this.config.debug) {
-      this.log.info(message, ...parameters);
+      this.logger.info(message, ...parameters);
     }
   }
 
   info(message: string, ...parameters: any[]): void {
-    this.log.info(message, ...parameters);
+    this.logger.info(message, ...parameters);
   }
 
   warn(message: string, ...parameters: any[]): void {
-    this.log.warn(message, ...parameters);
+    this.logger.warn(message, ...parameters);
   }
 
   error(message: string, ...parameters: any[]): void {
-    this.log.error(message, ...parameters);
+    this.logger.error(message, ...parameters);
   }
 }
