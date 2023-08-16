@@ -1,22 +1,56 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import AlexaRemote, { InitOptions } from 'alexa-remote2';
-import { API, PlatformConfig } from 'homebridge';
+import * as E from 'fp-ts/Either';
+import { constFalse, constTrue, constVoid, pipe } from 'fp-ts/lib/function';
 import { AlexaApiWrapper } from './alexa-api-wrapper';
-import { PLUGIN_NAME } from './platform';
-import { PluginLogger } from './plugin-logger';
-import { getAuthentication } from './util';
+import { PLUGIN_NAME } from '../platform';
+import { getAuthentication } from '../util';
+
+let alexa: AlexaRemote;
+beforeAll(async () => {
+  alexa = await getAlexaRemote();
+});
 
 it('should retrieve device list', async () => {
   // given
-  const alexa = await getAlexaRemote();
   const wrapper = getAlexaApiWrapper(alexa);
 
   // when
   const devices = await wrapper.getDevices();
 
   // then
-  expect(devices.data?.endpoints?.items?.length).toBeGreaterThan(0);
+  expect(
+    pipe(
+      devices,
+      E.map(({ length }) => length > 0),
+    ),
+  ).toStrictEqual(E.right(true));
+});
+
+it('should set lightbulb state', async () => {
+  // given
+  const wrapper = getAlexaApiWrapper(alexa);
+
+  // when
+  const result = await wrapper.setLightbulbState(
+    process.env.DEVICE_ID!,
+    'turnOff',
+  );
+
+  // then
+  expect(result).toStrictEqual(E.right(constVoid()));
+});
+
+it('should get lightbulb state', async () => {
+  // given
+  const wrapper = getAlexaApiWrapper(alexa);
+
+  // when
+  const result = await wrapper.getLightbulbState(process.env.DEVICE_ID!);
+
+  // then
+  expect(E.match(constFalse, constTrue)(result)).toStrictEqual(true);
 });
 
 async function getAlexaRemote(): Promise<AlexaRemote> {
@@ -48,5 +82,5 @@ async function getAlexaRemote(): Promise<AlexaRemote> {
 }
 
 function getAlexaApiWrapper(alexaRemote: AlexaRemote): AlexaApiWrapper {
-  return new AlexaApiWrapper({} as PlatformConfig, {} as API, console as unknown as PluginLogger, alexaRemote);
+  return new AlexaApiWrapper(alexaRemote);
 }

@@ -19,7 +19,9 @@ export const PLUGIN_NAME = 'homebridge-alexa-smarthome';
 
 export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
-  public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
+  public readonly Characteristic: typeof Characteristic =
+    this.api.hap.Characteristic;
+
   public readonly logger: PluginLogger;
   public readonly config: AlexaPlatformConfig;
 
@@ -31,13 +33,19 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
 
   private readonly persistPath: string;
 
-  constructor(readonly log: Logger, config: PlatformConfig, public readonly api: API) {
+  constructor(
+    readonly log: Logger,
+    config: PlatformConfig,
+    public readonly api: API,
+  ) {
     this.logger = new PluginLogger(log, config);
 
     if (util.validateConfig(config)) {
       this.config = config;
     } else {
-      this.logger.error('Missing configuration for this plugin to work, see the documentation for initial setup.');
+      this.logger.error(
+        'Missing configuration for this plugin to work, see the documentation for initial setup.',
+      );
       return;
     }
 
@@ -65,19 +73,29 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
   initAlexaRemote(callback: CallbackWithError) {
     this.alexaRemote.on('cookie', () => {
       const cookieData = this.alexaRemote.cookieData;
-      if (util.isValidAuthentication(cookieData as unknown as Nullable<Record<string, string | object | number>>)) {
-        this.logger.debug('Cookie updated. Do not share with anyone.', { cookieData });
+      if (
+        util.isValidAuthentication(
+          cookieData as unknown as Nullable<
+            Record<string, string | object | number>
+          >,
+        )
+      ) {
+        this.logger.debug('Cookie updated. Do not share with anyone.', {
+          cookieData,
+        });
         fs.writeFileSync(this.persistPath, JSON.stringify({ cookieData }));
       }
     });
 
     const auth = util.getAuthentication(this.persistPath);
+    const amazonDomain = this.config.amazonDomain ?? 'amazon.com';
     this.alexaRemote.init(
       {
         acceptLanguage: this.config.language ?? 'en-US',
-        alexaServiceHost: `pitangui.${this.config.amazonDomain}`,
-        amazonPage: this.config.amazonDomain,
-        amazonPageProxyLanguage: this.config.language?.replace('-', '_') ?? 'en_US',
+        alexaServiceHost: `alexa.${amazonDomain}`,
+        amazonPage: amazonDomain,
+        amazonPageProxyLanguage:
+          this.config.language?.replace('-', '_') ?? 'en_US',
         formerRegistrationData: auth || {},
         cookieRefreshInterval: this.config.auth.refreshInterval,
         cookie: auth?.localCookie,

@@ -1,8 +1,8 @@
 import AlexaRemote from 'alexa-remote2';
 import * as hapNodeJs from 'hap-nodejs';
 import type { API, Logger } from 'homebridge';
-import { AlexaSmartHomePlatform } from './platform';
 import type { AlexaPlatformConfig } from './domain/homebridge';
+import { AlexaSmartHomePlatform } from './platform';
 
 it('should initialize', async () => {
   // given
@@ -30,7 +30,10 @@ function getPlatform(): AlexaSmartHomePlatform {
 
 function getApi(): API {
   return {
-    hap: { Service: hapNodeJs.Service, Characteristic: hapNodeJs.Characteristic },
+    hap: {
+      Service: hapNodeJs.Service,
+      Characteristic: hapNodeJs.Characteristic,
+    },
     on: () => ({}),
     user: { persistPath: () => '.' },
   } as unknown as API;
@@ -40,6 +43,7 @@ function getPlatformConfig(): AlexaPlatformConfig {
   return {
     platform: 'HomebridgeAlexaSmartHome',
     amazonDomain: 'amazon.com',
+    devices: [],
     auth: {
       refreshInterval: 0,
       proxy: {
@@ -47,6 +51,7 @@ function getPlatformConfig(): AlexaPlatformConfig {
         port: 2345,
       },
     },
+    language: 'en-US',
     debug: true,
   };
 }

@@ -1,4 +1,5 @@
 import { InitOptions } from 'alexa-remote2';
+import { Nullable } from '../index';
 
 export type AmazonDomain =
   | 'amazon.com'
@@ -13,5 +14,19 @@ export type AmazonDomain =
   | 'amazon.com.br'
   | 'amazon.com.mx';
 
-type FormerRegistrationData = Extract<Extract<InitOptions, Partial<object>>['formerRegistrationData'], object>;
+type FormerRegistrationData = Extract<
+  Extract<InitOptions, Partial<object>>['formerRegistrationData'],
+  object
+>;
 export type Authentication = FormerRegistrationData;
+
+export interface DeviceResponse {
+  entity: Nullable<{
+    entityId: string;
+    entityType: string;
+  }>;
+  entityId: Nullable<string>;
+  code: Nullable<string>;
+  message: Nullable<string>;
+  error: Nullable<string>;
+}

@@ -3,6 +3,7 @@ import { AmazonDomain } from './alexa/index';
 
 export interface AlexaPlatformConfig extends PlatformConfig {
   platform: 'HomebridgeAlexaSmartHome';
+  devices: string[];
   amazonDomain: AmazonDomain;
   auth: {
     proxy: {
@@ -11,5 +12,6 @@ export interface AlexaPlatformConfig extends PlatformConfig {
     };
     refreshInterval: number;
   };
+  language: string;
   debug?: boolean;
 }

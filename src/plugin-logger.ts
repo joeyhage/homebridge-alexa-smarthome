@@ -2,7 +2,10 @@
 import { LogLevel, type Logger, type PlatformConfig } from 'homebridge';
 
 export class PluginLogger {
-  constructor(private readonly logger: Logger, private readonly config: PlatformConfig) {}
+  constructor(
+    private readonly logger: Logger,
+    private readonly config: PlatformConfig,
+  ) {}
 
   log(message: string, ...parameters: any[]): void {
     this.logger.log(LogLevel.INFO, message, ...parameters);

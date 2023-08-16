@@ -5,12 +5,12 @@
   "schema": {
     "type": "object",
     "properties": {
-      "debug": {
-        "title": "Debug logging",
-        "description": "Whether to enable debug logging for troubleshooting issues and support.",
-        "type": "boolean",
-        "required": false,
-        "default": false
+      "devices": {
+        "title": "Device names",
+        "description": "List of smart home device names to add as HomeKit accessories.",
+        "type": "array",
+        "required": true,
+        "default": []
       },
       "language": {
         "title": "Two character language code hyphen two character country code",
@@ -18,6 +18,13 @@
         "type": "string",
         "required": false,
         "default": "en-US"
+      },
+      "debug": {
+        "title": "Debug logging",
+        "description": "Whether to enable debug logging for troubleshooting issues and support.",
+        "type": "boolean",
+        "required": false,
+        "default": false
       }
     }
   }
