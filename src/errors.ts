@@ -1,25 +1,31 @@
 import { Nullable } from './domain';
 
-export interface AlexaApiError {
-  errorMessage: string;
+export abstract class AlexaApiError {
+  public readonly name = 'AlexaApiError';
+  abstract message: string;
 }
 
-export class InvalidRequest implements AlexaApiError {
-  constructor(public readonly errorMessage: string) {}
+export class InvalidRequest extends AlexaApiError {
+  constructor(public readonly message: string) {
+    super();
+  }
 }
 
-export class HttpError implements AlexaApiError {
-  constructor(public readonly errorMessage: string) {}
+export class HttpError extends AlexaApiError {
+  constructor(public readonly message: string) {
+    super();
+  }
 }
 
-export class RequestUnsuccessful implements AlexaApiError {
-  public readonly errorMessage: string;
+export class RequestUnsuccessful extends AlexaApiError {
+  public readonly message: string;
 
   constructor(
     errorMessage: string,
     public readonly errorCode: Nullable<string>,
   ) {
-    this.errorMessage =
+    super();
+    this.message =
       errorMessage + (errorCode ? `. Error code: ${errorCode}` : '');
   }
 }

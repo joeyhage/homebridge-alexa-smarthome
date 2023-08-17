@@ -6,6 +6,7 @@ import { constFalse, constTrue, constVoid, pipe } from 'fp-ts/lib/function';
 import { AlexaApiWrapper } from './alexa-api-wrapper';
 import { PLUGIN_NAME } from '../platform';
 import { getAuthentication } from '../util';
+import { PluginLogger } from '../plugin-logger';
 
 let alexa: AlexaRemote;
 beforeAll(async () => {
@@ -17,7 +18,7 @@ it('should retrieve device list', async () => {
   const wrapper = getAlexaApiWrapper(alexa);
 
   // when
-  const devices = await wrapper.getDevices();
+  const devices = await wrapper.getDevices()();
 
   // then
   expect(
@@ -36,7 +37,7 @@ it('should set lightbulb state', async () => {
   const result = await wrapper.setLightbulbState(
     process.env.DEVICE_ID!,
     'turnOff',
-  );
+  )();
 
   // then
   expect(result).toStrictEqual(E.right(constVoid()));
@@ -47,7 +48,7 @@ it('should get lightbulb state', async () => {
   const wrapper = getAlexaApiWrapper(alexa);
 
   // when
-  const result = await wrapper.getLightbulbState(process.env.DEVICE_ID!);
+  const result = await wrapper.getLightbulbState(process.env.DEVICE_ID!)();
 
   // then
   expect(E.match(constFalse, constTrue)(result)).toStrictEqual(true);
@@ -82,5 +83,5 @@ async function getAlexaRemote(): Promise<AlexaRemote> {
 }
 
 function getAlexaApiWrapper(alexaRemote: AlexaRemote): AlexaApiWrapper {
-  return new AlexaApiWrapper(alexaRemote);
+  return new AlexaApiWrapper(alexaRemote, console as unknown as PluginLogger);
 }

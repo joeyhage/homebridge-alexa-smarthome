@@ -41,7 +41,8 @@
   ],
   "dependencies": {
     "alexa-remote2": "^5.10.3",
-    "fp-ts": "^2.16.1"
+    "fp-ts": "^2.16.1",
+    "ts-pattern": "^4.3.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.0",
