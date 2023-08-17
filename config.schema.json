@@ -5,6 +5,41 @@
   "schema": {
     "type": "object",
     "properties": {
+      "auth": {
+        "title": "Authorization and authentication settings",
+        "type": "object",
+        "required": true,
+        "properties": {
+          "refreshInterval": {
+            "title": "Refresh interval",
+            "placeholder": "Refresh the session automatically every __ days",
+            "description": "How often this plugin should automatically refresh the session with Amazon. Defaults to 0 which means never.",
+            "type": "number",
+            "required": false,
+            "default": 0
+          },
+          "proxy": {
+            "title": "Proxy Client Host",
+            "type": "object",
+            "properties": {
+              "clientHost": {
+                "title": "Proxy Client Host",
+                "placeholder": "e.g., 192.168.1.234, homebridge.local, localhost",
+                "description": "A current IP address or hostname of the Homebridge host that is accessible from the web browser where you will authenticate from.",
+                "type": "string",
+                "required": true
+              },
+              "port": {
+                "title": "Proxy port",
+                "placeholder": "e.g., 2345",
+                "description": "The port to run the authentication proxy on.",
+                "type": "number",
+                "required": true
+              }
+            }
+          }
+        }
+      },
       "devices": {
         "title": "Device names",
         "description": "List of smart home device names to add as HomeKit accessories.",
