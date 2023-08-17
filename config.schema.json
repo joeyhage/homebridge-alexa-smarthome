@@ -9,8 +9,13 @@
         "title": "Device names",
         "description": "List of smart home device names to add as HomeKit accessories.",
         "type": "array",
+        "uniqueItems": true,
         "required": true,
-        "default": []
+        "default": [],
+        "items": {
+          "title": "Device name",
+          "type": "string"
+        }
       },
       "language": {
         "title": "Two character language code hyphen two character country code",
