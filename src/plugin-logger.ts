@@ -34,26 +34,14 @@ export class PluginLogger {
 
   errorT(prefix: string, e: unknown): void {
     match(e)
-      .with({ code: 'DeviceOffline' }, (m) =>
-        this.logger.debug(`${prefix} - ${m}`),
-      )
       .with(
-        { message: Pattern.intersection(Pattern.string, Pattern.select()) },
-        (m) => this.logger.error(`${prefix} - ${m}`),
+        { code: 'DeviceOffline', message: Pattern.select(Pattern.string) },
+        (m) => this.debug(`${prefix} - ${m}`),
       )
-      .with(
-        {
-          hapStatus: Pattern.intersection(
-            Pattern.not(Pattern.nullish),
-            Pattern.select(),
-          ),
-        },
-        (s) => this.logger.error(`${prefix} - HapStatusError(${s})`),
+      .with({ message: Pattern.select(Pattern.string) }, (m) =>
+        this.logger.error(`${prefix} - ${m}`),
       )
-      .when(
-        (e) => typeof e === 'string',
-        (e) => this.logger.error(`${prefix} - ${e}`),
-      )
+      .with(Pattern.string, (e) => this.logger.error(`${prefix} - ${e}`))
       .otherwise((e) => this.logger.error(`${prefix} - Unknown error`, e));
   }
 }

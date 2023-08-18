@@ -111,7 +111,7 @@ export default class LightAccessory extends BaseAccessory {
             ),
             O.map(({ value }) => value as number),
             O.tap((s) =>
-              O.some(this.logWithContext('debug', `GET Power result: ${s}`)),
+              O.some(this.logWithContext('debug', `GET Brightness result: ${s}`)),
             ),
           ),
         constant(new InvalidResponse('Brightness state not available')),

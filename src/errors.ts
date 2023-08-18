@@ -5,7 +5,7 @@ export abstract class AlexaApiError {
   public readonly message: string;
 
   constructor(message: string, public readonly code: string) {
-    this.message = `${this.code}(${this.message})`;
+    this.message = `${this.code}(${message})`;
   }
 }
 
