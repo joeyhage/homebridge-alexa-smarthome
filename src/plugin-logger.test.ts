@@ -1,6 +1,5 @@
 import { PlatformConfig } from 'homebridge';
 import { Logger } from 'homebridge/lib/logger';
-import { HapStatusError, HAPStatus } from 'hap-nodejs';
 import { DeviceOffline } from './errors';
 import { PluginLogger } from './plugin-logger';
 
