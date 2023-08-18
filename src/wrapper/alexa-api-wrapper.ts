@@ -21,6 +21,7 @@ import GetDevicesResponse from '../domain/alexa/get-devices';
 import SetDeviceStateResponse from '../domain/alexa/set-device-state';
 import {
   AlexaApiError,
+  DeviceOffline,
   HttpError,
   InvalidRequest,
   RequestUnsuccessful,
@@ -209,10 +210,22 @@ export class AlexaApiWrapper {
         )
         .otherwise(constFalse),
     (response) =>
-      new RequestUnsuccessful(
-        'Error getting smart home device state',
-        response.errors?.[0]?.code,
-      ),
+      match(response)
+        .with(
+          {
+            deviceStates: Pattern.optional([]),
+            errors: [{ code: 'ENDPOINT_UNREACHABLE' }],
+          },
+          constant(new DeviceOffline()),
+        )
+        .otherwise(
+          constant(
+            new RequestUnsuccessful(
+              'Error getting smart home device state',
+              response.errors?.[0]?.code,
+            ),
+          ),
+        ),
   );
 
   private static async toPromise<T>(

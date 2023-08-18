@@ -2,6 +2,8 @@
 import { LogLevel, type Logger, type PlatformConfig } from 'homebridge';
 import { Pattern, match } from 'ts-pattern';
 
+export type PluginLogLevel = `${LogLevel}`;
+
 export class PluginLogger {
   constructor(
     private readonly logger: Logger,
@@ -32,6 +34,9 @@ export class PluginLogger {
 
   errorT(prefix: string, e: unknown): void {
     match(e)
+      .with({ code: 'DeviceOffline' }, (m) =>
+        this.logger.debug(`${prefix} - ${m}`),
+      )
       .with(
         { message: Pattern.intersection(Pattern.string, Pattern.select()) },
         (m) => this.logger.error(`${prefix} - ${m}`),

@@ -6,7 +6,6 @@ import { Service } from 'hap-nodejs';
 import { CharacteristicValue } from 'homebridge';
 import { match } from 'ts-pattern';
 import { CapabilityState } from '../domain/alexa/get-device-states';
-import * as util from '../util';
 import BaseAccessory from './BaseAccessory';
 
 export interface LightbulbState {
@@ -56,12 +55,12 @@ export default class LightAccessory extends BaseAccessory {
   }
 
   async handleOnGet(): Promise<boolean> {
-    this.logger.debug('Triggered GET Active');
+    this.logWithContext('debug', 'Triggered GET Power');
     return pipe(
       this.platform.alexaApi.getLightbulbState(this.device.id),
       TE.match(
         (e) => {
-          this.logger.errorT('handleOnGet', e);
+          this.logWithContext('errorT', 'handleOnGet', e);
           throw new this.platform.api.hap.HapStatusError(
             this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE,
           );
@@ -74,7 +73,7 @@ export default class LightAccessory extends BaseAccessory {
   }
 
   async handleOnSet(value: CharacteristicValue): Promise<void> {
-    this.logger.debug('Triggered SET Active:', value);
+    this.logWithContext('debug', `Triggered SET Power: ${value}`);
     if (typeof value !== 'boolean') {
       return;
     }
@@ -87,30 +86,30 @@ export default class LightAccessory extends BaseAccessory {
         TE.flatMap(() => TE.sequenceArray(this.updateAllValues())),
       )();
     } catch (e) {
-      this.logger.errorT('handleOnSet', e);
+      this.logWithContext('errorT', 'handleOnSet', e);
     }
   }
 
   async handleBrightnessGet(): Promise<number> {
-    this.logger.debug('Triggered GET Brightness');
+    this.logWithContext('debug', 'Triggered GET Brightness');
     return pipe(
       this.platform.alexaApi.getLightbulbState(this.device.id),
       TE.match(
         (e) => {
-          this.logger.errorT('handleBrightnessGet', e);
+          this.logWithContext('errorT', 'handleBrightnessGet', e);
           throw new this.platform.api.hap.HapStatusError(
             this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE,
           );
         },
         (states) =>
-          ((states.find((s) => s.namespace === 'Alexa.BrightnessController')
-            ?.value as number) ?? 0) * 100,
+          (states.find((s) => s.namespace === 'Alexa.BrightnessController')
+            ?.value as number) ?? 0,
       ),
     )();
   }
 
   async handleBrightnessSet(value: CharacteristicValue): Promise<void> {
-    this.logger.debug('Triggered SET Brightness:', value);
+    this.logWithContext('debug', `Triggered SET Brightness: ${value}`);
     if (typeof value !== 'number') {
       return;
     }
@@ -119,12 +118,12 @@ export default class LightAccessory extends BaseAccessory {
         this.platform.alexaApi.setLightbulbState(
           this.device.id,
           'setBrightness',
-          { brightness: (value / 100.0).toString(10) },
+          { brightness: value.toString(10) },
         ),
         TE.flatMap(() => TE.sequenceArray(this.updateAllValues())),
       )();
     } catch (e) {
-      this.logger.errorT('handleBrightnessSet', e);
+      this.logWithContext('errorT', 'handleBrightnessSet', e);
     }
   }
 

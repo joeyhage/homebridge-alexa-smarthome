@@ -10,9 +10,10 @@ import * as TE from 'fp-ts/TaskEither';
 import { TaskEither } from 'fp-ts/TaskEither';
 import * as A from 'fp-ts/lib/Array';
 import { constVoid, pipe } from 'fp-ts/lib/function';
+import { match } from 'ts-pattern';
 import { SmartHomeDevice } from '../domain/alexa/get-devices';
 import { AlexaSmartHomePlatform } from '../platform';
-import { PluginLogger } from '../plugin-logger';
+import { PluginLogLevel, PluginLogger } from '../plugin-logger';
 
 interface CharacteristicGetters {
   characteristicUuid: string;
@@ -34,6 +35,19 @@ export default abstract class BaseAccessory {
     public readonly accessory: PlatformAccessory,
   ) {
     this.addAccessoryInfoService();
+  }
+
+  logWithContext(
+    logLevel: PluginLogLevel | 'errorT',
+    message: string,
+    e?: unknown,
+  ) {
+    const msgAndContext = `${this.device.displayName} - ${message}`;
+    match(logLevel)
+      .with('errorT', () => this.logger.errorT(msgAndContext, e))
+      .otherwise((logLevel: PluginLogLevel) =>
+        this.logger[logLevel](msgAndContext),
+      );
   }
 
   addCharacteristicGetter(
