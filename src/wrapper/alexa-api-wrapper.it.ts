@@ -4,7 +4,7 @@ import AlexaRemote, { InitOptions } from 'alexa-remote2';
 import * as E from 'fp-ts/Either';
 import { constFalse, constTrue, constVoid, pipe } from 'fp-ts/lib/function';
 import { AlexaApiWrapper } from './alexa-api-wrapper';
-import { PLUGIN_NAME } from '../platform';
+import { PLUGIN_NAME } from '../config';
 import { getAuthentication } from '../util';
 import { PluginLogger } from '../plugin-logger';
 
@@ -61,7 +61,7 @@ async function getAlexaRemote(): Promise<AlexaRemote> {
     alexaRemote.init(
       {
         acceptLanguage: 'en-US',
-        alexaServiceHost: 'pitangui.amazon.com',
+        alexaServiceHost: 'alexa.amazon.com',
         amazonPage: 'amazon.com',
         amazonPageProxyLanguage: 'en_US',
         cookie: auth?.localCookie,
