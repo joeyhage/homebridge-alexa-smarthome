@@ -18,7 +18,7 @@ import {
 import AccessoryFactory from './accessory/AccessoryFactory';
 import BaseAccessory from './accessory/BaseAccessory';
 import LightAccessory from './accessory/LightAccessory';
-import * as config from './config';
+import * as settings from './settings';
 import { Nullable } from './domain';
 import { SmartHomeDevice } from './domain/alexa/get-devices';
 import { AlexaPlatformConfig } from './domain/homebridge';
@@ -59,7 +59,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
       return;
     }
 
-    this.persistPath = `${api.user.persistPath()}/.${config.PLUGIN_NAME}`;
+    this.persistPath = `${api.user.persistPath()}/.${settings.PLUGIN_NAME}`;
     this.alexaRemote = new AlexaRemote();
     this.alexaApi = new AlexaApiWrapper(this.alexaRemote, this.logger);
 
@@ -162,19 +162,19 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
 
     const auth = util.getAuthentication(this.persistPath);
     const amazonDomain =
-      this.config.amazonDomain ?? config.DEFAULT_AMAZON_DOMAIN;
+      this.config.amazonDomain ?? settings.DEFAULT_AMAZON_DOMAIN;
     this.alexaRemote.init(
       {
-        acceptLanguage: this.config.language ?? config.DEFAULT_ACCEPT_LANG,
+        acceptLanguage: this.config.language ?? settings.DEFAULT_ACCEPT_LANG,
         alexaServiceHost: `alexa.${amazonDomain}`,
         amazonPage: amazonDomain,
         amazonPageProxyLanguage:
           this.config.language?.replace('-', '_') ??
-          config.DEFAULT_PROXY_PAGE_LANG,
+          settings.DEFAULT_PROXY_PAGE_LANG,
         formerRegistrationData: auth || {},
         cookieRefreshInterval:
           (this.config.auth.refreshInterval ??
-            config.DEFAULT_REFRESH_INTERVAL_DAYS) * config.ONE_DAY_MILLIS,
+            settings.DEFAULT_REFRESH_INTERVAL_DAYS) * settings.ONE_DAY_MILLIS,
         cookie: auth?.localCookie,
         macDms: auth?.macDms,
         proxyOwnIp: this.config.auth.proxy.clientHost,
@@ -231,8 +231,8 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
       AccessoryFactory.createAccessory(this, acc, device),
       TE.tap(() => {
         this.api.registerPlatformAccessories(
-          config.PLUGIN_NAME,
-          config.PLATFORM_NAME,
+          settings.PLUGIN_NAME,
+          settings.PLATFORM_NAME,
           [acc],
         );
         this.devices.push(device);
@@ -252,8 +252,8 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
 
     if (staleAccessories.length) {
       this.api.unregisterPlatformAccessories(
-        config.PLUGIN_NAME,
-        config.PLATFORM_NAME,
+        settings.PLUGIN_NAME,
+        settings.PLATFORM_NAME,
         staleAccessories,
       );
     }

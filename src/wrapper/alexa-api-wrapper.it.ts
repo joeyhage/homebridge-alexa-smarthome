@@ -4,7 +4,7 @@ import AlexaRemote, { InitOptions } from 'alexa-remote2';
 import * as E from 'fp-ts/Either';
 import { constFalse, constTrue, constVoid, pipe } from 'fp-ts/lib/function';
 import { AlexaApiWrapper } from './alexa-api-wrapper';
-import { PLUGIN_NAME } from '../config';
+import { PLUGIN_NAME } from '../settings';
 import { getAuthentication } from '../util';
 import { PluginLogger } from '../plugin-logger';
 
