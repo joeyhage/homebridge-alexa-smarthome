@@ -25,7 +25,7 @@ export default abstract class BaseAccessory {
   public readonly Characteristic: typeof Characteristic =
     this.platform.api.hap.Characteristic;
 
-  characteristicGetters: CharacteristicGetters[];
+  characteristicGetters: CharacteristicGetters[] = [];
   _initialized = false;
 
   constructor(
