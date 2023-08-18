@@ -1,4 +1,3 @@
-import { HAPStatus, HapStatusError } from 'hap-nodejs';
 import { Nullable } from './domain';
 
 export abstract class AlexaApiError {
