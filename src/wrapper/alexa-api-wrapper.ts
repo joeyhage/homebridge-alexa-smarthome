@@ -57,8 +57,7 @@ export class AlexaApiWrapper {
     entityType: EntityType | 'ENTITY' = 'ENTITY',
   ): TaskEither<AlexaApiError, GetDeviceStatesResponse> {
     const maybeEntityIds = deviceIds.map(AlexaApiWrapper.extractEntityId);
-    const errors = A.lefts(maybeEntityIds);
-    const entityIds = A.rights(maybeEntityIds);
+    const { left: errors, right: entityIds } = A.separate(maybeEntityIds);
     errors.forEach((error) =>
       this.logger.warn(
         `Cannot retrieve state for device because ${error.message}`,

@@ -5,15 +5,6 @@ import { Pattern, match } from 'ts-pattern';
 import { Nullable } from './domain';
 import { Authentication } from './domain/alexa';
 import type { AlexaPlatformConfig } from './domain/homebridge';
-import { AlexaApiError } from './errors';
-import { PluginLogger } from './plugin-logger';
-
-export const logError = (logger: PluginLogger, e: unknown, prefix = '') =>
-  match(e)
-    .with({ name: 'AlexaApiError' }, (e: AlexaApiError) =>
-      logger.error(`${prefix} - ${e.message}`),
-    )
-    .otherwise((e) => logger.error(`${prefix} - Unknown error`, e));
 
 export const validateConfig = (
   config: PlatformConfig,
@@ -22,9 +13,14 @@ export const validateConfig = (
     .with(
       {
         platform: 'HomebridgeAlexaSmartHome',
-        debug: Pattern.optional(Pattern.boolean),
+        amazonDomain: Pattern.optional(Pattern.string),
+        auth: {
+          refreshInterval: Pattern.optional(Pattern.number),
+          proxy: { clientHost: Pattern.string, port: Pattern.number },
+        },
         language: Pattern.optional(Pattern.string),
         devices: Pattern.optional(Pattern.array(Pattern.string)),
+        debug: Pattern.optional(Pattern.boolean),
       },
       constTrue,
     )
@@ -35,7 +31,7 @@ export const validateConfig = (
 export const isValidAuthentication = (
   maybeCookieData: Nullable<Record<string, string | object | number>>,
 ): maybeCookieData is Authentication =>
-  match(maybeCookieData)
+  match(maybeCookieData?.cookieData ?? maybeCookieData)
     .with(
       {
         localCookie: Pattern.string,
@@ -43,7 +39,10 @@ export const isValidAuthentication = (
         deviceId: Pattern.string,
         deviceAppName: Pattern.string,
         refreshToken: Pattern.string,
-        macDms: Pattern.not(Pattern.nullish),
+        macDms: {
+          device_private_key: Pattern.string,
+          adp_token: Pattern.string,
+        },
       },
       constTrue,
     )

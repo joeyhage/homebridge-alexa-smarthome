@@ -6,33 +6,28 @@ export abstract class AlexaApiError {
 }
 
 export class InvalidRequest extends AlexaApiError {
-  constructor(public readonly message: string) {
+  public readonly message: string;
+
+  constructor(message: string) {
     super();
+    this.message = `InvalidRequest(${message})`;
   }
 }
 
 export class HttpError extends AlexaApiError {
-  constructor(public readonly message: string) {
+  public readonly message: string;
+
+  constructor(message: string) {
     super();
+    this.message = `HttpError(${message})`;
   }
 }
 
 export class RequestUnsuccessful extends AlexaApiError {
   public readonly message: string;
 
-  constructor(
-    errorMessage: string,
-    public readonly errorCode: Nullable<string>,
-  ) {
+  constructor(message: string, public readonly errorCode: Nullable<string>) {
     super();
-    this.message =
-      errorMessage + (errorCode ? `. Error code: ${errorCode}` : '');
-  }
-}
-
-export class SpotifyDeviceNotFoundError extends Error {
-  constructor() {
-    super();
-    this.name = 'SpotifyDeviceNotFoundError';
+    this.message = `RequestUnsuccessful(${message}${errorCode ? `. Error code: ${errorCode}` : ''})`;
   }
 }

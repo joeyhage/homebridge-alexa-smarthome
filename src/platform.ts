@@ -18,6 +18,7 @@ import {
 import AccessoryFactory from './accessory/AccessoryFactory';
 import BaseAccessory from './accessory/BaseAccessory';
 import LightAccessory from './accessory/LightAccessory';
+import * as config from './config';
 import { Nullable } from './domain';
 import { SmartHomeDevice } from './domain/alexa/get-devices';
 import { AlexaPlatformConfig } from './domain/homebridge';
@@ -25,9 +26,6 @@ import { AlexaApiError } from './errors';
 import { PluginLogger } from './plugin-logger';
 import * as util from './util';
 import { AlexaApiWrapper } from './wrapper/alexa-api-wrapper';
-
-export const PLATFORM_NAME = 'HomebridgeAlexaSmartHome';
-export const PLUGIN_NAME = 'homebridge-alexa-smarthome';
 
 export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
@@ -61,7 +59,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
       return;
     }
 
-    this.persistPath = `${api.user.persistPath()}/.${PLUGIN_NAME}`;
+    this.persistPath = `${api.user.persistPath()}/.${config.PLUGIN_NAME}`;
     this.alexaRemote = new AlexaRemote();
     this.alexaApi = new AlexaApiWrapper(this.alexaRemote, this.logger);
 
@@ -74,8 +72,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
         }
         this.logger.debug('Successfully authenticated Alexa account.');
         pipe(
-          TE.Do,
-          TE.flatMap(() => this.initDevices()),
+          this.initDevices(),
           TE.map(A.map(({ accessory: { UUID } }) => UUID)),
           TE.map((activeAccessoryIds) =>
             pipe(
@@ -83,11 +80,11 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
               A.filter(({ UUID }) => !activeAccessoryIds.includes(UUID)),
             ),
           ),
-        )().then((result) =>
-          E.match<AlexaApiError, PlatformAccessory[], void>(
-            (e) => this.log.error('Error initializing devices', e),
+        )().then(
+          E.match(
+            (e) => this.logger.errorT('didFinishLaunching', e),
             this.unregisterStaleAccessories.bind(this),
-          )(result),
+          ),
         );
       });
     });
@@ -99,25 +96,25 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
   }
 
   initDevices(): TE.TaskEither<AlexaApiError, BaseAccessory[]> {
+    const deviceFilter = this.config.devices ?? [];
     return pipe(
       TE.bindTo('devices')(this.alexaApi.getDevices()),
       TE.map(({ devices }) =>
         pipe(
           devices,
-          A.filter((d) => this.config.devices?.includes(d.displayName) ?? true),
+          A.filter((d) =>
+            A.isEmpty(deviceFilter)
+              ? true
+              : deviceFilter.includes(d.displayName),
+          ),
           A.traverse(T.ApplicativePar)(this.handleAccessory.bind(this)),
         ),
       ),
       TE.flatMap((devices) =>
-        TE.fromTask(
-          T.ApplicativePar.map(devices, (either) => ({
-            errors: A.lefts(either),
-            handlers: A.rights(either),
-          })),
-        ),
+        TE.fromTask(T.ApplicativePar.map(devices, A.separate)),
       ),
-      TE.map(({ errors, handlers }) => {
-        errors.forEach((e) => this.log.error(e));
+      TE.map(({ left: errors, right: handlers }) => {
+        errors.forEach((e) => this.logger.errorT('initDevices', e));
         handlers.forEach((h) => {
           if (h instanceof LightAccessory) {
             h.handleOnSet(false);
@@ -164,16 +161,20 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     });
 
     const auth = util.getAuthentication(this.persistPath);
-    const amazonDomain = this.config.amazonDomain ?? 'amazon.com';
+    const amazonDomain =
+      this.config.amazonDomain ?? config.DEFAULT_AMAZON_DOMAIN;
     this.alexaRemote.init(
       {
-        acceptLanguage: this.config.language ?? 'en-US',
+        acceptLanguage: this.config.language ?? config.DEFAULT_ACCEPT_LANG,
         alexaServiceHost: `alexa.${amazonDomain}`,
         amazonPage: amazonDomain,
         amazonPageProxyLanguage:
-          this.config.language?.replace('-', '_') ?? 'en_US',
+          this.config.language?.replace('-', '_') ??
+          config.DEFAULT_PROXY_PAGE_LANG,
         formerRegistrationData: auth || {},
-        cookieRefreshInterval: this.config.auth.refreshInterval,
+        cookieRefreshInterval:
+          (this.config.auth.refreshInterval ??
+            config.DEFAULT_REFRESH_INTERVAL_DAYS) * config.ONE_DAY_MILLIS,
         cookie: auth?.localCookie,
         macDms: auth?.macDms,
         proxyOwnIp: this.config.auth.proxy.clientHost,
@@ -188,7 +189,10 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     device: SmartHomeDevice,
     acc: PlatformAccessory,
   ): TE.TaskEither<string, BaseAccessory> {
-    this.logger.info('Restoring existing accessory from cache:', acc.displayName);
+    this.logger.info(
+      'Restoring existing accessory from cache:',
+      acc.displayName,
+    );
     this.logger.debug('Existing accessory:', device);
 
     if (!acc.context?.deviceId || !acc.context?.supportedOperations) {
@@ -201,8 +205,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
       this.api.updatePlatformAccessories([acc]);
     }
     return pipe(
-      TE.Do,
-      TE.flatMap(() => AccessoryFactory.createAccessory(this, acc, device)),
+      AccessoryFactory.createAccessory(this, acc, device),
       TE.tap(() => {
         this.devices.push(device);
         return TE.right(constVoid);
@@ -225,10 +228,13 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     };
 
     return pipe(
-      TE.Do,
-      TE.flatMap(() => AccessoryFactory.createAccessory(this, acc, device)),
+      AccessoryFactory.createAccessory(this, acc, device),
       TE.tap(() => {
-        this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [acc]);
+        this.api.registerPlatformAccessories(
+          config.PLUGIN_NAME,
+          config.PLATFORM_NAME,
+          [acc],
+        );
         this.devices.push(device);
         return TE.right(constVoid);
       }),
@@ -246,8 +252,8 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
 
     if (staleAccessories.length) {
       this.api.unregisterPlatformAccessories(
-        PLUGIN_NAME,
-        PLATFORM_NAME,
+        config.PLUGIN_NAME,
+        config.PLATFORM_NAME,
         staleAccessories,
       );
     }

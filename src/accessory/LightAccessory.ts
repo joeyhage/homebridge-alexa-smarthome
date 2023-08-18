@@ -6,7 +6,6 @@ import { Service } from 'hap-nodejs';
 import { CharacteristicValue } from 'homebridge';
 import { match } from 'ts-pattern';
 import { CapabilityState } from '../domain/alexa/get-device-states';
-import { AlexaApiError } from '../errors';
 import * as util from '../util';
 import BaseAccessory from './BaseAccessory';
 
@@ -62,7 +61,7 @@ export default class LightAccessory extends BaseAccessory {
       this.platform.alexaApi.getLightbulbState(this.device.id),
       TE.match(
         (e) => {
-          util.logError(this.logger, e, 'handleOnGet');
+          this.logger.errorT('handleOnGet', e);
           throw new this.platform.api.hap.HapStatusError(
             this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE,
           );
@@ -88,7 +87,7 @@ export default class LightAccessory extends BaseAccessory {
         TE.flatMap(() => TE.sequenceArray(this.updateAllValues())),
       )();
     } catch (e) {
-      util.logError(this.logger, e, 'handleOnSet');
+      this.logger.errorT('handleOnSet', e);
     }
   }
 
@@ -98,7 +97,7 @@ export default class LightAccessory extends BaseAccessory {
       this.platform.alexaApi.getLightbulbState(this.device.id),
       TE.match(
         (e) => {
-          util.logError(this.logger, e, 'handleBrightnessGet');
+          this.logger.errorT('handleBrightnessGet', e);
           throw new this.platform.api.hap.HapStatusError(
             this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE,
           );
@@ -125,7 +124,7 @@ export default class LightAccessory extends BaseAccessory {
         TE.flatMap(() => TE.sequenceArray(this.updateAllValues())),
       )();
     } catch (e) {
-      util.logError(this.logger, e, 'handleBrightnessSet');
+      this.logger.errorT('handleBrightnessSet', e);
     }
   }
 

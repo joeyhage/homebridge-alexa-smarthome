@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { LogLevel, type Logger, type PlatformConfig } from 'homebridge';
+import { Pattern, match } from 'ts-pattern';
 
 export class PluginLogger {
   constructor(
@@ -27,5 +28,18 @@ export class PluginLogger {
 
   error(message: string, ...parameters: any[]): void {
     this.logger.error(message, ...parameters);
+  }
+
+  errorT(prefix: string, e: unknown): void {
+    match(e)
+      .with(
+        { message: Pattern.intersection(Pattern.string, Pattern.select()) },
+        (m) => this.logger.error(`${prefix} - ${m}`),
+      )
+      .when(
+        (e) => typeof e === 'string',
+        (e) => this.logger.error(`${prefix} - ${e}`),
+      )
+      .otherwise((e) => this.logger.error(`${prefix} - Unknown error`, e));
   }
 }

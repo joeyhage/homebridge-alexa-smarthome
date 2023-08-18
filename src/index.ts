@@ -1,4 +1,5 @@
-import { AlexaSmartHomePlatform, PLATFORM_NAME, PLUGIN_NAME } from './platform';
+import { PLATFORM_NAME, PLUGIN_NAME } from './config';
+import { AlexaSmartHomePlatform } from './platform';
 
 import type { API } from 'homebridge';
 

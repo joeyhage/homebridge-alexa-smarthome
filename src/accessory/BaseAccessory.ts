@@ -1,4 +1,3 @@
-import * as T from 'fp-ts/Task';
 import {
   Characteristic,
   CharacteristicValue,
@@ -69,14 +68,16 @@ export default abstract class BaseAccessory {
   }
 
   configureStatusActive() {
-    for (const service of this.accessory.services) {
-      if (!service.testCharacteristic(this.Characteristic.StatusActive)) {
-        service.addOptionalCharacteristic(this.Characteristic.StatusActive);
-      }
-      service
-        .getCharacteristic(this.Characteristic.StatusActive)
-        .onGet(() => this.device.providerData.enabled);
-    }
+    return pipe(
+      this.accessory.services,
+      A.map((s) => {
+        !s.testCharacteristic(this.Characteristic.StatusActive) &&
+          s.addOptionalCharacteristic(this.Characteristic.StatusActive);
+        s.getCharacteristic(this.Characteristic.StatusActive).onGet(
+          () => this.device.providerData.enabled,
+        );
+      }),
+    );
   }
 
   updateAllValues(): TaskEither<void, void>[] {

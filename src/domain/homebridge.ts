@@ -10,7 +10,7 @@ export interface AlexaPlatformConfig extends PlatformConfig {
       clientHost: string;
       port: number;
     };
-    refreshInterval: number;
+    refreshInterval?: number;
   };
   language?: string;
   debug?: boolean;
