@@ -1,28 +1,30 @@
+import { HAPStatus, HapStatusError } from 'hap-nodejs';
 import { Nullable } from './domain';
 
 export abstract class AlexaApiError {
   public readonly name = 'AlexaApiError';
-  abstract code: string;
-  abstract message: string;
+  public readonly message: string;
+
+  constructor(message: string, public readonly code: string) {
+    this.message = `${this.code}(${this.message})`;
+  }
 }
 
 export class InvalidRequest extends AlexaApiError {
-  public readonly message: string;
-  public readonly code = 'InvalidRequest';
-
   constructor(message: string) {
-    super();
-    this.message = `${this.code}(${message})`;
+    super(message, 'InvalidRequest');
+  }
+}
+
+export class InvalidResponse extends AlexaApiError {
+  constructor(message: string) {
+    super(message, 'InvalidResponse');
   }
 }
 
 export class HttpError extends AlexaApiError {
-  public readonly message: string;
-  public readonly code = 'HttpError';
-
   constructor(message: string) {
-    super();
-    this.message = `${this.code}(${message})`;
+    super(message, 'HttpError');
   }
 }
 
@@ -31,19 +33,23 @@ export class RequestUnsuccessful extends AlexaApiError {
   public readonly code = 'RequestUnsuccessful';
 
   constructor(message: string, public readonly errorCode: Nullable<string>) {
-    super();
-    this.message = `${this.code}(${message}${
-      errorCode ? `. Error code: ${errorCode}` : ''
-    })`;
+    super(
+      `${message}${errorCode ? `. Error code: ${errorCode}` : ''}`,
+      'RequestUnsuccessful',
+    );
   }
 }
 
 export class DeviceOffline extends AlexaApiError {
-  public readonly message: string;
-  public readonly code = 'DeviceOffline';
-
   constructor() {
-    super();
-    this.message = `${this.code}(ENDPOINT_UNREACHABLE)`;
+    super('ENDPOINT_UNREACHABLE', 'DeviceOffline');
+  }
+}
+
+export abstract class PlatformError extends HapStatusError {}
+
+export class ServiceCommunicationFailure extends PlatformError {
+  constructor() {
+    super(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
   }
 }
