@@ -45,11 +45,3 @@ export class DeviceOffline extends AlexaApiError {
     super('ENDPOINT_UNREACHABLE', 'DeviceOffline');
   }
 }
-
-export abstract class PlatformError extends HapStatusError {}
-
-export class ServiceCommunicationFailure extends PlatformError {
-  constructor() {
-    super(HAPStatus.SERVICE_COMMUNICATION_FAILURE);
-  }
-}

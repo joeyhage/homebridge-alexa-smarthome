@@ -22,6 +22,7 @@ interface CharacteristicGetters {
 
 export default abstract class BaseAccessory {
   public readonly Service: typeof Service = this.platform.api.hap.Service;
+
   public readonly Characteristic: typeof Characteristic =
     this.platform.api.hap.Characteristic;
 
@@ -122,6 +123,12 @@ export default abstract class BaseAccessory {
           TE.asUnit,
         ),
       ),
+    );
+  }
+
+  get serviceCommunicationError() {
+    return new this.platform.api.hap.HapStatusError(
+      this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE,
     );
   }
 

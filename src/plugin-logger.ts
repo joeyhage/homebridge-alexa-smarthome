@@ -41,6 +41,15 @@ export class PluginLogger {
         { message: Pattern.intersection(Pattern.string, Pattern.select()) },
         (m) => this.logger.error(`${prefix} - ${m}`),
       )
+      .with(
+        {
+          hapStatus: Pattern.intersection(
+            Pattern.not(Pattern.nullish),
+            Pattern.select(),
+          ),
+        },
+        (s) => this.logger.error(`${prefix} - HapStatusError(${s})`),
+      )
       .when(
         (e) => typeof e === 'string',
         (e) => this.logger.error(`${prefix} - ${e}`),

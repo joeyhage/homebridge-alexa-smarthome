@@ -6,7 +6,7 @@ import { Service } from 'hap-nodejs';
 import { CharacteristicValue } from 'homebridge';
 import { match } from 'ts-pattern';
 import { CapabilityState } from '../domain/alexa/get-device-states';
-import { InvalidResponse, ServiceCommunicationFailure } from '../errors';
+import { InvalidResponse } from '../errors';
 import BaseAccessory from './BaseAccessory';
 
 export interface LightbulbState {
@@ -76,7 +76,7 @@ export default class LightAccessory extends BaseAccessory {
       ),
       TE.match((e) => {
         this.logWithContext('errorT', 'handleOnGet', e);
-        throw new ServiceCommunicationFailure();
+        throw this.serviceCommunicationError;
       }, identity),
     )();
   }
@@ -119,7 +119,7 @@ export default class LightAccessory extends BaseAccessory {
       ),
       TE.match((e) => {
         this.logWithContext('errorT', 'handleOnGet', e);
-        throw new ServiceCommunicationFailure();
+        throw this.serviceCommunicationError;
       }, identity),
     )();
   }
