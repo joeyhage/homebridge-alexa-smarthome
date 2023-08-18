@@ -8,12 +8,12 @@ import type { AlexaPlatformConfig } from './domain/homebridge';
 import { AlexaApiError } from './errors';
 import { PluginLogger } from './plugin-logger';
 
-export const logError = (logger: PluginLogger, e: unknown) =>
+export const logError = (logger: PluginLogger, e: unknown, prefix = '') =>
   match(e)
     .with({ name: 'AlexaApiError' }, (e: AlexaApiError) =>
-      logger.error(e.message),
+      logger.error(`${prefix} - ${e.message}`),
     )
-    .otherwise((e) => logger.error('Unknown error', e));
+    .otherwise((e) => logger.error(`${prefix} - Unknown error`, e));
 
 export const validateConfig = (
   config: PlatformConfig,

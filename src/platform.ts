@@ -94,7 +94,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
   }
 
   configureAccessory(accessory: PlatformAccessory) {
-    this.log.info('Loading accessory from cache:', accessory.displayName);
+    this.logger.info('Loading accessory from cache:', accessory.displayName);
     this.cachedAccessories.push(accessory);
   }
 
@@ -188,11 +188,11 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     device: SmartHomeDevice,
     acc: PlatformAccessory,
   ): TE.TaskEither<string, BaseAccessory> {
-    this.log.info('Restoring existing accessory from cache:', acc.displayName);
-    this.log.debug('Existing accessory:', device);
+    this.logger.info('Restoring existing accessory from cache:', acc.displayName);
+    this.logger.debug('Existing accessory:', device);
 
     if (!acc.context?.deviceId || !acc.context?.supportedOperations) {
-      this.log.info('Update accessory context:', acc.displayName);
+      this.logger.info('Update accessory context:', acc.displayName);
       acc.context = {
         ...acc.context,
         deviceId: device.id,
@@ -214,8 +214,8 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     device: SmartHomeDevice,
     uuid: string,
   ): TE.TaskEither<string, BaseAccessory> {
-    this.log.info('Adding new accessory:', device.displayName);
-    this.log.debug('New accessory:', device);
+    this.logger.info('Adding new accessory:', device.displayName);
+    this.logger.debug('New accessory:', device);
 
     const acc = new this.api.platformAccessory(device.displayName, uuid);
     acc.context = {

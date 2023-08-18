@@ -47,11 +47,11 @@ export default class LightAccessory extends BaseAccessory {
     if (this.device.supportedOperations.includes('setBrightness')) {
       this.lightbulbService
         .getCharacteristic(this.platform.Characteristic.Brightness)
-        .onGet(this.handleOnGet.bind(this))
-        .onSet(this.handleOnSet.bind(this));
+        .onGet(this.handleBrightnessGet.bind(this))
+        .onSet(this.handleBrightnessSet.bind(this));
       this.addCharacteristicGetter(
-        this.platform.Characteristic.On.UUID,
-        'handleOnGet',
+        this.platform.Characteristic.Brightness.UUID,
+        'handleBrightnessGet',
       );
     }
   }
@@ -62,7 +62,7 @@ export default class LightAccessory extends BaseAccessory {
       this.platform.alexaApi.getLightbulbState(this.device.id),
       TE.match(
         (e) => {
-          util.logError(this.logger, e);
+          util.logError(this.logger, e, 'handleOnGet');
           throw new this.platform.api.hap.HapStatusError(
             this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE,
           );
@@ -88,11 +88,7 @@ export default class LightAccessory extends BaseAccessory {
         TE.flatMap(() => TE.sequenceArray(this.updateAllValues())),
       )();
     } catch (e) {
-      match(e)
-        .with({ name: 'AlexaApiError' }, (e: AlexaApiError) =>
-          this.logger.error(e.message),
-        )
-        .otherwise((e) => this.logger.error('Unknown error setting power', e));
+      util.logError(this.logger, e, 'handleOnSet');
     }
   }
 
@@ -102,7 +98,7 @@ export default class LightAccessory extends BaseAccessory {
       this.platform.alexaApi.getLightbulbState(this.device.id),
       TE.match(
         (e) => {
-          util.logError(this.logger, e);
+          util.logError(this.logger, e, 'handleBrightnessGet');
           throw new this.platform.api.hap.HapStatusError(
             this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE,
           );
@@ -129,13 +125,7 @@ export default class LightAccessory extends BaseAccessory {
         TE.flatMap(() => TE.sequenceArray(this.updateAllValues())),
       )();
     } catch (e) {
-      match(e)
-        .with({ name: 'AlexaApiError' }, (e: AlexaApiError) =>
-          this.logger.error(e.message),
-        )
-        .otherwise((e) =>
-          this.logger.error('Unknown error setting brightness', e),
-        );
+      util.logError(this.logger, e, 'handleBrightnessSet');
     }
   }
 
@@ -158,33 +148,4 @@ export default class LightAccessory extends BaseAccessory {
       A.map(({ namespace, value }) => ({ namespace, value })),
     );
   }
-
-  // setInitialState(): void {
-  //   this.setCurrentStates();
-
-  //   this.logger.debug(
-  //     `Set initial state // active ${this.activeState} // brightness ${this.brightness}`,
-  //   );
-  //   this.lightbulbService
-  //     .getCharacteristic(this.platform.Characteristic.On)
-  //     .updateValue(this.activeState);
-  //   this.lightbulbService
-  //     .getCharacteristic(this.platform.Characteristic.Brightness)
-  //     .updateValue(this.brightness);
-  // }
-
-  // private setCurrentStates() {
-  //   if (this.device.displayName) {
-  //     const match = SpotifySpeakerAccessory.DEVICES?.find(
-  //       (device) => device.name === this.device.spotifyDeviceName,
-  //     );
-  //     if (match?.id) {
-  //       this.device.spotifyDeviceId = match.id;
-  //     } else {
-  //       this.logger.error(
-  //         `spotifyDeviceName '${this.device.spotifyDeviceName}' did not match any Spotify devices. spotifyDeviceName is case sensitive.`,
-  //       );
-  //     }
-  //   }
-  // }
 }
