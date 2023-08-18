@@ -1,17 +1,18 @@
 import * as O from 'fp-ts/Option';
 import * as TE from 'fp-ts/TaskEither';
 import * as A from 'fp-ts/lib/Array';
-import { constant, pipe } from 'fp-ts/lib/function';
-import { Service } from 'hap-nodejs';
-import { CharacteristicValue } from 'homebridge';
+import { constant, identity, pipe } from 'fp-ts/lib/function';
+import { CharacteristicValue, Service } from 'homebridge';
 import { match } from 'ts-pattern';
 import { CapabilityState } from '../domain/alexa/get-device-states';
+import { InvalidResponse } from '../errors';
 import BaseAccessory from './BaseAccessory';
 
 export interface LightbulbState {
   namespace: keyof typeof LightbulbNamespaces;
   value: NonNullable<string | number | boolean>;
 }
+
 const LightbulbNamespaces = {
   'Alexa.PowerController': 0,
   'Alexa.BrightnessController': 1,
@@ -58,17 +59,24 @@ export default class LightAccessory extends BaseAccessory {
     this.logWithContext('debug', 'Triggered GET Power');
     return pipe(
       this.platform.alexaApi.getLightbulbState(this.device.id),
-      TE.match(
-        (e) => {
-          this.logWithContext('errorT', 'handleOnGet', e);
-          throw new this.platform.api.hap.HapStatusError(
-            this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE,
-          );
-        },
+      TE.flatMapOption(
         (states) =>
-          states.find((s) => s.namespace === 'Alexa.PowerController')?.value ===
-          'ON',
+          pipe(
+            states,
+            A.findFirst(
+              ({ namespace }) => namespace === 'Alexa.PowerController',
+            ),
+            O.map(({ value }) => value === 'ON'),
+            O.tap((s) =>
+              O.some(this.logWithContext('debug', `GET Power result: ${s}`)),
+            ),
+          ),
+        constant(new InvalidResponse('Power state not available')),
       ),
+      TE.match((e) => {
+        this.logWithContext('errorT', 'handleOnGet', e);
+        throw this.serviceCommunicationError;
+      }, identity),
     )();
   }
 
@@ -94,17 +102,24 @@ export default class LightAccessory extends BaseAccessory {
     this.logWithContext('debug', 'Triggered GET Brightness');
     return pipe(
       this.platform.alexaApi.getLightbulbState(this.device.id),
-      TE.match(
-        (e) => {
-          this.logWithContext('errorT', 'handleBrightnessGet', e);
-          throw new this.platform.api.hap.HapStatusError(
-            this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE,
-          );
-        },
+      TE.flatMapOption(
         (states) =>
-          (states.find((s) => s.namespace === 'Alexa.BrightnessController')
-            ?.value as number) ?? 0,
+          pipe(
+            states,
+            A.findFirst(
+              ({ namespace }) => namespace === 'Alexa.BrightnessController',
+            ),
+            O.map(({ value }) => value as number),
+            O.tap((s) =>
+              O.some(this.logWithContext('debug', `GET Brightness result: ${s}`)),
+            ),
+          ),
+        constant(new InvalidResponse('Brightness state not available')),
       ),
+      TE.match((e) => {
+        this.logWithContext('errorT', 'handleOnGet', e);
+        throw this.serviceCommunicationError;
+      }, identity),
     )();
   }
 
@@ -130,7 +145,10 @@ export default class LightAccessory extends BaseAccessory {
   static toLightCapabilities(capabilityStates?: string[]): LightbulbState[] {
     return pipe(
       capabilityStates ?? [],
-      A.map((cs) => JSON.parse(cs) as CapabilityState),
+      A.map((cs) => JSON.parse(cs)),
+      A.filterMap((cs) =>
+        typeof cs === 'object' ? O.some(cs as CapabilityState) : O.none,
+      ),
       A.filterMap(({ namespace, value }) =>
         match([namespace, value])
           .when(

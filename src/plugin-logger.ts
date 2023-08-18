@@ -34,17 +34,14 @@ export class PluginLogger {
 
   errorT(prefix: string, e: unknown): void {
     match(e)
-      .with({ code: 'DeviceOffline' }, (m) =>
-        this.logger.debug(`${prefix} - ${m}`),
-      )
       .with(
-        { message: Pattern.intersection(Pattern.string, Pattern.select()) },
-        (m) => this.logger.error(`${prefix} - ${m}`),
+        { code: 'DeviceOffline', message: Pattern.select(Pattern.string) },
+        (m) => this.debug(`${prefix} - ${m}`),
       )
-      .when(
-        (e) => typeof e === 'string',
-        (e) => this.logger.error(`${prefix} - ${e}`),
+      .with({ message: Pattern.select(Pattern.string) }, (m) =>
+        this.logger.error(`${prefix} - ${m}`),
       )
+      .with(Pattern.string, (e) => this.logger.error(`${prefix} - ${e}`))
       .otherwise((e) => this.logger.error(`${prefix} - Unknown error`, e));
   }
 }
