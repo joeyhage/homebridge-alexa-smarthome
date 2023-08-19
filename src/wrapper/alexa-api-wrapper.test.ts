@@ -10,6 +10,7 @@ import SetDeviceStateResponse from '../domain/alexa/set-device-state';
 import { HttpError, InvalidRequest, RequestUnsuccessful } from '../errors';
 import { PluginLogger } from '../plugin-logger';
 import { AlexaApiWrapper } from './alexa-api-wrapper';
+import { Logger, PlatformConfig } from 'homebridge';
 
 jest.mock('alexa-remote2');
 const alexaRemoteMocks = AlexaRemote as jest.MockedClass<typeof AlexaRemote>;
@@ -197,7 +198,10 @@ describe('getLightbulbState', () => {
 function getAlexaApiWrapper(): AlexaApiWrapper {
   return new AlexaApiWrapper(
     new AlexaRemote(),
-    console as unknown as PluginLogger,
+    new PluginLogger(
+      console as Logger,
+      { debug: true, platform: '' } as PlatformConfig,
+    ),
   );
 }
 

@@ -14,6 +14,7 @@ import { PLUGIN_NAME } from '../settings';
 import { getAuthentication } from '../util';
 import { AlexaApiWrapper } from './alexa-api-wrapper';
 import { Authentication } from '../domain/alexa';
+import { Logger, PlatformConfig } from 'homebridge';
 
 let alexa: AlexaRemote;
 beforeAll(async () => {
@@ -92,5 +93,11 @@ async function getAlexaRemote(): Promise<AlexaRemote> {
 }
 
 function getAlexaApiWrapper(alexaRemote: AlexaRemote): AlexaApiWrapper {
-  return new AlexaApiWrapper(alexaRemote, console as unknown as PluginLogger);
+  return new AlexaApiWrapper(
+    alexaRemote,
+    new PluginLogger(
+      console as Logger,
+      { platform: '', debug: true } as PlatformConfig,
+    ),
+  );
 }

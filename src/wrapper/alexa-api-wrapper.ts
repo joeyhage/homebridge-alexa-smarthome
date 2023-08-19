@@ -15,6 +15,7 @@ import {
   constTrue,
   constVoid,
   constant,
+  flow,
   pipe,
 } from 'fp-ts/lib/function';
 import { Pattern, match } from 'ts-pattern';
@@ -62,15 +63,15 @@ export class AlexaApiWrapper {
   ): TaskEither<AlexaApiError, GetDeviceStatesResponse> {
     const maybeEntityIds = deviceIds.map(AlexaApiWrapper.extractEntityId);
     const { left: errors, right: entityIds } = A.separate(maybeEntityIds);
-    return pipe(
-      errors,
-      A.map((e) =>
-        this.logger.warn(
-          `Cannot retrieve state for device because ${e.message}`,
-        ),
-      ),
+
+    const handleGetStateErrors = flow(
+      A.map((e: AlexaApiError) => this.logger.warn('initDevices', e)),
       A.sequence(IO.Applicative),
       TE.fromIO,
+    );
+
+    return pipe(
+      handleGetStateErrors(errors),
       TE.flatMap(() =>
         match(entityIds)
           .when(A.isNonEmpty, constant(TE.of(entityIds)))
