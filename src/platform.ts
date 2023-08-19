@@ -83,7 +83,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
               ),
             ),
           ),
-          TE.flatMap(this.initDevices),
+          TE.flatMap(this.initDevices.bind(this)),
           TE.map(A.map(({ accessory: { UUID } }) => UUID)),
           TE.map((activeAccessoryIds) =>
             pipe(
