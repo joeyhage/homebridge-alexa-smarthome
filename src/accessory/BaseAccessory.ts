@@ -42,13 +42,13 @@ export default abstract class BaseAccessory {
     logLevel: PluginLogLevel | 'errorT',
     message: string,
     e?: unknown,
-  ) {
+  ): void {
     const msgAndContext = `${this.device.displayName} - ${message}`;
-    match(logLevel)
+    return match(logLevel)
       .with('errorT', () => this.logger.errorT(msgAndContext, e))
       .otherwise((logLevel: PluginLogLevel) =>
         this.logger[logLevel](msgAndContext),
-      );
+      )();
   }
 
   addCharacteristicGetter(

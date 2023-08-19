@@ -59,7 +59,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     } else {
       this.logger.error(
         'Missing configuration for this plugin to work, see the documentation for initial setup.',
-      );
+      )();
       return;
     }
 
@@ -173,7 +173,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
       if (util.isValidAuthentication(cookieData as unknown as J.Json)) {
         this.logger.debug('Cookie updated. Do not share with anyone.', {
           cookieData,
-        });
+        })();
         fs.writeFileSync(this.persistPath, JSON.stringify({ cookieData }));
       }
     });
@@ -182,14 +182,14 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
       () => {
         this.logger.debug(
           'Login required because existing authentication not found.',
-        );
+        )();
         return undefined;
       },
       (e) => {
         this.logger.errorT(
           'Error trying to retrieve stored authentication.',
           e,
-        );
+        )();
         return undefined;
       },
     );
@@ -233,11 +233,11 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     this.logger.info(
       'Restoring existing accessory from cache:',
       acc.displayName,
-    );
-    this.logger.debug('Existing accessory:', device);
+    )();
+    this.logger.debug('Existing accessory:', device)();
 
     if (!acc.context?.deviceId || !acc.context?.supportedOperations) {
-      this.logger.info('Update accessory context:', acc.displayName);
+      this.logger.info('Update accessory context:', acc.displayName)();
       acc.context = {
         ...acc.context,
         deviceId: device.id,
@@ -258,8 +258,8 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     device: SmartHomeDevice,
     uuid: string,
   ): TE.TaskEither<string, BaseAccessory> {
-    this.logger.info('Adding new accessory:', device.displayName);
-    this.logger.debug('New accessory:', device);
+    this.logger.info('Adding new accessory:', device.displayName)();
+    this.logger.debug('New accessory:', device)();
 
     const acc = new this.api.platformAccessory(device.displayName, uuid);
     acc.context = {
@@ -288,7 +288,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     staleAccessories.forEach((staleAccessory) => {
       this.logger.info(
         `Removing stale cached accessory ${staleAccessory.UUID} ${staleAccessory.displayName}`,
-      );
+      )();
     });
 
     if (staleAccessories.length) {

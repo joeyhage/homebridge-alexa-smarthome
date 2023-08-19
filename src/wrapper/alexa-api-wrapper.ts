@@ -5,6 +5,7 @@ import AlexaRemote, {
 import * as E from 'fp-ts/Either';
 import { Either } from 'fp-ts/Either';
 import * as O from 'fp-ts/Option';
+import * as IO from 'fp-ts/IO';
 import * as TE from 'fp-ts/TaskEither';
 import { TaskEither } from 'fp-ts/TaskEither';
 import * as A from 'fp-ts/lib/Array';
@@ -61,13 +62,16 @@ export class AlexaApiWrapper {
   ): TaskEither<AlexaApiError, GetDeviceStatesResponse> {
     const maybeEntityIds = deviceIds.map(AlexaApiWrapper.extractEntityId);
     const { left: errors, right: entityIds } = A.separate(maybeEntityIds);
-    errors.forEach((error) =>
-      this.logger.warn(
-        `Cannot retrieve state for device because ${error.message}`,
-      ),
-    );
     return pipe(
-      TE.bindTo('entityIds')(
+      errors,
+      A.map((e) =>
+        this.logger.warn(
+          `Cannot retrieve state for device because ${e.message}`,
+        ),
+      ),
+      A.sequence(IO.Applicative),
+      TE.fromIO,
+      TE.flatMap(() =>
         match(entityIds)
           .when(A.isNonEmpty, constant(TE.of(entityIds)))
           .otherwise(
@@ -78,7 +82,7 @@ export class AlexaApiWrapper {
             ),
           ),
       ),
-      TE.flatMap(({ entityIds }) =>
+      TE.flatMap((entityIds) =>
         TE.tryCatch(
           () =>
             AlexaApiWrapper.toPromise<GetDeviceStatesResponse>(
@@ -144,7 +148,10 @@ export class AlexaApiWrapper {
           ),
           A.filterMap(
             E.match((e) => {
-              this.logger.errorT(`Device id '${deviceId}' - toLightStates`, e);
+              this.logger.errorT(
+                `Device id '${deviceId}' - toLightStates`,
+                e,
+              )();
               return O.none;
             }, O.some),
           ),
