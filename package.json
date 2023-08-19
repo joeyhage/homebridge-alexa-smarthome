@@ -1,7 +1,7 @@
 {
   "displayName": "Homebridge Alexa Smart Home",
   "name": "homebridge-alexa-smarthome",
-  "version": "0.0.13-beta.0",
+  "version": "0.0.14-beta.0",
   "description": "Homebridge plugin that can control smart home devices connected to Alexa.",
   "license": "MIT",
   "author": "Joey Hage <contact@jmhage.com>",
@@ -55,7 +55,7 @@
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-prettier": "^4.2.1",
     "homebridge": "^1.6.1",
-    "husky": "^8.0.3",  
+    "husky": "^8.0.3",
     "jest": "^29.5.0",
     "lint-staged": "^13.2.0",
     "nodemon": "^2.0.22",
