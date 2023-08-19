@@ -7,7 +7,8 @@ import * as O from 'fp-ts/Option';
 import * as T from 'fp-ts/Task';
 import * as TE from 'fp-ts/TaskEither';
 import * as A from 'fp-ts/lib/Array';
-import { constVoid, identity, pipe } from 'fp-ts/lib/function';
+import { match as fpMatch } from 'fp-ts/lib/boolean';
+import { constVoid, constant, flow, identity, pipe } from 'fp-ts/lib/function';
 import fs from 'fs';
 import {
   API,
@@ -18,6 +19,7 @@ import {
   PlatformConfig,
   Service,
 } from 'homebridge';
+import { Pattern, match } from 'ts-pattern';
 import AccessoryFactory from './accessory/AccessoryFactory';
 import BaseAccessory from './accessory/BaseAccessory';
 import LightAccessory from './accessory/LightAccessory';
@@ -66,15 +68,22 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     this.alexaApi = new AlexaApiWrapper(this.alexaRemote, this.logger);
 
     api.on('didFinishLaunching', () => {
-      this.logger.debug('Executed didFinishLaunching callback');
+      this.logger.debug('Executed didFinishLaunching callback')();
       this.initAlexaRemote((error) => {
-        if (error) {
-          this.logger.error('Failed to initialize.', error);
-          return;
-        }
-        this.logger.debug('Successfully authenticated Alexa account.');
         pipe(
-          this.initDevices(),
+          TE.rightIO(
+            pipe(
+              !!error,
+              fpMatch(
+                () =>
+                  this.logger.debug(
+                    'Successfully authenticated Alexa account.',
+                  ),
+                () => this.logger.error('Failed to initialize.', error),
+              ),
+            ),
+          ),
+          TE.flatMap(this.initDevices),
           TE.map(A.map(({ accessory: { UUID } }) => UUID)),
           TE.map((activeAccessoryIds) =>
             pipe(
@@ -84,7 +93,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
           ),
         )().then(
           E.match(
-            (e) => this.logger.errorT('didFinishLaunching', e),
+            (e) => this.logger.errorT('didFinishLaunching', e)(),
             this.unregisterStaleAccessories.bind(this),
           ),
         );
@@ -93,43 +102,56 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
   }
 
   configureAccessory(accessory: PlatformAccessory) {
-    this.logger.info('Loading accessory from cache:', accessory.displayName);
+    this.logger.info('Loading accessory from cache:', accessory.displayName)();
     this.cachedAccessories.push(accessory);
   }
 
-  initDevices(): TE.TaskEither<AlexaApiError, BaseAccessory[]> {
+  initDevices(): TE.TaskEither<AlexaApiError | void, BaseAccessory[]> {
     const deviceFilter = this.config.devices ?? [];
-    return pipe(
-      TE.bindTo('devices')(this.alexaApi.getDevices()),
-      TE.map(({ devices }) =>
-        pipe(
-          devices,
-          A.filter((d) =>
-            A.isEmpty(deviceFilter)
-              ? true
-              : deviceFilter.includes(d.displayName),
-          ),
-          A.traverse(T.ApplicativePar)(this.handleAccessory.bind(this)),
-        ),
+
+    const findUserConfiguredDevices = flow(
+      A.filter((d: SmartHomeDevice) =>
+        A.isEmpty(deviceFilter) ? true : deviceFilter.includes(d.displayName),
       ),
+      A.traverse(T.ApplicativePar)(this.initAccessory.bind(this)),
+    );
+
+    const handleInitAccessoryErrors = flow(
+      A.map((e: string) => this.logger.errorT('initDevices', e)),
+      A.sequence(IO.Applicative),
+      TE.fromIO,
+    );
+
+    const setInitialStates = flow(
+      A.map((h: BaseAccessory) =>
+        match(h)
+          .with(Pattern.instanceOf(LightAccessory), (h) =>
+            TE.tryCatch(
+              () => h.handleOnSet(false),
+              (e) => this.logger.errorT('handleOnSet', e)(),
+            ),
+          )
+          .otherwise(constant(TE.right(constVoid()))),
+      ),
+    );
+
+    return pipe(
+      this.alexaApi.getDevices(),
+      TE.map(findUserConfiguredDevices),
       TE.flatMap((devices) =>
         TE.fromTask(T.ApplicativePar.map(devices, A.separate)),
       ),
-      TE.map(({ left: errors, right: handlers }) => {
-        errors.forEach((e) => this.logger.errorT('initDevices', e));
-        handlers.forEach((h) => {
-          if (h instanceof LightAccessory) {
-            h.handleOnSet(false);
-          }
-        });
-        return handlers;
-      }),
+      TE.flatMap(({ left: errors, right: handlers }) =>
+        pipe(
+          handleInitAccessoryErrors(errors),
+          TE.flatMap(() => TE.sequenceArray(setInitialStates(handlers))),
+          TE.map(constant(handlers)),
+        ),
+      ),
     );
   }
 
-  handleAccessory(
-    device: SmartHomeDevice,
-  ): TE.TaskEither<string, BaseAccessory> {
+  initAccessory(device: SmartHomeDevice): TE.TaskEither<string, BaseAccessory> {
     const uuid = this.api.hap.uuid.generate(device.id);
     return pipe(
       O.bindTo('acc')(
@@ -276,5 +298,20 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
         staleAccessories,
       );
     }
+  }
+
+  private setInitialAccessoryStates() {
+    return flow(
+      A.map((h: BaseAccessory) =>
+        match(h)
+          .with(Pattern.instanceOf(LightAccessory), (h) =>
+            TE.tryCatch(
+              () => h.handleOnSet(false),
+              (e) => this.logger.errorT('handleOnSet', e)(),
+            ),
+          )
+          .otherwise(constant(TE.right(constVoid()))),
+      ),
+    );
   }
 }

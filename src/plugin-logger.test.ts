@@ -27,7 +27,7 @@ describe('errorT', () => {
     } as unknown as PlatformConfig);
 
     // when
-    logger.errorT('TEST', new DeviceOffline());
+    logger.errorT('TEST', new DeviceOffline())();
 
     // then
     expect(mockLogger.info).toHaveBeenCalledTimes(1);
@@ -44,7 +44,7 @@ describe('errorT', () => {
     } as unknown as PlatformConfig);
 
     // when
-    logger.errorT('TEST', 'fake error');
+    logger.errorT('TEST', 'fake error')();
 
     // then
     expect(mockLogger.error).toHaveBeenCalledTimes(1);
