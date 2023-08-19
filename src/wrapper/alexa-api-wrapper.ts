@@ -4,9 +4,11 @@ import AlexaRemote, {
 } from 'alexa-remote2';
 import * as E from 'fp-ts/Either';
 import { Either } from 'fp-ts/Either';
+import * as O from 'fp-ts/Option';
 import * as TE from 'fp-ts/TaskEither';
 import { TaskEither } from 'fp-ts/TaskEither';
 import * as A from 'fp-ts/lib/Array';
+import { match as fpMatch } from 'fp-ts/lib/boolean';
 import {
   constFalse,
   constTrue,
@@ -67,7 +69,7 @@ export class AlexaApiWrapper {
     return pipe(
       TE.bindTo('entityIds')(
         match(entityIds)
-          .when(A.isNonEmpty, constant(TE.right(entityIds)))
+          .when(A.isNonEmpty, constant(TE.of(entityIds)))
           .otherwise(
             constant(
               TE.left(
@@ -138,7 +140,13 @@ export class AlexaApiWrapper {
         pipe(
           deviceStates ?? [],
           A.flatMap(({ capabilityStates }) =>
-            LightAccessory.toLightCapabilities(capabilityStates ?? []),
+            LightAccessory.toLightStates(capabilityStates ?? []),
+          ),
+          A.filterMap(
+            E.match((e) => {
+              this.logger.errorT(`Device id '${deviceId}' - toLightStates`, e);
+              return O.none;
+            }, O.some),
           ),
         ),
       ),
@@ -163,7 +171,7 @@ export class AlexaApiWrapper {
 
   private static extractEntityId(id: string): Either<AlexaApiError, string> {
     return pipe(
-      E.bindTo('matches')(E.right(id.match(ENTITY_ID_REGEX))),
+      E.bindTo('matches')(E.of(id.match(ENTITY_ID_REGEX))),
       E.filterOrElse(
         ({ matches }) => !!matches,
         constant(
@@ -214,7 +222,7 @@ export class AlexaApiWrapper {
         .with(
           {
             deviceStates: Pattern.optional([]),
-            errors: [{ code: 'ENDPOINT_UNREACHABLE' }],
+            errors: [{ code: DeviceOffline.code }],
           },
           constant(new DeviceOffline()),
         )
@@ -231,14 +239,16 @@ export class AlexaApiWrapper {
   private static async toPromise<T>(
     fn: (cb: CallbackWithErrorAndBody) => void,
   ): Promise<T> {
-    return new Promise((resolve, reject) => {
-      fn((error, body) => {
-        if (error) {
-          return reject(error);
-        } else {
-          return resolve(body as T);
-        }
-      });
-    });
+    return new Promise((resolve, reject) =>
+      fn((error, body) =>
+        pipe(
+          !!error,
+          fpMatch(
+            () => resolve(body as T),
+            () => reject(error),
+          ),
+        ),
+      ),
+    );
   }
 }

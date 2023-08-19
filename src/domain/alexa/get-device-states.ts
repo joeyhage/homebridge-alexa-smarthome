@@ -2,9 +2,9 @@ import { Nullable } from '../index';
 import { DeviceResponse } from './index';
 
 export interface CapabilityState {
-  namespace: Nullable<string>;
+  namespace: string;
   name: Nullable<string>;
-  value: Nullable<string | number | boolean>;
+  value: string | number | boolean;
 }
 
 export interface DeviceStateResponse extends DeviceResponse {

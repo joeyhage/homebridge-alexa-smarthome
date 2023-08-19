@@ -1,10 +1,28 @@
-import { constFalse, constTrue } from 'fp-ts/lib/function';
+import * as E from 'fp-ts/Either';
+import * as IOE from 'fp-ts/IOEither';
+import { IOEither } from 'fp-ts/IOEither';
+import * as J from 'fp-ts/Json';
+import * as O from 'fp-ts/Option';
+import { Option } from 'fp-ts/Option';
+import {
+  constFalse,
+  constTrue,
+  constant,
+  flow,
+  identity,
+  pipe,
+} from 'fp-ts/lib/function';
 import fs from 'fs';
 import type { PlatformConfig } from 'homebridge';
 import { Pattern, match } from 'ts-pattern';
-import { Nullable } from './domain';
 import { Authentication } from './domain/alexa';
 import type { AlexaPlatformConfig } from './domain/homebridge';
+import {
+  IoError,
+  JsonFormatError,
+  PluginError,
+  ValidationError,
+} from './errors';
 
 export const validateConfig = (
   config: PlatformConfig,
@@ -24,14 +42,12 @@ export const validateConfig = (
       },
       constTrue,
     )
-    .otherwise(() => {
-      throw new Error('Unknown configuration error');
-    });
+    .otherwise(constFalse);
 
 export const isValidAuthentication = (
-  maybeCookieData: Nullable<Record<string, string | object | number>>,
+  maybeCookieData: J.Json,
 ): maybeCookieData is Authentication =>
-  match(maybeCookieData?.cookieData ?? maybeCookieData)
+  match(maybeCookieData)
     .with(
       {
         localCookie: Pattern.string,
@@ -48,16 +64,49 @@ export const isValidAuthentication = (
     )
     .otherwise(constFalse);
 
+export const readFile = (path: string) =>
+  IOE.tryCatch(
+    () => fs.readFileSync(path, { encoding: 'utf-8' }),
+    (e) => new IoError('Error reading file. ' + e),
+  );
+
+export const parseJson = flow(
+  J.parse,
+  E.mapLeft((e) => new JsonFormatError('Invalid JSON. ' + e)),
+);
+
 export const getAuthentication = (
   persistPath: string,
-): Authentication | undefined => {
-  if (fs.existsSync(persistPath)) {
-    const maybeAuth = JSON.parse(
-      fs.readFileSync(persistPath, { encoding: 'utf-8' }) ?? '{}',
-    );
-    const maybeCookieData =
-      typeof maybeAuth === 'object' ? maybeAuth.cookieData : {};
-    return isValidAuthentication(maybeCookieData) ? maybeCookieData : undefined;
-  }
-  return undefined;
+): IOEither<Option<PluginError>, Authentication> => {
+  const doesPreviousAuthExist = pipe(
+    IOE.tryCatch(
+      () => (fs.existsSync(persistPath) ? O.some(true) : O.none),
+      (e) =>
+        O.some(
+          new IoError('Error checking for existing authentication file. ' + e),
+        ),
+    ),
+    IOE.flatMap(IOE.fromOption(constant(O.none))),
+  );
+
+  const toCookieData: (json: J.Json) => NonNullable<J.Json> = flow(
+    O.fromNullable,
+    O.map((j) =>
+      match(j)
+        .with({ cookieData: Pattern.not(Pattern.nullish) }, (j) => j.cookieData)
+        .otherwise(identity),
+    ),
+    O.getOrElse<NonNullable<J.Json>>(constant({})),
+  );
+
+  return pipe(
+    doesPreviousAuthExist,
+    IOE.flatMap(() => IOE.Bifunctor.mapLeft(readFile(persistPath), O.some)),
+    IOE.flatMapEither((s) => E.Bifunctor.mapLeft(parseJson(s), O.some)),
+    IOE.map(toCookieData),
+    IOE.filterOrElse(
+      isValidAuthentication,
+      constant(O.some(new ValidationError('Invalid configuration'))),
+    ),
+  );
 };

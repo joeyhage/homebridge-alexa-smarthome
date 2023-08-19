@@ -1,11 +1,14 @@
 import * as O from 'fp-ts/Option';
 import * as TE from 'fp-ts/TaskEither';
+import { Either } from 'fp-ts/Either';
+import * as E from 'fp-ts/Either';
 import * as A from 'fp-ts/lib/Array';
+import * as util from '../util';
 import { constant, identity, pipe } from 'fp-ts/lib/function';
 import { CharacteristicValue, Service } from 'homebridge';
-import { match } from 'ts-pattern';
+import { Pattern, match } from 'ts-pattern';
 import { CapabilityState } from '../domain/alexa/get-device-states';
-import { InvalidResponse } from '../errors';
+import { AlexaApiError, InvalidResponse } from '../errors';
 import BaseAccessory from './BaseAccessory';
 
 export interface LightbulbState {
@@ -111,7 +114,9 @@ export default class LightAccessory extends BaseAccessory {
             ),
             O.map(({ value }) => value as number),
             O.tap((s) =>
-              O.some(this.logWithContext('debug', `GET Brightness result: ${s}`)),
+              O.some(
+                this.logWithContext('debug', `GET Brightness result: ${s}`),
+              ),
             ),
           ),
         constant(new InvalidResponse('Brightness state not available')),
@@ -142,26 +147,37 @@ export default class LightAccessory extends BaseAccessory {
     }
   }
 
-  static toLightCapabilities(capabilityStates?: string[]): LightbulbState[] {
+  static toLightStates(
+    capabilityStates?: string[],
+  ): Either<AlexaApiError, LightbulbState>[] {
     return pipe(
       capabilityStates ?? [],
-      A.map((cs) => JSON.parse(cs)),
-      A.filterMap((cs) =>
-        typeof cs === 'object' ? O.some(cs as CapabilityState) : O.none,
+      A.map(util.parseJson),
+      A.map(
+        E.bimap(
+          (e) => new InvalidResponse(e.message),
+          (j) =>
+            match(j)
+              .with(
+                {
+                  namespace: Pattern.string,
+                  value: Pattern.union(
+                    Pattern.string,
+                    Pattern.number,
+                    Pattern.boolean,
+                  ),
+                  name: Pattern._,
+                },
+                (jr) => O.some(jr as CapabilityState),
+              )
+              .otherwise(constant(O.none)),
+        ),
       ),
-      A.filterMap(({ namespace, value }) =>
-        match([namespace, value])
-          .when(
-            ([ns, val]) =>
-              Object.keys(LightbulbNamespaces).includes(ns ?? '') && !!val,
-            ([ns, val]: [
-              LightbulbState['namespace'],
-              LightbulbState['value'],
-            ]) => O.some({ namespace: ns, value: val }),
-          )
-          .otherwise(constant(O.none)),
+      A.filter(
+        (maybeCs): maybeCs is Either<AlexaApiError, O.Some<CapabilityState>> =>
+          E.isLeft(maybeCs) || E.exists(O.isSome)(maybeCs),
       ),
-      A.map(({ namespace, value }) => ({ namespace, value })),
+      A.map(E.map(({ value: { namespace, value } }) => ({ namespace, value } as LightbulbState))),
     );
   }
 }

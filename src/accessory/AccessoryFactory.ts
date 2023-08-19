@@ -26,7 +26,7 @@ export default class AccessoryFactory {
               supportedOperations: Pattern.array(Pattern.string),
             },
             () =>
-              TE.right(
+              TE.of(
                 new LightAccessory(
                   platform,
                   platform.logger,
@@ -43,7 +43,7 @@ export default class AccessoryFactory {
         acc.configureServices();
         acc.configureStatusActive();
         acc.setInitialized(true);
-        return TE.right(acc);
+        return TE.of(acc);
       }),
       TE.map(({ acc }) => acc),
     );

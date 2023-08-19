@@ -2,11 +2,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import AlexaRemote, { InitOptions } from 'alexa-remote2';
 import * as E from 'fp-ts/Either';
-import { constFalse, constTrue, constVoid, pipe } from 'fp-ts/lib/function';
-import { AlexaApiWrapper } from './alexa-api-wrapper';
+import {
+  constFalse,
+  constTrue,
+  constVoid,
+  constant,
+  pipe,
+} from 'fp-ts/lib/function';
+import { PluginLogger } from '../plugin-logger';
 import { PLUGIN_NAME } from '../settings';
 import { getAuthentication } from '../util';
-import { PluginLogger } from '../plugin-logger';
+import { AlexaApiWrapper } from './alexa-api-wrapper';
+import { Authentication } from '../domain/alexa';
 
 let alexa: AlexaRemote;
 beforeAll(async () => {
@@ -56,7 +63,9 @@ it('should get lightbulb state', async () => {
 
 async function getAlexaRemote(): Promise<AlexaRemote> {
   const alexaRemote = new AlexaRemote();
-  const auth = getAuthentication(`./.${PLUGIN_NAME}`);
+  const auth = E.getOrElse(constant({} as Authentication))(
+    getAuthentication(`./.${PLUGIN_NAME}`)(),
+  );
   return new Promise<AlexaRemote>((resolve, reject) => {
     alexaRemote.init(
       {

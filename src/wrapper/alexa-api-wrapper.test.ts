@@ -111,6 +111,7 @@ describe('getLightbulbState', () => {
             capabilityStates: [
               JSON.stringify({
                 namespace: 'Alexa.PowerController',
+                name: 'test',
                 value: 'ON',
               }),
             ],

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { LogLevel, type Logger, type PlatformConfig } from 'homebridge';
 import { Pattern, match } from 'ts-pattern';
+import { DeviceOffline } from './errors';
 
 export type PluginLogLevel = `${LogLevel}`;
 
@@ -35,7 +36,7 @@ export class PluginLogger {
   errorT(prefix: string, e: unknown): void {
     match(e)
       .with(
-        { code: 'DeviceOffline', message: Pattern.select(Pattern.string) },
+        { name: DeviceOffline.name, message: Pattern.select(Pattern.string) },
         (m) => this.debug(`${prefix} - ${m}`),
       )
       .with({ message: Pattern.select(Pattern.string) }, (m) =>

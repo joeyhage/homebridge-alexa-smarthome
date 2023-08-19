@@ -37,6 +37,17 @@ describe('validateConfig', () => {
     // then
     expect(actual).toBe(true);
   });
+
+  test('should return false given invalid config', () => {
+    // given
+    const config = { platform: 'platform' };
+
+    // when
+    const actual = util.validateConfig(config);
+
+    // then
+    expect(actual).toBe(false);
+  });
 });
 
 describe('isValidAuthentication', () => {
@@ -67,9 +78,20 @@ describe('isValidAuthentication', () => {
     expect(actual).toBe(true);
   });
 
-  test('should return false given undefined', () => {
+  test('should return false given empty', () => {
     // given
-    const maybeCookieData = undefined;
+    const maybeCookieData = {};
+
+    // when
+    const actual = util.isValidAuthentication(maybeCookieData);
+
+    // then
+    expect(actual).toBe(false);
+  });
+
+  test('should return false given string', () => {
+    // given
+    const maybeCookieData = '';
 
     // when
     const actual = util.isValidAuthentication(maybeCookieData);

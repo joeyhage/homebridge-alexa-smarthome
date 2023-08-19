@@ -1,10 +1,13 @@
 import AlexaRemote, { CallbackWithError, InitOptions } from 'alexa-remote2';
 import * as E from 'fp-ts/Either';
+import * as IO from 'fp-ts/IO';
+import * as IOE from 'fp-ts/IOEither';
+import * as J from 'fp-ts/Json';
 import * as O from 'fp-ts/Option';
 import * as T from 'fp-ts/Task';
 import * as TE from 'fp-ts/TaskEither';
 import * as A from 'fp-ts/lib/Array';
-import { constVoid, pipe } from 'fp-ts/lib/function';
+import { constVoid, identity, pipe } from 'fp-ts/lib/function';
 import fs from 'fs';
 import {
   API,
@@ -18,12 +21,11 @@ import {
 import AccessoryFactory from './accessory/AccessoryFactory';
 import BaseAccessory from './accessory/BaseAccessory';
 import LightAccessory from './accessory/LightAccessory';
-import * as settings from './settings';
-import { Nullable } from './domain';
 import { SmartHomeDevice } from './domain/alexa/get-devices';
 import { AlexaPlatformConfig } from './domain/homebridge';
 import { AlexaApiError } from './errors';
 import { PluginLogger } from './plugin-logger';
+import * as settings from './settings';
 import * as util from './util';
 import { AlexaApiWrapper } from './wrapper/alexa-api-wrapper';
 
@@ -146,13 +148,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
   initAlexaRemote(callback: CallbackWithError) {
     this.alexaRemote.on('cookie', () => {
       const cookieData = this.alexaRemote.cookieData;
-      if (
-        util.isValidAuthentication(
-          cookieData as unknown as Nullable<
-            Record<string, string | object | number>
-          >,
-        )
-      ) {
+      if (util.isValidAuthentication(cookieData as unknown as J.Json)) {
         this.logger.debug('Cookie updated. Do not share with anyone.', {
           cookieData,
         });
@@ -160,29 +156,52 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
       }
     });
 
-    const auth = util.getAuthentication(this.persistPath);
+    const logStoredAuthErrors = O.match(
+      () => {
+        this.logger.debug(
+          'Login required because existing authentication not found.',
+        );
+        return undefined;
+      },
+      (e) => {
+        this.logger.errorT(
+          'Error trying to retrieve stored authentication.',
+          e,
+        );
+        return undefined;
+      },
+    );
+
     const amazonDomain =
       this.config.amazonDomain ?? settings.DEFAULT_AMAZON_DOMAIN;
-    this.alexaRemote.init(
-      {
-        acceptLanguage: this.config.language ?? settings.DEFAULT_ACCEPT_LANG,
-        alexaServiceHost: `alexa.${amazonDomain}`,
-        amazonPage: amazonDomain,
-        amazonPageProxyLanguage:
-          this.config.language?.replace('-', '_') ??
-          settings.DEFAULT_PROXY_PAGE_LANG,
-        formerRegistrationData: auth || {},
-        cookieRefreshInterval:
-          (this.config.auth.refreshInterval ??
-            settings.DEFAULT_REFRESH_INTERVAL_DAYS) * settings.ONE_DAY_MILLIS,
-        cookie: auth?.localCookie,
-        macDms: auth?.macDms,
-        proxyOwnIp: this.config.auth.proxy.clientHost,
-        proxyPort: this.config.auth.proxy.port,
-        useWsMqtt: false,
-      } as InitOptions,
-      callback,
-    );
+    pipe(
+      util.getAuthentication(this.persistPath),
+      IOE.match(logStoredAuthErrors, identity),
+      IO.map((auth) =>
+        this.alexaRemote.init(
+          {
+            acceptLanguage:
+              this.config.language ?? settings.DEFAULT_ACCEPT_LANG,
+            alexaServiceHost: `alexa.${amazonDomain}`,
+            amazonPage: amazonDomain,
+            amazonPageProxyLanguage:
+              this.config.language?.replace('-', '_') ??
+              settings.DEFAULT_PROXY_PAGE_LANG,
+            formerRegistrationData: auth,
+            cookieRefreshInterval:
+              (this.config.auth.refreshInterval ??
+                settings.DEFAULT_REFRESH_INTERVAL_DAYS) *
+              settings.ONE_DAY_MILLIS,
+            cookie: auth?.localCookie,
+            macDms: auth?.macDms,
+            proxyOwnIp: this.config.auth.proxy.clientHost,
+            proxyPort: this.config.auth.proxy.port,
+            useWsMqtt: false,
+          } as InitOptions,
+          callback,
+        ),
+      ),
+    )();
   }
 
   private restoreExistingAccessory(
@@ -208,7 +227,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
       AccessoryFactory.createAccessory(this, acc, device),
       TE.tap(() => {
         this.devices.push(device);
-        return TE.right(constVoid);
+        return TE.of(constVoid);
       }),
     );
   }
@@ -236,7 +255,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
           [acc],
         );
         this.devices.push(device);
-        return TE.right(constVoid);
+        return TE.of(constVoid);
       }),
     );
   }
