@@ -14,6 +14,10 @@ This plugin **does not** allow Alexa to control devices in HomeKit. For that, pl
 
 This plugin is in beta and has not been battle tested. Expect to encounter issues while using this plugin. Features and configuration options are subject to change. Please report all issues during the beta phase of this plugin so it can be improved for everyone. Pull requests welcome!
 
+## Currently supported devices
+
+- Lightbulbs (does not include lightbulb groups)
+
 ## Benefits
 
 - Devices already linked to your Alexa account can be integrated with HomeKit automatically.
