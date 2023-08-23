@@ -9,7 +9,7 @@ import {
   constant,
   pipe,
 } from 'fp-ts/lib/function';
-import { PluginLogger } from '../plugin-logger';
+import { PluginLogger } from '../util/plugin-logger';
 import { PLUGIN_NAME } from '../settings';
 import { getAuthentication } from '../util';
 import { AlexaApiWrapper } from './alexa-api-wrapper';

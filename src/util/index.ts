@@ -15,14 +15,14 @@ import {
 import fs from 'fs';
 import type { PlatformConfig } from 'homebridge';
 import { Pattern, match } from 'ts-pattern';
-import { Authentication } from './domain/alexa';
-import type { AlexaPlatformConfig } from './domain/homebridge';
+import { Authentication } from '../domain/alexa';
+import type { AlexaPlatformConfig } from '../domain/homebridge';
 import {
   IoError,
   JsonFormatError,
   PluginError,
   ValidationError,
-} from './errors';
+} from '../errors';
 
 export const validateConfig = (
   config: PlatformConfig,

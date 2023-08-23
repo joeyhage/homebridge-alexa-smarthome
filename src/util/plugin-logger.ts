@@ -2,14 +2,14 @@
 import { IO } from 'fp-ts/IO';
 import { LogLevel, type Logger, type PlatformConfig } from 'homebridge';
 import { Pattern, match } from 'ts-pattern';
-import { DeviceOffline } from './errors';
+import { DeviceOffline } from '../errors';
 
 export type PluginLogLevel = `${LogLevel}`;
 
 export class PluginLogger {
   constructor(
     private readonly logger: Logger,
-    private readonly config: PlatformConfig,
+    public readonly config: PlatformConfig,
   ) {}
 
   log(message: string, ...parameters: any[]): IO<void> {

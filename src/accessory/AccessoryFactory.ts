@@ -1,6 +1,6 @@
+import * as E from 'fp-ts/Either';
+import { Either } from 'fp-ts/Either';
 import { pipe } from 'fp-ts/lib/function';
-import * as TE from 'fp-ts/TaskEither';
-import { TaskEither } from 'fp-ts/TaskEither';
 import { PlatformAccessory } from 'homebridge';
 import { match, Pattern } from 'ts-pattern';
 import { SmartHomeDevice } from '../domain/alexa/get-devices';
@@ -13,9 +13,9 @@ export default class AccessoryFactory {
     platform: AlexaSmartHomePlatform,
     accessory: PlatformAccessory,
     device: SmartHomeDevice,
-  ): TaskEither<string, BaseAccessory> {
+  ): Either<string, BaseAccessory> {
     return pipe(
-      TE.bindTo('acc')(
+      E.bindTo('acc')(
         match(device)
           .with(
             {
@@ -26,26 +26,26 @@ export default class AccessoryFactory {
               supportedOperations: Pattern.array(Pattern.string),
             },
             () =>
-              TE.of(
+              E.of(
                 new LightAccessory(
                   platform,
-                  platform.logger,
+                  platform.log,
                   device,
                   accessory,
                 ),
               ),
           )
           .otherwise(() =>
-            TE.left(`Unsupported device: ${device.displayName}.`),
+            E.left(`Unsupported device: ${device.displayName}.`),
           ),
       ),
-      TE.tap(({ acc }) => {
+      E.tap(({ acc }) => {
         acc.configureServices();
         acc.configureStatusActive();
         acc.setInitialized(true);
-        return TE.of(acc);
+        return E.of(acc);
       }),
-      TE.map(({ acc }) => acc),
+      E.map(({ acc }) => acc),
     );
   }
 }

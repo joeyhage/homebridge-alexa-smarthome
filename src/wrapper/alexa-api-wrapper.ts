@@ -30,7 +30,7 @@ import {
   InvalidRequest,
   RequestUnsuccessful,
 } from '../errors';
-import { PluginLogger } from '../plugin-logger';
+import { PluginLogger } from '../util/plugin-logger';
 
 const ENTITY_ID_REGEX = new RegExp(
   /[\da-fA-F]{8}-(?:[\da-fA-F]{4}-){3}[\da-fA-F]{12}/,
@@ -39,7 +39,7 @@ const ENTITY_ID_REGEX = new RegExp(
 export class AlexaApiWrapper {
   constructor(
     private readonly alexaRemote: AlexaRemote,
-    private readonly logger: PluginLogger,
+    private readonly log: PluginLogger,
   ) {}
 
   getDevices(): TaskEither<AlexaApiError, GetDevicesResponse> {
@@ -65,7 +65,7 @@ export class AlexaApiWrapper {
     const { left: errors, right: entityIds } = A.separate(maybeEntityIds);
 
     const handleGetStateErrors = flow(
-      A.map((e: AlexaApiError) => this.logger.warn('initDevices', e)),
+      A.map((e: AlexaApiError) => this.log.warn('initDevices', e)),
       A.sequence(IO.Applicative),
       TE.fromIO,
     );
@@ -149,10 +149,7 @@ export class AlexaApiWrapper {
           ),
           A.filterMap(
             E.match((e) => {
-              this.logger.errorT(
-                `Device id '${deviceId}' - toLightStates`,
-                e,
-              )();
+              this.log.errorT(`Device id '${deviceId}' - toLightStates`, e)();
               return O.none;
             }, O.some),
           ),

@@ -1,4 +1,4 @@
-import * as util from './util';
+import * as util from '.';
 
 describe('validateConfig', () => {
   test('should return true given minimal config', () => {

@@ -13,7 +13,7 @@ import { constVoid, pipe } from 'fp-ts/lib/function';
 import { match } from 'ts-pattern';
 import { SmartHomeDevice } from '../domain/alexa/get-devices';
 import { AlexaSmartHomePlatform } from '../platform';
-import { PluginLogLevel, PluginLogger } from '../plugin-logger';
+import { PluginLogLevel, PluginLogger } from '../util/plugin-logger';
 
 interface CharacteristicGetters {
   characteristicUuid: string;
@@ -31,7 +31,7 @@ export default abstract class BaseAccessory {
 
   constructor(
     readonly platform: AlexaSmartHomePlatform,
-    readonly logger: PluginLogger,
+    readonly log: PluginLogger,
     public readonly device: SmartHomeDevice,
     public readonly accessory: PlatformAccessory,
   ) {
@@ -45,9 +45,9 @@ export default abstract class BaseAccessory {
   ): void {
     const msgAndContext = `${this.device.displayName} - ${message}`;
     return match(logLevel)
-      .with('errorT', () => this.logger.errorT(msgAndContext, e))
+      .with('errorT', () => this.log.errorT(msgAndContext, e))
       .otherwise((logLevel: PluginLogLevel) =>
-        this.logger[logLevel](msgAndContext),
+        this.log[logLevel](msgAndContext),
       )();
   }
 
