@@ -14,12 +14,20 @@ This plugin **does not** allow Alexa to control devices in HomeKit. For that, pl
 
 This plugin is in beta and has not been battle tested. Expect to encounter issues while using this plugin. Features and configuration options are subject to change. Please report all issues during the beta phase of this plugin so it can be improved for everyone. Pull requests welcome!
 
+## Table of Contents
+
+- [Currently supported devices](#currently-supported-devices)
+- [Benefits of using this plugin](#benefits-of-using-this-plugin)
+- [Initial configuration](#initial-configuration)
+- [Issues and questions](#issues-and-questions)
+- [Long-term support](#long-term-support)
+
 ## Currently supported devices
 
 - Lightbulbs (does not include lightbulb groups)
 - [Request / vote](https://homebridge-alexa-smarthome.canny.io/feedback?selectedCategory=supported-device-types) on device types you would like to see supported.
 
-## Benefits
+## Benefits of using this plugin
 
 - Devices already linked to your Alexa account can be integrated with HomeKit automatically.
 - Device groups created in the Alexa app can be integrated with HomeKit (possible but not yet supported). For example, a group of lights configured in Alexa could be automatically configured in HomeKit.
@@ -43,7 +51,7 @@ The first time this plugin starts, you will need to authenticate using your Amaz
 6. The homebridge logs will also show a message such as "Successfully authenticated Alexa account".
    1. ![authentication successful screenshot](./docs/img/6-homebridge-success.png)
 
-## Issues and Questions
+## Issues and questions
 
 Please visit the [Canny feedback board](https://homebridge-alexa-smarthome.canny.io/feedback) first to see if your issue or request is currently being worked on. You can also suggest new features and vote on features requested by others.
 
