@@ -1,13 +1,18 @@
 import AlexaRemote from 'alexa-remote2';
 import { randomUUID } from 'crypto';
 import * as E from 'fp-ts/Either';
+import * as O from 'fp-ts/Option';
 import { constVoid } from 'fp-ts/lib/function';
 import { DeviceResponse } from '../domain/alexa';
 import GetDeviceStatesResponse, {
   DeviceStateResponse,
 } from '../domain/alexa/get-device-states';
 import SetDeviceStateResponse from '../domain/alexa/set-device-state';
-import { HttpError, InvalidRequest, RequestUnsuccessful } from '../domain/alexa/errors';
+import {
+  HttpError,
+  InvalidRequest,
+  RequestUnsuccessful,
+} from '../domain/alexa/errors';
 import { PluginLogger } from '../util/plugin-logger';
 import { AlexaApiWrapper } from './alexa-api-wrapper';
 import { Logger, PlatformConfig } from 'homebridge';
@@ -19,7 +24,7 @@ beforeEach(() => {
   alexaRemoteMocks.mockClear();
 });
 
-describe('setLightbulbState', () => {
+describe('setDeviceState', () => {
   test('should set state successfully', async () => {
     // given
     const wrapper = getAlexaApiWrapper();
@@ -32,7 +37,7 @@ describe('setLightbulbState', () => {
     );
 
     // when
-    const actual = await wrapper.setLightbulbState(randomUUID(), 'turnOff')();
+    const actual = await wrapper.setDeviceState(randomUUID(), 'turnOff')();
 
     // then
     expect(actual).toStrictEqual(E.right(constVoid()));
@@ -43,7 +48,7 @@ describe('setLightbulbState', () => {
     const wrapper = getAlexaApiWrapper();
 
     // when
-    const actual = await wrapper.setLightbulbState('invalid', 'turnOff')();
+    const actual = await wrapper.setDeviceState('invalid', 'turnOff')();
 
     // then
     expect(actual).toStrictEqual(
@@ -58,17 +63,17 @@ describe('setLightbulbState', () => {
     const wrapper = getAlexaApiWrapper();
     const mockAlexa = getMockedAlexaRemote();
     mockAlexa.executeSmarthomeDeviceAction.mockImplementationOnce(
-      (_1, _2, _3, cb) => cb(new Error('error for setLightbulbState test')),
+      (_1, _2, _3, cb) => cb(new Error('error for setDeviceState test')),
     );
 
     // when
-    const actual = await wrapper.setLightbulbState(randomUUID(), 'turnOff')();
+    const actual = await wrapper.setDeviceState(randomUUID(), 'turnOff')();
 
     // then
     expect(actual).toStrictEqual(
       E.left(
         new HttpError(
-          'Error setting smart home device state. Reason: error for setLightbulbState test',
+          'Error setting smart home device state. Reason: error for setDeviceState test',
         ),
       ),
     );
@@ -86,13 +91,13 @@ describe('setLightbulbState', () => {
     );
 
     // when
-    const actual = await wrapper.setLightbulbState(randomUUID(), 'turnOff')();
+    const actual = await wrapper.setDeviceState(randomUUID(), 'turnOff')();
 
     // then
     expect(actual).toStrictEqual(
       E.left(
         new RequestUnsuccessful(
-          'Error setting smart home device state',
+          'Error setting smart home device state. Response: {"errors":[{"code":"TestError"}]}',
           'TestError',
         ),
       ),
@@ -100,7 +105,7 @@ describe('setLightbulbState', () => {
   });
 });
 
-describe('getLightbulbState', () => {
+describe('getDeviceStates', () => {
   test('should get state successfully', async () => {
     // given
     const wrapper = getAlexaApiWrapper();
@@ -123,16 +128,19 @@ describe('getLightbulbState', () => {
     );
 
     // when
-    const actual = await wrapper.getLightbulbState(randomUUID())();
+    const actual = await wrapper.getDeviceStates([randomUUID()])();
 
     // then
     expect(actual).toStrictEqual(
-      E.right([
-        {
-          namespace: 'Alexa.PowerController',
-          value: 'ON',
-        },
-      ]),
+      E.right(
+        O.some([
+          {
+            capabilityStates: [
+              '{"namespace":"Alexa.PowerController","name":"test","value":"ON"}',
+            ],
+          },
+        ]),
+      ),
     );
   });
 
@@ -141,7 +149,7 @@ describe('getLightbulbState', () => {
     const wrapper = getAlexaApiWrapper();
 
     // when
-    const actual = await wrapper.getLightbulbState('invalid')();
+    const actual = await wrapper.getDeviceStates(['invalid'])();
 
     // then
     expect(actual).toStrictEqual(
@@ -154,16 +162,16 @@ describe('getLightbulbState', () => {
     const wrapper = getAlexaApiWrapper();
     const mockAlexa = getMockedAlexaRemote();
     mockAlexa.querySmarthomeDevices.mockImplementationOnce((_1, _2, _3, cb) =>
-      cb!(new Error('error for getLightbulbState test')),
+      cb!(new Error('error for getDeviceStates test')),
     );
     // when
-    const actual = await wrapper.getLightbulbState(randomUUID())();
+    const actual = await wrapper.getDeviceStates([randomUUID()])();
 
     // then
     expect(actual).toStrictEqual(
       E.left(
         new HttpError(
-          'Error getting smart home device state. Reason: error for getLightbulbState test',
+          'Error getting smart home device state. Reason: error for getDeviceStates test',
         ),
       ),
     );
@@ -181,13 +189,13 @@ describe('getLightbulbState', () => {
     );
 
     // when
-    const actual = await wrapper.getLightbulbState(randomUUID())();
+    const actual = await wrapper.getDeviceStates([randomUUID()])();
 
     // then
     expect(actual).toStrictEqual(
       E.left(
         new RequestUnsuccessful(
-          'Error getting smart home device state',
+          'Error getting smart home device state. Response: {"deviceStates":[],"errors":[{"code":"TestError"}]}',
           'TestError',
         ),
       ),

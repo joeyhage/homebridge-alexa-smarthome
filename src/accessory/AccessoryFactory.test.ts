@@ -4,7 +4,11 @@ import { HomebridgeAPI } from 'homebridge/lib/api';
 import type { AlexaPlatformConfig } from '../domain/homebridge';
 import { AlexaSmartHomePlatform } from '../platform';
 import AccessoryFactory from './AccessoryFactory';
-import { UnsupportedDeviceError } from '../domain/alexa/errors';
+import {
+  InvalidDeviceError,
+  UnsupportedDeviceError,
+} from '../domain/alexa/errors';
+import { SmartHomeDevice } from '../domain/alexa/get-devices';
 
 describe('createAccessory', () => {
   it('should create a LightAccessory', () => {
@@ -38,6 +42,33 @@ describe('createAccessory', () => {
     expect(E.isRight(lightAcc)).toBe(true);
   });
 
+  it('should create an OutletAccessory', () => {
+    // given
+    const device = {
+      id: '123',
+      displayName: 'test plug',
+      description: 'test',
+      supportedOperations: ['turnOff', 'turnOn'],
+      providerData: {
+        enabled: 'true',
+        categoryType: 'APPLIANCE',
+        deviceType: 'SMARTPLUG',
+      },
+    };
+    const platform = getPlatform();
+    const uuid = platform.api.hap.uuid.generate(device.id);
+    const platAcc = new platform.api.platformAccessory(
+      device.displayName,
+      uuid,
+    );
+
+    // when
+    const plugAcc = AccessoryFactory.createAccessory(platform, platAcc, device);
+
+    // then
+    expect(E.isRight(plugAcc)).toBe(true);
+  });
+
   it('should not create an unsupported device', async () => {
     // given
     const device = {
@@ -47,7 +78,7 @@ describe('createAccessory', () => {
       supportedOperations: [],
       providerData: {
         enabled: 'true',
-        categoryType: 'GROUP',
+        categoryType: 'APPLIANCE',
         deviceType: 'OTHER',
       },
     };
@@ -67,6 +98,30 @@ describe('createAccessory', () => {
 
     // then
     expect(lightAcc).toStrictEqual(E.left(new UnsupportedDeviceError(device)));
+  });
+
+  it('should not create an invalid device', async () => {
+    // given
+    const device = {
+      id: '123',
+      displayName: 'test light group',
+    } as SmartHomeDevice;
+    const platform = getPlatform();
+    const uuid = platform.api.hap.uuid.generate(device.id);
+    const platAcc = new platform.api.platformAccessory(
+      device.displayName,
+      uuid,
+    );
+
+    // when
+    const lightAcc = AccessoryFactory.createAccessory(
+      platform,
+      platAcc,
+      device,
+    );
+
+    // then
+    expect(lightAcc).toStrictEqual(E.left(new InvalidDeviceError(device)));
   });
 });
 

@@ -4,8 +4,9 @@ import AlexaRemote, {
 } from 'alexa-remote2';
 import * as E from 'fp-ts/Either';
 import { Either } from 'fp-ts/Either';
-import * as O from 'fp-ts/Option';
 import * as IO from 'fp-ts/IO';
+import * as O from 'fp-ts/Option';
+import { Option } from 'fp-ts/Option';
 import * as TE from 'fp-ts/TaskEither';
 import { TaskEither } from 'fp-ts/TaskEither';
 import * as A from 'fp-ts/lib/Array';
@@ -19,10 +20,6 @@ import {
   pipe,
 } from 'fp-ts/lib/function';
 import { Pattern, match } from 'ts-pattern';
-import LightAccessory, { LightbulbState } from '../accessory/LightAccessory';
-import GetDeviceStatesResponse from '../domain/alexa/get-device-states';
-import GetDevicesResponse from '../domain/alexa/get-devices';
-import SetDeviceStateResponse from '../domain/alexa/set-device-state';
 import {
   AlexaApiError,
   DeviceOffline,
@@ -30,6 +27,11 @@ import {
   InvalidRequest,
   RequestUnsuccessful,
 } from '../domain/alexa/errors';
+import GetDeviceStatesResponse, {
+  DeviceStateResponse,
+} from '../domain/alexa/get-device-states';
+import GetDevicesResponse from '../domain/alexa/get-devices';
+import SetDeviceStateResponse from '../domain/alexa/set-device-state';
 import { PluginLogger } from '../util/plugin-logger';
 
 const ENTITY_ID_REGEX = new RegExp(
@@ -60,7 +62,7 @@ export class AlexaApiWrapper {
   getDeviceStates(
     deviceIds: string[],
     entityType: EntityType | 'ENTITY' = 'ENTITY',
-  ): TaskEither<AlexaApiError, GetDeviceStatesResponse> {
+  ): TaskEither<AlexaApiError, Option<DeviceStateResponse[]>> {
     const maybeEntityIds = deviceIds.map(AlexaApiWrapper.extractEntityId);
     const { left: errors, right: entityIds } = A.separate(maybeEntityIds);
 
@@ -103,10 +105,11 @@ export class AlexaApiWrapper {
         ),
       ),
       TE.flatMap(AlexaApiWrapper.whereGetStateSuccessful),
+      TE.map(({ deviceStates }) => O.fromNullable(deviceStates)),
     );
   }
 
-  setLightbulbState(
+  setDeviceState(
     deviceId: string,
     action: 'turnOn' | 'turnOff' | 'setBrightness',
     parameters: Record<string, string> = {},
@@ -132,29 +135,6 @@ export class AlexaApiWrapper {
       ),
       TE.flatMap(AlexaApiWrapper.whereSetStateSuccessful),
       TE.map(constVoid),
-    );
-  }
-
-  getLightbulbState(
-    deviceId: string,
-    entityType: EntityType | 'ENTITY' = 'ENTITY',
-  ): TaskEither<AlexaApiError, LightbulbState[]> {
-    return pipe(
-      this.getDeviceStates([deviceId], entityType),
-      TE.map(({ deviceStates }) =>
-        pipe(
-          deviceStates ?? [],
-          A.flatMap(({ capabilityStates }) =>
-            LightAccessory.toLightStates(capabilityStates ?? []),
-          ),
-          A.filterMap(
-            E.match((e) => {
-              this.log.errorT(`Device id '${deviceId}' - toLightStates`, e)();
-              return O.none;
-            }, O.some),
-          ),
-        ),
-      ),
     );
   }
 
@@ -199,15 +179,14 @@ export class AlexaApiWrapper {
               Pattern.not([]),
               Pattern.array({ code: 'SUCCESS' }),
             ),
-            errors: Pattern.optional([]),
           },
           constTrue,
         )
         .otherwise(constFalse),
-    (response) =>
+    (r) =>
       new RequestUnsuccessful(
-        'Error setting smart home device state',
-        response.errors?.[0]?.code,
+        `Error setting smart home device state. Response: ${JSON.stringify(r)}`,
+        r.errors?.[0]?.code,
       ),
   );
 
@@ -217,10 +196,7 @@ export class AlexaApiWrapper {
   >(
     (response) =>
       match(response)
-        .with(
-          { deviceStates: Pattern.not([]), errors: Pattern.optional([]) },
-          constTrue,
-        )
+        .with({ deviceStates: Pattern.not([]) }, constTrue)
         .otherwise(constFalse),
     (response) =>
       match(response)
@@ -232,12 +208,13 @@ export class AlexaApiWrapper {
           constant(new DeviceOffline()),
         )
         .otherwise(
-          constant(
+          (r) =>
             new RequestUnsuccessful(
-              'Error getting smart home device state',
-              response.errors?.[0]?.code,
+              `Error getting smart home device state. Response: ${JSON.stringify(
+                r,
+              )}`,
+              r.errors?.[0]?.code,
             ),
-          ),
         ),
   );
 

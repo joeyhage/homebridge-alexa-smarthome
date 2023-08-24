@@ -1,14 +1,9 @@
 import * as O from 'fp-ts/Option';
 import * as TE from 'fp-ts/TaskEither';
-import { Either } from 'fp-ts/Either';
-import * as E from 'fp-ts/Either';
 import * as A from 'fp-ts/lib/Array';
-import * as util from '../util';
-import { constant, identity, pipe } from 'fp-ts/lib/function';
+import { constant, flow, identity, pipe } from 'fp-ts/lib/function';
 import { CharacteristicValue, Service } from 'homebridge';
-import { Pattern, match } from 'ts-pattern';
-import { CapabilityState } from '../domain/alexa/get-device-states';
-import { AlexaError, InvalidResponse } from '../domain/alexa/errors';
+import { InvalidResponse } from '../domain/alexa/errors';
 import BaseAccessory from './BaseAccessory';
 
 export interface LightbulbState {
@@ -17,8 +12,8 @@ export interface LightbulbState {
 }
 
 const LightbulbNamespaces = {
-  'Alexa.PowerController': 0,
-  'Alexa.BrightnessController': 1,
+  'Alexa.PowerController': 'Alexa.PowerController',
+  'Alexa.BrightnessController': 'Alexa.BrightnessController',
 };
 
 export default class LightAccessory extends BaseAccessory {
@@ -60,20 +55,21 @@ export default class LightAccessory extends BaseAccessory {
 
   async handleOnGet(): Promise<boolean> {
     this.logWithContext('debug', 'Triggered GET Power');
+    const determinePowerState = flow(
+      O.filterMap<LightbulbState[], LightbulbState>(
+        A.findFirst(({ namespace }) => namespace === 'Alexa.PowerController'),
+      ),
+      O.map(({ value }) => value === 'ON'),
+      O.tap((s) =>
+        O.some(this.logWithContext('debug', `GET Power result: ${s}`)),
+      ),
+    );
+
     return pipe(
-      this.platform.alexaApi.getLightbulbState(this.device.id),
+      this.platform.alexaApi.getDeviceStates([this.device.id]),
+      TE.map(flow(O.map(A.head), O.map(this.extractStates<LightbulbState>))),
       TE.flatMapOption(
-        (states) =>
-          pipe(
-            states,
-            A.findFirst(
-              ({ namespace }) => namespace === 'Alexa.PowerController',
-            ),
-            O.map(({ value }) => value === 'ON'),
-            O.tap((s) =>
-              O.some(this.logWithContext('debug', `GET Power result: ${s}`)),
-            ),
-          ),
+        determinePowerState,
         constant(new InvalidResponse('Power state not available')),
       ),
       TE.match((e) => {
@@ -90,7 +86,7 @@ export default class LightAccessory extends BaseAccessory {
     }
     try {
       await pipe(
-        this.platform.alexaApi.setLightbulbState(
+        this.platform.alexaApi.setDeviceState(
           this.device.id,
           value ? 'turnOn' : 'turnOff',
         ),
@@ -103,22 +99,21 @@ export default class LightAccessory extends BaseAccessory {
 
   async handleBrightnessGet(): Promise<number> {
     this.logWithContext('debug', 'Triggered GET Brightness');
+    const determineBrightnessState = flow(
+      O.filterMap<LightbulbState[], LightbulbState>(
+        A.findFirst(({ namespace }) => namespace === 'Alexa.BrightnessController'),
+      ),
+      O.map(({ value }) => value as number),
+      O.tap((s) =>
+        O.some(this.logWithContext('debug', `GET Brightness result: ${s}`)),
+      ),
+    );
+
     return pipe(
-      this.platform.alexaApi.getLightbulbState(this.device.id),
+      this.platform.alexaApi.getDeviceStates([this.device.id]),
+      TE.map(flow(O.map(A.head), O.map(this.extractStates<LightbulbState>))),
       TE.flatMapOption(
-        (states) =>
-          pipe(
-            states,
-            A.findFirst(
-              ({ namespace }) => namespace === 'Alexa.BrightnessController',
-            ),
-            O.map(({ value }) => value as number),
-            O.tap((s) =>
-              O.some(
-                this.logWithContext('debug', `GET Brightness result: ${s}`),
-              ),
-            ),
-          ),
+        determineBrightnessState,
         constant(new InvalidResponse('Brightness state not available')),
       ),
       TE.match((e) => {
@@ -135,49 +130,13 @@ export default class LightAccessory extends BaseAccessory {
     }
     try {
       await pipe(
-        this.platform.alexaApi.setLightbulbState(
-          this.device.id,
-          'setBrightness',
-          { brightness: value.toString(10) },
-        ),
+        this.platform.alexaApi.setDeviceState(this.device.id, 'setBrightness', {
+          brightness: value.toString(10),
+        }),
         TE.flatMap(() => TE.sequenceArray(this.updateAllValues())),
       )();
     } catch (e) {
       this.logWithContext('errorT', 'handleBrightnessSet', e);
     }
-  }
-
-  static toLightStates(
-    capabilityStates?: string[],
-  ): Either<AlexaError, LightbulbState>[] {
-    return pipe(
-      capabilityStates ?? [],
-      A.map(util.parseJson),
-      A.map(
-        E.bimap(
-          (e) => new InvalidResponse(e.message),
-          (j) =>
-            match(j)
-              .with(
-                {
-                  namespace: Pattern.string,
-                  value: Pattern.union(
-                    Pattern.string,
-                    Pattern.number,
-                    Pattern.boolean,
-                  ),
-                  name: Pattern._,
-                },
-                (jr) => O.some(jr as CapabilityState),
-              )
-              .otherwise(constant(O.none)),
-        ),
-      ),
-      A.filter(
-        (maybeCs): maybeCs is Either<AlexaError, O.Some<CapabilityState>> =>
-          E.isLeft(maybeCs) || E.exists(O.isSome)(maybeCs),
-      ),
-      A.map(E.map(({ value: { namespace, value } }) => ({ namespace, value } as LightbulbState))),
-    );
   }
 }

@@ -42,7 +42,7 @@ it('should set lightbulb state', async () => {
   const wrapper = getAlexaApiWrapper(alexa);
 
   // when
-  const result = await wrapper.setLightbulbState(
+  const result = await wrapper.setDeviceState(
     process.env.DEVICE_ID!,
     'turnOff',
   )();
@@ -51,12 +51,12 @@ it('should set lightbulb state', async () => {
   expect(result).toStrictEqual(E.right(constVoid()));
 });
 
-it('should get lightbulb state', async () => {
+it('should get device state', async () => {
   // given
   const wrapper = getAlexaApiWrapper(alexa);
 
   // when
-  const result = await wrapper.getLightbulbState(process.env.DEVICE_ID!)();
+  const result = await wrapper.getDeviceStates([process.env.DEVICE_ID!])();
 
   // then
   expect(E.match(constFalse, constTrue)(result)).toStrictEqual(true);
