@@ -1,19 +1,28 @@
+import * as E from 'fp-ts/Either';
+import { Either } from 'fp-ts/Either';
+import * as O from 'fp-ts/Option';
+import { Option } from 'fp-ts/Option';
+import * as TE from 'fp-ts/TaskEither';
+import { TaskEither } from 'fp-ts/TaskEither';
+import * as A from 'fp-ts/lib/Array';
+import { constVoid, constant, flow, pipe } from 'fp-ts/lib/function';
 import {
   Characteristic,
   CharacteristicValue,
   PlatformAccessory,
   Service,
 } from 'homebridge';
-
-import * as O from 'fp-ts/Option';
-import * as TE from 'fp-ts/TaskEither';
-import { TaskEither } from 'fp-ts/TaskEither';
-import * as A from 'fp-ts/lib/Array';
-import { constVoid, pipe } from 'fp-ts/lib/function';
-import { match } from 'ts-pattern';
+import { Pattern, match } from 'ts-pattern';
+import { AlexaApiError, InvalidResponse } from '../domain/alexa/errors';
+import {
+  CapabilityState,
+  DeviceStateResponse,
+} from '../domain/alexa/get-device-states';
 import { SmartHomeDevice } from '../domain/alexa/get-devices';
 import { AlexaSmartHomePlatform } from '../platform';
+import * as util from '../util';
 import { PluginLogLevel, PluginLogger } from '../util/plugin-logger';
+import { Json } from 'fp-ts/lib/Json';
 
 interface CharacteristicGetters {
   characteristicUuid: string;
@@ -26,15 +35,17 @@ export default abstract class BaseAccessory {
   public readonly Characteristic: typeof Characteristic =
     this.platform.api.hap.Characteristic;
 
+  readonly log: PluginLogger;
+
   characteristicGetters: CharacteristicGetters[] = [];
   _initialized = false;
 
   constructor(
     readonly platform: AlexaSmartHomePlatform,
-    readonly log: PluginLogger,
     public readonly device: SmartHomeDevice,
     public readonly accessory: PlatformAccessory,
   ) {
+    this.log = platform.log;
     this.addAccessoryInfoService();
   }
 
@@ -129,6 +140,56 @@ export default abstract class BaseAccessory {
   get serviceCommunicationError() {
     return new this.platform.api.hap.HapStatusError(
       this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE,
+    );
+  }
+
+  extractStates<T>(maybeStates: Option<DeviceStateResponse>): T[] {
+    const validateCapabilityState = E.bimap(
+      (e: AlexaApiError) => new InvalidResponse(e.message),
+      (j: Json) =>
+        match(j)
+          .with(
+            {
+              namespace: Pattern.string,
+              value: Pattern.union(
+                Pattern.string,
+                Pattern.number,
+                Pattern.boolean,
+              ),
+              name: Pattern._,
+            },
+            (jr) => O.some(jr as CapabilityState),
+          )
+          .otherwise(constant(O.none)),
+    );
+
+    return pipe(
+      maybeStates,
+      O.flatMap(({ capabilityStates }) => O.fromNullable(capabilityStates)),
+      O.map(
+        flow(
+          A.map(util.parseJson),
+          A.map(validateCapabilityState),
+          A.filter(
+            (
+              maybeCs,
+            ): maybeCs is Either<AlexaApiError, O.Some<CapabilityState>> =>
+              E.isLeft(maybeCs) || E.exists(O.isSome)(maybeCs),
+          ),
+          A.map(
+            E.map(
+              ({ value: { namespace, value } }) => ({ namespace, value } as T),
+            ),
+          ),
+          A.filterMap(
+            E.match((e) => {
+              this.logWithContext('errorT', 'Extract States', e);
+              return O.none;
+            }, O.some),
+          ),
+        ),
+      ),
+      O.getOrElse(constant(new Array<T>())),
     );
   }
 
