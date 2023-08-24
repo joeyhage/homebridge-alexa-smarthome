@@ -2,7 +2,7 @@
 import { IO } from 'fp-ts/IO';
 import { LogLevel, type Logger, type PlatformConfig } from 'homebridge';
 import { Pattern, match } from 'ts-pattern';
-import { DeviceOffline } from '../errors';
+import { DeviceOffline } from '../domain/alexa/errors';
 
 export type PluginLogLevel = `${LogLevel}`;
 
@@ -36,7 +36,7 @@ export class PluginLogger {
     return () => this.logger.error(message, ...parameters);
   }
 
-  errorT(prefix: string, e: unknown): IO<void> {
+  errorT(prefix: string, e: any): IO<void> {
     return () =>
       match(e)
         .with(

@@ -1,5 +1,5 @@
 import { PlatformConfig } from 'homebridge';
-import { AmazonDomain } from './alexa/index';
+import { AmazonDomain } from '../alexa/index';
 
 export interface AlexaPlatformConfig extends PlatformConfig {
   platform: 'HomebridgeAlexaSmartHome';

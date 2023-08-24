@@ -8,7 +8,7 @@ import { constant, identity, pipe } from 'fp-ts/lib/function';
 import { CharacteristicValue, Service } from 'homebridge';
 import { Pattern, match } from 'ts-pattern';
 import { CapabilityState } from '../domain/alexa/get-device-states';
-import { AlexaApiError, InvalidResponse } from '../errors';
+import { AlexaError, InvalidResponse } from '../domain/alexa/errors';
 import BaseAccessory from './BaseAccessory';
 
 export interface LightbulbState {
@@ -149,7 +149,7 @@ export default class LightAccessory extends BaseAccessory {
 
   static toLightStates(
     capabilityStates?: string[],
-  ): Either<AlexaApiError, LightbulbState>[] {
+  ): Either<AlexaError, LightbulbState>[] {
     return pipe(
       capabilityStates ?? [],
       A.map(util.parseJson),
@@ -174,7 +174,7 @@ export default class LightAccessory extends BaseAccessory {
         ),
       ),
       A.filter(
-        (maybeCs): maybeCs is Either<AlexaApiError, O.Some<CapabilityState>> =>
+        (maybeCs): maybeCs is Either<AlexaError, O.Some<CapabilityState>> =>
           E.isLeft(maybeCs) || E.exists(O.isSome)(maybeCs),
       ),
       A.map(E.map(({ value: { namespace, value } }) => ({ namespace, value } as LightbulbState))),

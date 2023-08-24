@@ -22,7 +22,7 @@ import {
   JsonFormatError,
   PluginError,
   ValidationError,
-} from '../errors';
+} from '../domain/homebridge/errors';
 
 export const validateConfig = (
   config: PlatformConfig,

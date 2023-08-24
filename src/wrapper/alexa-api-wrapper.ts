@@ -29,7 +29,7 @@ import {
   HttpError,
   InvalidRequest,
   RequestUnsuccessful,
-} from '../errors';
+} from '../domain/alexa/errors';
 import { PluginLogger } from '../util/plugin-logger';
 
 const ENTITY_ID_REGEX = new RegExp(
@@ -65,7 +65,7 @@ export class AlexaApiWrapper {
     const { left: errors, right: entityIds } = A.separate(maybeEntityIds);
 
     const handleGetStateErrors = flow(
-      A.map((e: AlexaApiError) => this.log.warn('initDevices', e)),
+      A.map((e: AlexaApiError) => this.log.info('Get Device States', e)),
       A.sequence(IO.Applicative),
       TE.fromIO,
     );

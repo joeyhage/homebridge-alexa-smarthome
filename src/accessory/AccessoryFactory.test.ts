@@ -4,6 +4,7 @@ import { HomebridgeAPI } from 'homebridge/lib/api';
 import type { AlexaPlatformConfig } from '../domain/homebridge';
 import { AlexaSmartHomePlatform } from '../platform';
 import AccessoryFactory from './AccessoryFactory';
+import { UnsupportedDeviceError } from '../domain/alexa/errors';
 
 describe('createAccessory', () => {
   it('should create a LightAccessory', () => {
@@ -65,7 +66,7 @@ describe('createAccessory', () => {
     );
 
     // then
-    expect(lightAcc).toStrictEqual(E.left('Unsupported device: test light group.'));
+    expect(lightAcc).toStrictEqual(E.left(new UnsupportedDeviceError(device)));
   });
 });
 

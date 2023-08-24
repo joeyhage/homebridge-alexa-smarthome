@@ -7,7 +7,7 @@ import GetDeviceStatesResponse, {
   DeviceStateResponse,
 } from '../domain/alexa/get-device-states';
 import SetDeviceStateResponse from '../domain/alexa/set-device-state';
-import { HttpError, InvalidRequest, RequestUnsuccessful } from '../errors';
+import { HttpError, InvalidRequest, RequestUnsuccessful } from '../domain/alexa/errors';
 import { PluginLogger } from '../util/plugin-logger';
 import { AlexaApiWrapper } from './alexa-api-wrapper';
 import { Logger, PlatformConfig } from 'homebridge';

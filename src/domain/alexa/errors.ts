@@ -1,13 +1,15 @@
-import { Nullable } from './domain';
+import { SupportedDeviceTypes } from '.';
+import { Nullable } from '../index';
+import { SmartHomeDevice } from './get-devices';
 
-export abstract class AlexaApiError extends Error {
-  public readonly message: string;
-
+export abstract class AlexaError extends Error {
   constructor(message: string, public readonly name: string) {
     super(message);
-    this.message = `${this.name}(${message})`;
+    this.message = `${name}(${message})`;
   }
 }
+
+export abstract class AlexaApiError extends AlexaError {}
 
 export class InvalidRequest extends AlexaApiError {
   constructor(message: string) {
@@ -45,29 +47,23 @@ export class DeviceOffline extends AlexaApiError {
   }
 }
 
-export abstract class PluginError extends Error {
-  public readonly message: string;
+export abstract class AlexaDeviceError extends AlexaError {}
 
-  constructor(message: string, public readonly name: string) {
-    super(message);
-    this.message = `${this.name}(${message})`;
+export class UnsupportedDeviceError extends AlexaDeviceError {
+  constructor(device: SmartHomeDevice) {
+    super(
+      `Unsupported device: ${device.displayName} with type: ${device.providerData.deviceType}. ` +
+        `Currently supported device types are: ${SupportedDeviceTypes}.`,
+      UnsupportedDeviceError.name,
+    );
   }
 }
 
-export class JsonFormatError extends PluginError {
-  constructor(message: string) {
-    super(message, JsonFormatError.name);
-  }
-}
-
-export class ValidationError extends PluginError {
-  constructor(message: string) {
-    super(message, ValidationError.name);
-  }
-}
-
-export class IoError extends PluginError {
-  constructor(message: string) {
-    super(message, IoError.name);
+export class InvalidDeviceError extends AlexaDeviceError {
+  constructor(device: SmartHomeDevice) {
+    super(
+      `Unable to determine device type for: ${device.displayName}`,
+      InvalidDeviceError.name,
+    );
   }
 }

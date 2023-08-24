@@ -1,6 +1,6 @@
 import { PlatformConfig } from 'homebridge';
 import { Logger } from 'homebridge/lib/logger';
-import { DeviceOffline } from '../errors';
+import { DeviceOffline } from '../domain/alexa/errors';
 import { PluginLogger } from './plugin-logger';
 
 jest.mock('homebridge/lib/logger', () => ({

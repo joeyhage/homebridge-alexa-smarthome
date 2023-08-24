@@ -1,6 +1,8 @@
 import { InitOptions } from 'alexa-remote2';
 import { Nullable } from '../index';
 
+export const SupportedDeviceTypes = ['LIGHT'];
+
 export type AmazonDomain =
   | 'amazon.com'
   | 'amazon.ca'

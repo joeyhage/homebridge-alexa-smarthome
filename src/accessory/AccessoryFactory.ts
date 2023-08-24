@@ -2,7 +2,13 @@ import * as E from 'fp-ts/Either';
 import { Either } from 'fp-ts/Either';
 import { pipe } from 'fp-ts/lib/function';
 import { PlatformAccessory } from 'homebridge';
-import { match, Pattern } from 'ts-pattern';
+import { Pattern, match } from 'ts-pattern';
+import { SupportedDeviceTypes } from '../domain/alexa';
+import {
+  AlexaDeviceError,
+  InvalidDeviceError,
+  UnsupportedDeviceError,
+} from '../domain/alexa/errors';
 import { SmartHomeDevice } from '../domain/alexa/get-devices';
 import { AlexaSmartHomePlatform } from '../platform';
 import BaseAccessory from './BaseAccessory';
@@ -13,10 +19,15 @@ export default class AccessoryFactory {
     platform: AlexaSmartHomePlatform,
     accessory: PlatformAccessory,
     device: SmartHomeDevice,
-  ): Either<string, BaseAccessory> {
+  ): Either<AlexaDeviceError, BaseAccessory> {
     return pipe(
       E.bindTo('acc')(
         match(device)
+          .when(
+            ({ providerData: { deviceType } }) =>
+              !SupportedDeviceTypes.includes(deviceType),
+            (d) => E.left(new UnsupportedDeviceError(d)),
+          )
           .with(
             {
               id: Pattern.string,
@@ -27,17 +38,10 @@ export default class AccessoryFactory {
             },
             () =>
               E.of(
-                new LightAccessory(
-                  platform,
-                  platform.log,
-                  device,
-                  accessory,
-                ),
+                new LightAccessory(platform, platform.log, device, accessory),
               ),
           )
-          .otherwise(() =>
-            E.left(`Unsupported device: ${device.displayName}.`),
-          ),
+          .otherwise((d) => E.left(new InvalidDeviceError(d))),
       ),
       E.tap(({ acc }) => {
         acc.configureServices();
