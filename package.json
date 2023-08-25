@@ -42,6 +42,7 @@
   ],
   "dependencies": {
     "alexa-remote2": "^5.10.3",
+    "async-mutex": "^0.4.0",
     "fp-ts": "^2.16.1",
     "ts-pattern": "^4.3.0"
   },

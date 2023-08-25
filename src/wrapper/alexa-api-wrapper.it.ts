@@ -9,12 +9,11 @@ import {
   constant,
   pipe,
 } from 'fp-ts/lib/function';
-import { PluginLogger } from '../util/plugin-logger';
+import { Authentication } from '../domain/alexa';
 import { PLUGIN_NAME } from '../settings';
 import { getAuthentication } from '../util';
 import { AlexaApiWrapper } from './alexa-api-wrapper';
-import { Authentication } from '../domain/alexa';
-import { Logger, PlatformConfig } from 'homebridge';
+import { PluginLogger } from '../util/plugin-logger';
 
 let alexa: AlexaRemote;
 beforeAll(async () => {
@@ -34,7 +33,7 @@ it('should retrieve device list', async () => {
       devices,
       E.map(({ length }) => length > 0),
     ),
-  ).toStrictEqual(E.right(true));
+  ).toStrictEqual(E.of(true));
 });
 
 it('should set lightbulb state', async () => {
@@ -48,7 +47,7 @@ it('should set lightbulb state', async () => {
   )();
 
   // then
-  expect(result).toStrictEqual(E.right(constVoid()));
+  expect(result).toStrictEqual(E.of(constVoid()));
 });
 
 it('should get device state', async () => {
@@ -95,9 +94,6 @@ async function getAlexaRemote(): Promise<AlexaRemote> {
 function getAlexaApiWrapper(alexaRemote: AlexaRemote): AlexaApiWrapper {
   return new AlexaApiWrapper(
     alexaRemote,
-    new PluginLogger(
-      console as Logger,
-      { platform: '', debug: true } as PlatformConfig,
-    ),
+    new PluginLogger(global.MockLogger, global.createPlatformConfig()),
   );
 }

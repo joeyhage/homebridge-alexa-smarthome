@@ -1,5 +1,6 @@
 # Ignore source code
 src
+__tests__
 config.dev.json
 TEMPLATE_README.md
 .homebridge-alexa-smarthome
@@ -18,6 +19,7 @@ TEMPLATE_README.md
 
 # typescript
 tsconfig.json
+tsconfig.test.json
 
 # jest
 jest.config.js

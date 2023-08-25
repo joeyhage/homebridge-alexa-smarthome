@@ -3,8 +3,7 @@ import * as IO from 'fp-ts/IO';
 import * as O from 'fp-ts/Option';
 import { pipe } from 'fp-ts/lib/function';
 import * as hapNodeJs from 'hap-nodejs';
-import type { API, Logger } from 'homebridge';
-import type { AlexaPlatformConfig } from './domain/homebridge';
+import type { API } from 'homebridge';
 import { AlexaSmartHomePlatform } from './platform';
 
 it('should initialize', async () => {
@@ -26,8 +25,11 @@ it('should initialize', async () => {
 });
 
 function getPlatform(): AlexaSmartHomePlatform {
-  const logger = console as Logger;
-  return new AlexaSmartHomePlatform(logger, getPlatformConfig(), getApi());
+  return new AlexaSmartHomePlatform(
+    global.MockLogger,
+    global.createPlatformConfig(),
+    getApi(),
+  );
 }
 
 function getApi(): API {
@@ -39,21 +41,4 @@ function getApi(): API {
     on: () => ({}),
     user: { persistPath: () => '.' },
   } as unknown as API;
-}
-
-function getPlatformConfig(): AlexaPlatformConfig {
-  return {
-    platform: 'HomebridgeAlexaSmartHome',
-    amazonDomain: 'amazon.com',
-    devices: [],
-    auth: {
-      refreshInterval: 0,
-      proxy: {
-        clientHost: 'localhost',
-        port: 2345,
-      },
-    },
-    language: 'en-US',
-    debug: true,
-  };
 }

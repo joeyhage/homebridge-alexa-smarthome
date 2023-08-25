@@ -20,8 +20,8 @@ import {
   PlatformConfig,
   Service,
 } from 'homebridge';
-import AccessoryFactory from './accessory/AccessoryFactory';
-import BaseAccessory from './accessory/BaseAccessory';
+import AccessoryFactory from './accessory/accessory-factory';
+import BaseAccessory from './accessory/base-accessory';
 import { SmartHomeDevice } from './domain/alexa/get-devices';
 import { AlexaPlatformConfig } from './domain/homebridge';
 import { AlexaDeviceError, AlexaError } from './domain/alexa/errors';
@@ -42,7 +42,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
 
   public cachedAccessories: PlatformAccessory[] = [];
   public accessoryHandlers: BaseAccessory[] = [];
-  public devices: SmartHomeDevice[] = [];
+  public activeDeviceIds: string[] = [];
 
   private readonly persistPath: string;
 
@@ -70,6 +70,10 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
       this.initAlexaRemote((result) => {
         pipe(
           TE.rightIO(result),
+          TE.flatMap(this.findDevices.bind(this)),
+          TE.tap((devices) =>
+            this.alexaApi.getDeviceStates(devices.map(({ id }) => id)),
+          ),
           TE.flatMap(this.initDevices.bind(this)),
           TE.flatMapIO(this.findStaleAccessories.bind(this)),
         )().then(
@@ -87,19 +91,30 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     this.cachedAccessories.push(accessory);
   }
 
-  initDevices(): TE.TaskEither<AlexaError | void, BaseAccessory[]> {
+  findDevices(): TE.TaskEither<AlexaError, SmartHomeDevice[]> {
     const deviceFilter = this.config.devices ?? [];
-
-    const initUserConfiguredDevices = flow(
-      A.filter((d: SmartHomeDevice) =>
-        A.isEmpty(deviceFilter) ? true : deviceFilter.includes(d.displayName),
+    return pipe(
+      this.alexaApi.getDevices(),
+      TE.map(
+        A.filter((d: SmartHomeDevice) =>
+          A.isEmpty(deviceFilter) ? true : deviceFilter.includes(d.displayName),
+        ),
       ),
-      A.map((device) => IO.FromIO.fromIO(this.initAccessory(device))),
+    );
+  }
+
+  initDevices(
+    devices: SmartHomeDevice[],
+  ): TE.TaskEither<AlexaError | void, BaseAccessory[]> {
+    const initUserConfiguredDevices = flow(
+      A.map((device: SmartHomeDevice) =>
+        IO.FromIO.fromIO(this.initAccessory(device)),
+      ),
       A.map(
         IO.flatMap(
           E.match(
             (e) => IO.as(this.log.errorT('Initialize Devices', e), O.none),
-            (acc) => IO.of(O.some(acc)),
+            (acc) => IO.of(O.of(acc)),
           ),
         ),
       ),
@@ -107,7 +122,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     );
 
     return pipe(
-      this.alexaApi.getDevices(),
+      TE.of(devices),
       TE.flatMapIO(initUserConfiguredDevices),
       TE.map(A.filterMap(identity)),
     );
@@ -116,12 +131,18 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
   initAccessory(
     device: SmartHomeDevice,
   ): IOEither<AlexaDeviceError, BaseAccessory> {
-    const uuid = this.api.hap.uuid.generate(device.id);
+    const uuid = this.api.hap.uuid.generate(
+      `${device.id}:${device.providerData.deviceType}`,
+    );
     return pipe(
       O.bindTo('acc')(
         pipe(
           this.cachedAccessories,
-          A.findFirst(({ UUID: cachedUuid }) => cachedUuid === uuid),
+          A.findFirst(
+            ({ UUID: cachedUuid, context }) =>
+              cachedUuid === uuid &&
+              context.deviceType === device.providerData.deviceType,
+          ),
         ),
       ),
       O.fold(
@@ -196,7 +217,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
                   () =>
                     IO.as(
                       this.log.error('Failed to initialize.', error),
-                      O.some(error!),
+                      O.of(error!),
                     ),
                 ),
               ),
@@ -211,12 +232,12 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     device: SmartHomeDevice,
     acc: PlatformAccessory,
   ): IOEither<AlexaDeviceError, BaseAccessory> {
-    if (!acc.context?.deviceId || !acc.context?.supportedOperations) {
+    if (!acc.context?.deviceId || !acc.context?.deviceType) {
       this.log.info('Update accessory context:', acc.displayName)();
       acc.context = {
         ...acc.context,
         deviceId: device.id,
-        supportedOperations: device.supportedOperations,
+        deviceType: device.providerData.deviceType,
       };
       this.api.updatePlatformAccessories([acc]);
     }
@@ -238,7 +259,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
         ),
       ),
       IOE.tapEither(() => {
-        this.devices.push(device);
+        this.activeDeviceIds.push(device.id);
         return E.of(constVoid());
       }),
     );
@@ -252,7 +273,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     acc.context = {
       ...acc.context,
       deviceId: device.id,
-      supportedOperations: device.supportedOperations,
+      deviceType: device.providerData.deviceType,
     };
 
     return pipe(
@@ -272,7 +293,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
           settings.PLATFORM_NAME,
           [acc],
         );
-        this.devices.push(device);
+        this.activeDeviceIds.push(device.id);
         return E.of(constVoid());
       }),
     );

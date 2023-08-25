@@ -10,9 +10,9 @@ import {
 } from '../domain/alexa/errors';
 import { SmartHomeDevice } from '../domain/alexa/get-devices';
 import { AlexaSmartHomePlatform } from '../platform';
-import BaseAccessory from './BaseAccessory';
-import LightAccessory from './LightAccessory';
-import OutletAccessory from './OutletAccessory';
+import BaseAccessory from './base-accessory';
+import LightAccessory from './light-accessory';
+import OutletAccessory from './outlet-accessory';
 
 export default class AccessoryFactory {
   static createAccessory(
