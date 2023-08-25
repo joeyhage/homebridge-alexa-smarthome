@@ -1,17 +1,13 @@
 import * as E from 'fp-ts/Either';
-import type { Logger } from 'homebridge';
-import { HomebridgeAPI } from 'homebridge/lib/api';
-import type { AlexaPlatformConfig } from '../domain/homebridge';
-import { AlexaSmartHomePlatform } from '../platform';
-import AccessoryFactory from './AccessoryFactory';
 import {
   InvalidDeviceError,
   UnsupportedDeviceError,
 } from '../domain/alexa/errors';
 import { SmartHomeDevice } from '../domain/alexa/get-devices';
+import AccessoryFactory from './accessory-factory';
 
 describe('createAccessory', () => {
-  it('should create a LightAccessory', () => {
+  test('should create a LightAccessory', () => {
     // given
     const device = {
       id: '123',
@@ -24,7 +20,7 @@ describe('createAccessory', () => {
         deviceType: 'LIGHT',
       },
     };
-    const platform = getPlatform();
+    const platform = global.createPlatform();
     const uuid = platform.api.hap.uuid.generate(device.id);
     const platAcc = new platform.api.platformAccessory(
       device.displayName,
@@ -42,7 +38,7 @@ describe('createAccessory', () => {
     expect(E.isRight(lightAcc)).toBe(true);
   });
 
-  it('should create an OutletAccessory', () => {
+  test('should create an OutletAccessory', () => {
     // given
     const device = {
       id: '123',
@@ -55,7 +51,7 @@ describe('createAccessory', () => {
         deviceType: 'SMARTPLUG',
       },
     };
-    const platform = getPlatform();
+    const platform = global.createPlatform();
     const uuid = platform.api.hap.uuid.generate(device.id);
     const platAcc = new platform.api.platformAccessory(
       device.displayName,
@@ -69,7 +65,7 @@ describe('createAccessory', () => {
     expect(E.isRight(plugAcc)).toBe(true);
   });
 
-  it('should not create an unsupported device', async () => {
+  test('should not create an unsupported device', async () => {
     // given
     const device = {
       id: '123',
@@ -82,7 +78,7 @@ describe('createAccessory', () => {
         deviceType: 'OTHER',
       },
     };
-    const platform = getPlatform();
+    const platform = global.createPlatform();
     const uuid = platform.api.hap.uuid.generate(device.id);
     const platAcc = new platform.api.platformAccessory(
       device.displayName,
@@ -100,13 +96,13 @@ describe('createAccessory', () => {
     expect(lightAcc).toStrictEqual(E.left(new UnsupportedDeviceError(device)));
   });
 
-  it('should not create an invalid device', async () => {
+  test('should not create an invalid device', async () => {
     // given
     const device = {
       id: '123',
       displayName: 'test light group',
     } as SmartHomeDevice;
-    const platform = getPlatform();
+    const platform = global.createPlatform();
     const uuid = platform.api.hap.uuid.generate(device.id);
     const platAcc = new platform.api.platformAccessory(
       device.displayName,
@@ -124,29 +120,3 @@ describe('createAccessory', () => {
     expect(lightAcc).toStrictEqual(E.left(new InvalidDeviceError(device)));
   });
 });
-
-function getPlatform(): AlexaSmartHomePlatform {
-  const logger = console as Logger;
-  return new AlexaSmartHomePlatform(
-    logger,
-    getPlatformConfig(),
-    new HomebridgeAPI(),
-  );
-}
-
-function getPlatformConfig(): AlexaPlatformConfig {
-  return {
-    platform: 'HomebridgeAlexaSmartHome',
-    amazonDomain: 'amazon.com',
-    devices: [],
-    auth: {
-      refreshInterval: 0,
-      proxy: {
-        clientHost: 'localhost',
-        port: 2345,
-      },
-    },
-    language: 'en-US',
-    debug: true,
-  };
-}

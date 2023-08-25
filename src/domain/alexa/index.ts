@@ -32,3 +32,14 @@ export interface DeviceResponse {
   message: Nullable<string>;
   error: Nullable<string>;
 }
+
+export const SupportedNamespaces = {
+  'Alexa.PowerController': 'Alexa.PowerController',
+  'Alexa.BrightnessController': 'Alexa.BrightnessController',
+} as const;
+
+export interface CapabilityState {
+  namespace: string;
+  name?: Nullable<string>;
+  value: string | number | boolean;
+}

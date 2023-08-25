@@ -4,24 +4,73 @@ import * as E from 'fp-ts/Either';
 import * as O from 'fp-ts/Option';
 import { constVoid } from 'fp-ts/lib/function';
 import { DeviceResponse } from '../domain/alexa';
-import GetDeviceStatesResponse, {
-  DeviceStateResponse,
-} from '../domain/alexa/get-device-states';
-import SetDeviceStateResponse from '../domain/alexa/set-device-state';
 import {
   HttpError,
   InvalidRequest,
   RequestUnsuccessful,
 } from '../domain/alexa/errors';
+import GetDeviceStatesResponse, {
+  DeviceStateResponse,
+} from '../domain/alexa/get-device-states';
+import SetDeviceStateResponse from '../domain/alexa/set-device-state';
 import { PluginLogger } from '../util/plugin-logger';
 import { AlexaApiWrapper } from './alexa-api-wrapper';
-import { Logger, PlatformConfig } from 'homebridge';
 
 jest.mock('alexa-remote2');
 const alexaRemoteMocks = AlexaRemote as jest.MockedClass<typeof AlexaRemote>;
 
-beforeEach(() => {
-  alexaRemoteMocks.mockClear();
+describe('updateCacheValue', () => {
+  test('should update given device and namespace were previously cached', () => {
+    // given
+    const deviceId = randomUUID();
+    const wrapper = getAlexaApiWrapper();
+    wrapper.deviceStatesCache.cachedStates = {
+      [deviceId]: [
+        O.of({
+          namespace: 'Alexa.PowerController',
+          value: true,
+        }),
+      ],
+    };
+
+    // when
+    const cache = wrapper.updateCacheValue(deviceId, {
+      namespace: 'Alexa.PowerController',
+      value: false,
+    });
+
+    // then
+    expect(cache[deviceId].length).toBe(1);
+    expect(
+      O.Functor.map(cache[deviceId][0], ({ value }) => value),
+    ).toStrictEqual(O.of(false));
+  });
+
+  test('should not update given no previous value', () => {
+    // given
+    const deviceId = randomUUID();
+    const wrapper = getAlexaApiWrapper();
+    wrapper.deviceStatesCache.cachedStates = {
+      [deviceId]: [
+        O.of({
+          namespace: 'Alexa.PowerController',
+          value: true,
+        }),
+      ],
+    };
+
+    // when
+    const cache = wrapper.updateCacheValue(deviceId, {
+      namespace: 'Alexa.BrightnessController',
+      value: 100,
+    });
+
+    // then
+    expect(cache[deviceId].length).toBe(1);
+    expect(
+      O.Functor.map(cache[deviceId][0], ({ value }) => value),
+    ).toStrictEqual(O.of(true));
+  });
 });
 
 describe('setDeviceState', () => {
@@ -37,10 +86,10 @@ describe('setDeviceState', () => {
     );
 
     // when
-    const actual = await wrapper.setDeviceState(randomUUID(), 'turnOff')();
+    const actual = wrapper.setDeviceState(randomUUID(), 'turnOff')();
 
     // then
-    expect(actual).toStrictEqual(E.right(constVoid()));
+    await expect(actual).resolves.toStrictEqual(E.of(constVoid()));
   });
 
   test('should return error given invalid device id', async () => {
@@ -48,10 +97,10 @@ describe('setDeviceState', () => {
     const wrapper = getAlexaApiWrapper();
 
     // when
-    const actual = await wrapper.setDeviceState('invalid', 'turnOff')();
+    const actual = wrapper.setDeviceState('invalid', 'turnOff')();
 
     // then
-    expect(actual).toStrictEqual(
+    await expect(actual).resolves.toStrictEqual(
       E.left(
         new InvalidRequest('id: \'invalid\' is not a valid Smart Home device id'),
       ),
@@ -67,10 +116,10 @@ describe('setDeviceState', () => {
     );
 
     // when
-    const actual = await wrapper.setDeviceState(randomUUID(), 'turnOff')();
+    const actual = wrapper.setDeviceState(randomUUID(), 'turnOff')();
 
     // then
-    expect(actual).toStrictEqual(
+    await expect(actual).resolves.toStrictEqual(
       E.left(
         new HttpError(
           'Error setting smart home device state. Reason: error for setDeviceState test',
@@ -91,10 +140,10 @@ describe('setDeviceState', () => {
     );
 
     // when
-    const actual = await wrapper.setDeviceState(randomUUID(), 'turnOff')();
+    const actual = wrapper.setDeviceState(randomUUID(), 'turnOff')();
 
     // then
-    expect(actual).toStrictEqual(
+    await expect(actual).resolves.toStrictEqual(
       E.left(
         new RequestUnsuccessful(
           'Error setting smart home device state. Response: {"errors":[{"code":"TestError"}]}',
@@ -108,12 +157,16 @@ describe('setDeviceState', () => {
 describe('getDeviceStates', () => {
   test('should get state successfully', async () => {
     // given
+    const deviceId = randomUUID();
     const wrapper = getAlexaApiWrapper();
     const mockAlexa = getMockedAlexaRemote();
     mockAlexa.querySmarthomeDevices.mockImplementationOnce((_1, _2, _3, cb) =>
       cb!(undefined, {
         deviceStates: [
           {
+            entity: {
+              entityId: deviceId,
+            },
             capabilityStates: [
               JSON.stringify({
                 namespace: 'Alexa.PowerController',
@@ -128,20 +181,77 @@ describe('getDeviceStates', () => {
     );
 
     // when
-    const actual = await wrapper.getDeviceStates([randomUUID()])();
+    const actual = await wrapper.getDeviceStates([deviceId])();
 
     // then
     expect(actual).toStrictEqual(
-      E.right(
-        O.some([
-          {
-            capabilityStates: [
-              '{"namespace":"Alexa.PowerController","name":"test","value":"ON"}',
-            ],
-          },
-        ]),
-      ),
+      E.of({
+        fromCache: false,
+        statesByDevice: {
+          [deviceId]: [
+            O.of({
+              namespace: 'Alexa.PowerController',
+              name: 'test',
+              value: 'ON',
+            }),
+          ],
+        },
+      }),
     );
+  });
+
+  test('should use cache once cache is populated', async () => {
+    // given
+    const deviceId1 = randomUUID();
+    const deviceId2 = randomUUID();
+    const cs1 = {
+      namespace: 'Alexa.PowerController',
+      name: 'test 1',
+      value: 'ON',
+    };
+    const cs2 = {
+      namespace: 'Alexa.PowerController',
+      name: 'test 2',
+      value: 'OFF',
+    };
+    const wrapper = getAlexaApiWrapper();
+    const mockAlexa = getMockedAlexaRemote();
+    mockAlexa.querySmarthomeDevices.mockImplementationOnce((_1, _2, _3, cb) =>
+      cb!(undefined, {
+        deviceStates: [
+          {
+            entity: {
+              entityId: deviceId1,
+            },
+            capabilityStates: [JSON.stringify(cs1)],
+          },
+          {
+            entity: {
+              entityId: deviceId2,
+            },
+            capabilityStates: [JSON.stringify(cs2)],
+          },
+        ],
+        errors: Array<DeviceResponse>(),
+      }),
+    );
+
+    // when
+    const actual1 = await wrapper.getDeviceStates([deviceId1, deviceId2])();
+    const actual2 = await wrapper.getDeviceStates([deviceId1, deviceId2])();
+
+    // then
+    const expectedStates = {
+      [deviceId1]: [O.of(cs1)],
+      [deviceId2]: [O.of(cs2)],
+    };
+    expect(actual1).toStrictEqual(
+      E.of({ statesByDevice: expectedStates, fromCache: false }),
+    );
+    expect(actual2).toStrictEqual(
+      E.of({ statesByDevice: expectedStates, fromCache: true }),
+    );
+    expect(mockAlexa.querySmarthomeDevices).toHaveBeenCalledTimes(1);
   });
 
   test('should return error given invalid device id', async () => {
@@ -149,10 +259,10 @@ describe('getDeviceStates', () => {
     const wrapper = getAlexaApiWrapper();
 
     // when
-    const actual = await wrapper.getDeviceStates(['invalid'])();
+    const actual = wrapper.getDeviceStates(['invalid'])();
 
     // then
-    expect(actual).toStrictEqual(
+    await expect(actual).resolves.toStrictEqual(
       E.left(new InvalidRequest('No valid device ids to retrieve state for')),
     );
   });
@@ -165,10 +275,10 @@ describe('getDeviceStates', () => {
       cb!(new Error('error for getDeviceStates test')),
     );
     // when
-    const actual = await wrapper.getDeviceStates([randomUUID()])();
+    const actual = wrapper.getDeviceStates([randomUUID()])();
 
     // then
-    expect(actual).toStrictEqual(
+    await expect(actual).resolves.toStrictEqual(
       E.left(
         new HttpError(
           'Error getting smart home device state. Reason: error for getDeviceStates test',
@@ -189,10 +299,10 @@ describe('getDeviceStates', () => {
     );
 
     // when
-    const actual = await wrapper.getDeviceStates([randomUUID()])();
+    const actual = wrapper.getDeviceStates([randomUUID()])();
 
     // then
-    expect(actual).toStrictEqual(
+    await expect(actual).resolves.toStrictEqual(
       E.left(
         new RequestUnsuccessful(
           'Error getting smart home device state. Response: {"deviceStates":[],"errors":[{"code":"TestError"}]}',
@@ -206,10 +316,7 @@ describe('getDeviceStates', () => {
 function getAlexaApiWrapper(): AlexaApiWrapper {
   return new AlexaApiWrapper(
     new AlexaRemote(),
-    new PluginLogger(
-      console as Logger,
-      { debug: true, platform: '' } as PlatformConfig,
-    ),
+    new PluginLogger(global.MockLogger, global.createPlatformConfig()),
   );
 }
 

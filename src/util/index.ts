@@ -80,9 +80,9 @@ export const getAuthentication = (
 ): IOEither<Option<PluginError>, Authentication> => {
   const doesPreviousAuthExist = pipe(
     IOE.tryCatch(
-      () => (fs.existsSync(persistPath) ? O.some(true) : O.none),
+      () => (fs.existsSync(persistPath) ? O.of(true) : O.none),
       (e) =>
-        O.some(
+        O.of(
           new IoError('Error checking for existing authentication file. ' + e),
         ),
     ),
@@ -101,12 +101,12 @@ export const getAuthentication = (
 
   return pipe(
     doesPreviousAuthExist,
-    IOE.flatMap(() => IOE.Bifunctor.mapLeft(readFile(persistPath), O.some)),
-    IOE.flatMapEither((s) => E.Bifunctor.mapLeft(parseJson(s), O.some)),
+    IOE.flatMap(() => IOE.Bifunctor.mapLeft(readFile(persistPath), O.of)),
+    IOE.flatMapEither((s) => E.Bifunctor.mapLeft(parseJson(s), O.of)),
     IOE.map(toCookieData),
     IOE.filterOrElse(
       isValidAuthentication,
-      constant(O.some(new ValidationError('Invalid configuration'))),
+      constant(O.of(new ValidationError('Invalid configuration'))),
     ),
   );
 };

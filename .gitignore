@@ -1,6 +1,10 @@
 # Ignore compiled code
 dist
 .homebridge-alexa-smarthome
+__tests__/*.js
+__tests__/*.d.ts
+*.js.map
+*.ts.map
 
 # ------------- Defaults ------------- #
 
