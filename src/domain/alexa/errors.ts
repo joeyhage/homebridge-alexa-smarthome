@@ -30,13 +30,17 @@ export class HttpError extends AlexaApiError {
 }
 
 export class RequestUnsuccessful extends AlexaApiError {
-  public readonly message: string;
-
   constructor(message: string, public readonly errorCode: Nullable<string>) {
     super(
       `${message}${errorCode ? `. Error code: ${errorCode}` : ''}`,
       RequestUnsuccessful.name,
     );
+  }
+}
+
+export class TimeoutError extends AlexaApiError {
+  constructor(message: string) {
+    super(message, TimeoutError.name);
   }
 }
 

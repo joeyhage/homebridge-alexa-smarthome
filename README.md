@@ -4,7 +4,18 @@
 
 # Homebridge Alexa Smart Home
 
-[![npm version](https://img.shields.io/npm/v/homebridge-alexa-smarthome)](https://www.npmjs.com/package/homebridge-alexa-smarthome) [![npm downloads](https://img.shields.io/npm/dt/homebridge-alexa-smarthome)](https://www.npmjs.com/package/homebridge-alexa-smarthome) [![Build, lint, and test](https://github.com/joeyhage/homebridge-alexa-smarthome/actions/workflows/build.yml/badge.svg)](https://github.com/joeyhage/homebridge-alexa-smarthome/actions/workflows/build.yml)
+<p align="center">
+  <a href="https://github.com/joeyhage/homebridge-alexa-smarthome/blob/main/LICENSE">
+    <img alt="License" src="https://img.shields.io/github/license/joeyhage/homebridge-alexa-smarthome?cacheSeconds=3600&logo=github"></a>
+  <a href="https://github.com/joeyhage/homebridge-alexa-smarthome/actions/workflows/build.yml?query=branch%3Amain">
+    <img alt="Build, lint, and test" src="https://img.shields.io/github/actions/workflow/status/joeyhage/homebridge-alexa-smarthome/build.yml?cacheSeconds=3600&logo=github"></a>
+</p>
+<p align="center">
+  <a href="https://www.npmjs.com/package/homebridge-alexa-smarthome">
+    <img alt="npm version" src="https://img.shields.io/npm/v/homebridge-alexa-smarthome?cacheSeconds=3600&&label=version&logo=npm"></a>
+  <a href="https://www.npmjs.com/package/homebridge-alexa-smarthome">
+    <img alt="npm downloads" src="https://img.shields.io/npm/dt/homebridge-alexa-smarthome?cacheSeconds=3600&logo=npm"></a>
+</p>
 
 This is the home of the official homebridge-alexa-smarthome plugin. This plugin enables smart home device integration between HomeKit and Alexa. This allows HomeKit/Siri to control smart home devices that are connected via Amazon Alexa.
 
@@ -17,17 +28,19 @@ This plugin is in beta and has not been battle tested. Expect to encounter issue
 ## Table of Contents
 
 - [Currently supported devices](#currently-supported-devices)
-- [Benefits of using this plugin](#benefits-of-using-this-plugin)
+- [Features](#features)
 - [Initial configuration](#initial-configuration)
 - [Issues and questions](#issues-and-questions)
 - [Long-term support](#long-term-support)
+- [Disclaimer](#disclaimer)
 
 ## Currently supported devices
 
 - Lightbulbs (does not include lightbulb groups)
+- Outlets + smart plugs (does not include groups)
 - [Request / vote](https://homebridge-alexa-smarthome.canny.io/feedback?selectedCategory=supported-device-types) on device types you would like to see supported.
 
-## Benefits of using this plugin
+## Features
 
 - Devices already linked to your Alexa account can be integrated with HomeKit automatically.
 - Device groups created in the Alexa app can be integrated with HomeKit (possible but not yet supported). For example, a group of lights configured in Alexa could be automatically configured in HomeKit.
@@ -60,3 +73,9 @@ If you run into issues or you need help please use the [issues template](https:/
 ## Long-term support
 
 Please consider supporting the development of this plugin by sponsoring me. Sponsorship will encourage me to continue improving this plugin, support more devices, adapt to changes in the Alexa API, and fuel my late-night coding sessions. :coffee: 
+
+## Disclaimer
+
+- I am not affiliated with Amazon nor any of the device brands and this plugin is a personal project that I maintain in my free time
+- Use this plugin entirely at your own risk
+- Please see license for more information

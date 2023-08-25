@@ -33,6 +33,7 @@ import {
   InvalidRequest,
   InvalidResponse,
   RequestUnsuccessful,
+  TimeoutError,
 } from '../domain/alexa/errors';
 import GetDeviceStatesResponse, {
   CapabilityStates,
@@ -45,6 +46,7 @@ import GetDevicesResponse from '../domain/alexa/get-devices';
 import SetDeviceStateResponse from '../domain/alexa/set-device-state';
 import * as util from '../util';
 import { PluginLogger } from '../util/plugin-logger';
+import { Mutex, MutexInterface, withTimeout } from 'async-mutex';
 
 const ENTITY_ID_REGEX = new RegExp(
   /[\da-fA-F]{8}-(?:[\da-fA-F]{4}-){3}[\da-fA-F]{12}/,
@@ -56,6 +58,7 @@ export interface DeviceStatesCache {
 }
 
 export class AlexaApiWrapper {
+  private readonly mutex: MutexInterface;
   public readonly deviceStatesCache: DeviceStatesCache = {
     lastUpdated: new Date(0),
     cachedStates: {},
@@ -65,7 +68,12 @@ export class AlexaApiWrapper {
     private readonly alexaRemote: AlexaRemote,
     private readonly log: PluginLogger,
     private readonly cacheTTL = 30_000,
-  ) {}
+  ) {
+    this.mutex = withTimeout(
+      new Mutex(new TimeoutError('Alexa API Timeout')),
+      30_000,
+    );
+  }
 
   updateCache(
     deviceIds: string[],
@@ -155,7 +163,11 @@ export class AlexaApiWrapper {
         );
 
     return pipe(
-      TE.of(shouldReturnCache()),
+      TE.tryCatch(
+        () => this.mutex.acquire(),
+        (e) => e as TimeoutError,
+      ),
+      TE.map(shouldReturnCache),
       TE.flatMap(
         fpMatch(
           () =>
@@ -192,6 +204,16 @@ export class AlexaApiWrapper {
               ),
             ),
         ),
+      ),
+      TE.mapBoth(
+        (e) => {
+          this.mutex.release();
+          return e;
+        },
+        (res) => {
+          this.mutex.release();
+          return res;
+        },
       ),
     );
   }
