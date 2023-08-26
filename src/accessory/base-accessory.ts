@@ -6,7 +6,12 @@ import { TaskEither } from 'fp-ts/TaskEither';
 import * as A from 'fp-ts/lib/Array';
 import * as RRecord from 'fp-ts/lib/ReadonlyRecord';
 import { identity, pipe } from 'fp-ts/lib/function';
-import { Characteristic, PlatformAccessory, Service } from 'homebridge';
+import {
+  Characteristic,
+  CharacteristicValue,
+  PlatformAccessory,
+  Service,
+} from 'homebridge';
 import { match } from 'ts-pattern';
 import {
   AlexaApiError,
@@ -31,7 +36,7 @@ export default abstract class BaseAccessory {
   constructor(
     readonly platform: AlexaSmartHomePlatform,
     public readonly device: SmartHomeDevice,
-    public readonly accessory: PlatformAccessory,
+    public readonly platformAcc: PlatformAccessory,
   ) {
     this.log = platform.log;
     this.addAccessoryInfoService();
@@ -60,8 +65,8 @@ export default abstract class BaseAccessory {
 
   addAccessoryInfoService() {
     const service =
-      this.accessory.getService(this.Service.AccessoryInformation) ||
-      this.accessory.addService(this.Service.AccessoryInformation);
+      this.platformAcc.getService(this.Service.AccessoryInformation) ||
+      this.platformAcc.addService(this.Service.AccessoryInformation);
 
     service
       .setCharacteristic(this.Characteristic.Manufacturer, 'Unknown')
@@ -76,7 +81,7 @@ export default abstract class BaseAccessory {
 
   configureStatusActive() {
     return pipe(
-      this.accessory.services,
+      this.platformAcc.services,
       A.map((s) => {
         !s.testCharacteristic(this.Characteristic.StatusActive) &&
           s.addOptionalCharacteristic(this.Characteristic.StatusActive);
@@ -128,6 +133,17 @@ export default abstract class BaseAccessory {
     );
   }
 
+  getHapValue(characteristic: Parameters<Service['getCharacteristic']>[0]) {
+    return this.service.getCharacteristic(characteristic)?.value ?? null;
+  }
+
+  updateHapValue(
+    characteristic: Parameters<Service['getCharacteristic']>[0],
+    value: CharacteristicValue | null,
+  ) {
+    return this.service.getCharacteristic(characteristic)?.updateValue(value);
+  }
+
   private extractStates<T>(maybeStates: Option<CapabilityState>[]): T[] {
     return pipe(
       maybeStates,
@@ -137,4 +153,5 @@ export default abstract class BaseAccessory {
   }
 
   abstract configureServices(): void;
+  abstract service: Service;
 }

@@ -5,7 +5,6 @@ import * as TE from 'fp-ts/TaskEither';
 import { HomebridgeAPI } from 'homebridge/lib/api';
 import { HttpError } from '../domain/alexa/errors';
 import { AlexaSmartHomePlatform } from '../platform';
-import { PluginLogger } from '../util/plugin-logger';
 import { AlexaApiWrapper } from '../wrapper/alexa-api-wrapper';
 import LightAccessory from './light-accessory';
 
@@ -101,7 +100,7 @@ function createPlatform() {
   );
   (platform as any).alexaApi = new AlexaApiWrapper(
     new AlexaRemote(),
-    new PluginLogger(global.MockLogger, platform.config),
+    platform.log,
   );
   return platform;
 }
@@ -121,7 +120,12 @@ function createLightAccessory() {
   const platform = createPlatform();
   const uuid = platform.api.hap.uuid.generate(device.id);
   const platAcc = new platform.api.platformAccessory(device.displayName, uuid);
-  return new LightAccessory(platform, device, platAcc);
+  const acc = new LightAccessory(platform, device, platAcc);
+  acc.service = acc.platformAcc.addService(
+    acc.Service.Lightbulb,
+    acc.device.displayName,
+  );
+  return acc;
 }
 
 function getMockedAlexaApi(): jest.Mocked<AlexaApiWrapper> {

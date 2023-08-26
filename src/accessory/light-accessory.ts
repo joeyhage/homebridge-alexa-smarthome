@@ -4,6 +4,7 @@ import * as A from 'fp-ts/lib/Array';
 import { flow, identity, pipe } from 'fp-ts/lib/function';
 import { CharacteristicValue, Service } from 'homebridge';
 import BaseAccessory from './base-accessory';
+import * as mapper from '../util/mapper';
 import { SupportedNamespaces } from '../domain/alexa';
 
 export interface LightbulbState {
@@ -18,13 +19,13 @@ const LightbulbNamespaces = {
 } as const;
 
 export default class LightAccessory extends BaseAccessory {
-  private lightbulbService: Service;
+  service: Service;
   namespaces = LightbulbNamespaces;
 
   configureServices() {
-    this.lightbulbService =
-      this.accessory.getService(this.Service.Lightbulb) ||
-      this.accessory.addService(
+    this.service =
+      this.platformAcc.getService(this.Service.Lightbulb) ||
+      this.platformAcc.addService(
         this.Service.Lightbulb,
         this.device.displayName,
       );
@@ -33,14 +34,14 @@ export default class LightAccessory extends BaseAccessory {
       this.device.supportedOperations.includes('turnOn') &&
       this.device.supportedOperations.includes('turnOff')
     ) {
-      this.lightbulbService
+      this.service
         .getCharacteristic(this.Characteristic.On)
         .onGet(this.handlePowerGet.bind(this))
         .onSet(this.handlePowerSet.bind(this));
     }
 
     if (this.device.supportedOperations.includes('setBrightness')) {
-      this.lightbulbService
+      this.service
         .getCharacteristic(this.Characteristic.Brightness)
         .onGet(this.handleBrightnessGet.bind(this))
         .onSet(this.handleBrightnessSet.bind(this));
@@ -48,7 +49,6 @@ export default class LightAccessory extends BaseAccessory {
   }
 
   async handlePowerGet(): Promise<boolean> {
-    this.logWithContext('debug', 'Triggered get power');
     const determinePowerState = flow(
       O.filterMap<LightbulbState[], LightbulbState>(
         A.findFirst(({ namespace }) => namespace === 'Alexa.PowerController'),
@@ -59,10 +59,20 @@ export default class LightAccessory extends BaseAccessory {
       ),
     );
 
+    const hapChar = this.Characteristic.On;
+    const hapValue = this.getHapValue(hapChar);
+    this.logWithContext(
+      'debug',
+      `Triggered get power. Cached value before update: ${hapValue}`,
+    );
+
     return await pipe(
       this.getState(determinePowerState),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get power', e);
+        setTimeout(() => {
+          this.updateHapValue(hapChar, hapValue);
+        }, 2000);
         throw this.serviceCommunicationError;
       }, identity),
     )();
@@ -73,21 +83,21 @@ export default class LightAccessory extends BaseAccessory {
     if (typeof value !== 'boolean') {
       return;
     }
-    const newPowerState = value ? 'turnOn' : 'turnOff';
+    const action = mapper.mapHomeKitPowerToAlexaAction(value);
     try {
       await pipe(
-        this.platform.alexaApi.setDeviceState(this.device.id, newPowerState),
+        this.platform.alexaApi.setDeviceState(this.device.id, action),
         TE.tapIO(
           this.updateCacheValue.bind(this, {
-            value: newPowerState,
+            value: mapper.mapHomeKitPowerToAlexaValue(value),
             namespace: 'Alexa.PowerController',
           }),
         ),
         TE.tap(() =>
           TE.of(
-            this.lightbulbService
+            this.service
               .getCharacteristic(this.Characteristic.On)
-              .updateValue(newPowerState),
+              .updateValue(value),
           ),
         ),
       )();
@@ -97,7 +107,6 @@ export default class LightAccessory extends BaseAccessory {
   }
 
   async handleBrightnessGet(): Promise<number> {
-    this.logWithContext('debug', 'Triggered get Brightness');
     const determineBrightnessState = flow(
       O.filterMap<LightbulbState[], LightbulbState>(
         A.findFirst(
@@ -110,10 +119,22 @@ export default class LightAccessory extends BaseAccessory {
       ),
     );
 
+    const hapChar = this.Characteristic.Brightness;
+    const hapValue = this.getHapValue(hapChar);
+    this.logWithContext(
+      'debug',
+      `Triggered get brightness. Cached value before update: ${hapValue}`,
+    );
+
     return await pipe(
       this.getState(determineBrightnessState),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get brightness', e);
+        const hapValue = this.getHapValue(hapChar);
+        this.logWithContext(
+          'debug',
+          `Triggered get power. Cached value before update: ${hapValue}`,
+        );
         throw this.serviceCommunicationError;
       }, identity),
     )();
@@ -138,7 +159,7 @@ export default class LightAccessory extends BaseAccessory {
         ),
         TE.tap(() =>
           TE.of(
-            this.lightbulbService
+            this.service
               .getCharacteristic(this.Characteristic.Brightness)
               .updateValue(newBrightness),
           ),
@@ -147,5 +168,9 @@ export default class LightAccessory extends BaseAccessory {
     } catch (e) {
       this.logWithContext('errorT', 'Set brightness', e);
     }
+  }
+
+  private powerStateToAlexaAction(powerState: boolean) {
+    return powerState ? 'turnOn' : 'turnOff';
   }
 }
