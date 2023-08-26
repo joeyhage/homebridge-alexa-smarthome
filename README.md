@@ -16,6 +16,12 @@
   <a href="https://www.npmjs.com/package/homebridge-alexa-smarthome">
     <img alt="npm downloads" src="https://img.shields.io/npm/dt/homebridge-alexa-smarthome?cacheSeconds=3600&logo=npm"></a>
 </p>
+<p align="center">
+  <a href="https://github.com/homebridge/homebridge/wiki/Verified-Plugins">
+    <img alt="verified-by-homebridge" src="https://badgen.net/badge/homebridge/verified/purple"></a>
+  <a href="https://discord.com/channels/432663330281226270/1144780172084654190">
+    <img alt="Discord" src="https://img.shields.io/discord/432663330281226270?cacheSeconds=3600&logo=discord&color=728ED5&label=discord-channel"></a>
+</p>
 
 This is the home of the official homebridge-alexa-smarthome plugin. This plugin enables smart home device integration between HomeKit and Alexa. This allows HomeKit/Siri to control smart home devices that are connected via Amazon Alexa.
 

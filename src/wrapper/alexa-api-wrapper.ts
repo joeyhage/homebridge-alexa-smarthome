@@ -432,7 +432,7 @@ export class AlexaApiWrapper {
     new Date().getTime() - this.cacheTTL;
 
   private handleGetStateErrors = flow(
-    A.map((e: AlexaApiError) => this.log.info('Get Device States', e)),
+    A.map((e: AlexaApiError) => this.log.error('Get Device States', e)),
     A.sequence(IO.Applicative),
   );
 }

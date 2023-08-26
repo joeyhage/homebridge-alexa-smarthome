@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, unreleased work in progress.
 
+## [0.0.17] - 2023-08-26
+
+### Fixed
+
+- Fixed bug introduced in v0.0.16 with device status caching causing incorrect state to appear in HomeKit.
+
 ## [0.0.16] - 2023-08-25
 
 ### Added
@@ -25,6 +31,7 @@ See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, 
 
 - Support for outlets i.e. smart plugs.
 
-[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.0.16...HEAD
+[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.0.17...HEAD
+[0.0.17]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.0.16...v0.0.17
 [0.0.16]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.0.15...v0.0.16
 [0.0.15]: https://github.com/joeyhage/homebridge-spotify-speaker/releases/tag/v0.0.15
