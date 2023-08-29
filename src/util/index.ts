@@ -1,4 +1,5 @@
 import * as E from 'fp-ts/Either';
+import { Either } from 'fp-ts/Either';
 import * as IOE from 'fp-ts/IOEither';
 import { IOEither } from 'fp-ts/IOEither';
 import * as J from 'fp-ts/Json';
@@ -16,6 +17,7 @@ import fs from 'fs';
 import type { PlatformConfig } from 'homebridge';
 import { Pattern, match } from 'ts-pattern';
 import { Authentication } from '../domain/alexa';
+import { AlexaDeviceError } from '../domain/alexa/errors';
 import type { AlexaPlatformConfig } from '../domain/homebridge';
 import {
   IoError,
@@ -110,3 +112,19 @@ export const getAuthentication = (
     ),
   );
 };
+
+const ENTITY_ID_REGEX = new RegExp(
+  /[\da-fA-F]{8}-(?:[\da-fA-F]{4}-){3}[\da-fA-F]{12}/,
+);
+
+export const extractEntityId = (id: string): Either<AlexaDeviceError, string> =>
+  pipe(
+    E.bindTo('matches')(E.of(id.match(ENTITY_ID_REGEX))),
+    E.filterOrElse(
+      ({ matches }) => !!matches,
+      constant(
+        new ValidationError(`id: '${id}' is not a valid Smart Home device id`),
+      ),
+    ),
+    E.map(({ matches }) => matches![0]),
+  );

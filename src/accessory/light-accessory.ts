@@ -1,11 +1,11 @@
 import * as O from 'fp-ts/Option';
 import * as TE from 'fp-ts/TaskEither';
 import * as A from 'fp-ts/lib/Array';
-import { flow, identity, pipe } from 'fp-ts/lib/function';
+import { constant, flow, identity, pipe } from 'fp-ts/lib/function';
 import { CharacteristicValue, Service } from 'homebridge';
-import BaseAccessory from './base-accessory';
+import { SupportedNamespaces, SupportedNamespacesType } from '../domain/alexa';
 import * as mapper from '../util/mapper';
-import { SupportedNamespaces } from '../domain/alexa';
+import BaseAccessory from './base-accessory';
 
 export interface LightbulbState {
   namespace: keyof typeof LightbulbNamespaces &
@@ -49,9 +49,10 @@ export default class LightAccessory extends BaseAccessory {
   }
 
   async handlePowerGet(): Promise<boolean> {
+    const alexaNamespace: SupportedNamespacesType = 'Alexa.PowerController';
     const determinePowerState = flow(
       O.filterMap<LightbulbState[], LightbulbState>(
-        A.findFirst(({ namespace }) => namespace === 'Alexa.PowerController'),
+        A.findFirst(({ namespace }) => namespace === alexaNamespace),
       ),
       O.map(({ value }) => value === 'ON'),
       O.tap((s) =>
@@ -59,20 +60,18 @@ export default class LightAccessory extends BaseAccessory {
       ),
     );
 
-    const hapChar = this.Characteristic.On;
-    const hapValue = this.getHapValue(hapChar);
+    const cacheValue = this.getCacheValue(alexaNamespace);
     this.logWithContext(
       'debug',
-      `Triggered get power. Cached value before update: ${hapValue}`,
+      `Triggered get power. Cached value before update: ${O.getOrElse(
+        constant('' as CharacteristicValue),
+      )(cacheValue)}`,
     );
 
     return await pipe(
       this.getState(determinePowerState),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get power', e);
-        setTimeout(() => {
-          this.updateHapValue(hapChar, hapValue);
-        }, 2000);
         throw this.serviceCommunicationError;
       }, identity),
     )();
@@ -107,11 +106,11 @@ export default class LightAccessory extends BaseAccessory {
   }
 
   async handleBrightnessGet(): Promise<number> {
+    const alexaNamespace: SupportedNamespacesType =
+      'Alexa.BrightnessController';
     const determineBrightnessState = flow(
       O.filterMap<LightbulbState[], LightbulbState>(
-        A.findFirst(
-          ({ namespace }) => namespace === 'Alexa.BrightnessController',
-        ),
+        A.findFirst(({ namespace }) => namespace === alexaNamespace),
       ),
       O.map(({ value }) => value as number),
       O.tap((s) =>
@@ -119,22 +118,18 @@ export default class LightAccessory extends BaseAccessory {
       ),
     );
 
-    const hapChar = this.Characteristic.Brightness;
-    const hapValue = this.getHapValue(hapChar);
+    const cacheValue = this.getCacheValue(alexaNamespace);
     this.logWithContext(
       'debug',
-      `Triggered get brightness. Cached value before update: ${hapValue}`,
+      `Triggered get brightness. Cached value before update: ${O.getOrElse(
+        constant('' as CharacteristicValue),
+      )(cacheValue)}`,
     );
 
     return await pipe(
       this.getState(determineBrightnessState),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get brightness', e);
-        const hapValue = this.getHapValue(hapChar);
-        this.logWithContext(
-          'debug',
-          `Triggered get power. Cached value before update: ${hapValue}`,
-        );
         throw this.serviceCommunicationError;
       }, identity),
     )();
@@ -168,9 +163,5 @@ export default class LightAccessory extends BaseAccessory {
     } catch (e) {
       this.logWithContext('errorT', 'Set brightness', e);
     }
-  }
-
-  private powerStateToAlexaAction(powerState: boolean) {
-    return powerState ? 'turnOn' : 'turnOff';
   }
 }

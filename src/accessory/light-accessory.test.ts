@@ -129,5 +129,7 @@ function createLightAccessory() {
 }
 
 function getMockedAlexaApi(): jest.Mocked<AlexaApiWrapper> {
-  return alexaApiMocks.mock.instances[0] as jest.Mocked<AlexaApiWrapper>;
+  const mock = alexaApiMocks.mock.instances[0] as jest.Mocked<AlexaApiWrapper>;
+  mock.getCacheValue.mockReturnValueOnce(O.none);
+  return mock;
 }

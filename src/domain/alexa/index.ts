@@ -38,6 +38,16 @@ export const SupportedNamespaces = {
   'Alexa.BrightnessController': 'Alexa.BrightnessController',
 } as const;
 
+export type SupportedNamespacesType = keyof typeof SupportedNamespaces;
+
+export const SupportedActions = {
+  turnOn: 'turnOn',
+  turnOff: 'turnOff',
+  setBrightness: 'setBrightness',
+} as const;
+
+export type SupportedActionsType = keyof typeof SupportedActions;
+
 export interface CapabilityState {
   namespace: string;
   name?: Nullable<string>;
