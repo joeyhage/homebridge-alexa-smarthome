@@ -1,7 +1,7 @@
+import * as IO from 'fp-ts/IO';
 import * as O from 'fp-ts/Option';
 import { Option } from 'fp-ts/Option';
 import * as TE from 'fp-ts/TaskEither';
-import * as IO from 'fp-ts/IO';
 import { TaskEither } from 'fp-ts/TaskEither';
 import * as A from 'fp-ts/lib/Array';
 import * as RRecord from 'fp-ts/lib/ReadonlyRecord';
@@ -13,12 +13,12 @@ import {
   Service,
 } from 'homebridge';
 import { match } from 'ts-pattern';
+import { CapabilityState, SupportedNamespacesType } from '../domain/alexa';
 import {
   AlexaApiError,
   DeviceOffline,
   InvalidResponse,
 } from '../domain/alexa/errors';
-import { CapabilityState, SupportedNamespaces } from '../domain/alexa';
 import { SmartHomeDevice } from '../domain/alexa/get-devices';
 import { AlexaSmartHomePlatform } from '../platform';
 import { PluginLogLevel, PluginLogger } from '../util/plugin-logger';
@@ -124,8 +124,17 @@ export default abstract class BaseAccessory {
     );
   }
 
+  getCacheValue(
+    namespace: SupportedNamespacesType,
+  ): Option<CharacteristicValue> {
+    return pipe(
+      this.platform.alexaApi.getCacheValue(this.device.id, namespace),
+      O.flatMap(({ value }) => O.fromNullable(value)),
+    );
+  }
+
   updateCacheValue(newState: {
-    namespace: keyof typeof SupportedNamespaces;
+    namespace: SupportedNamespacesType;
     value: string | number | boolean;
   }) {
     return IO.of(

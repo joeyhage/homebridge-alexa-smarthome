@@ -9,7 +9,7 @@ import { Option } from 'fp-ts/Option';
 import * as TE from 'fp-ts/TaskEither';
 import * as A from 'fp-ts/lib/Array';
 import { match as fpMatch } from 'fp-ts/lib/boolean';
-import { constVoid, flow, identity, pipe } from 'fp-ts/lib/function';
+import { constVoid, constant, flow, identity, pipe } from 'fp-ts/lib/function';
 import fs from 'fs';
 import {
   API,
@@ -20,11 +20,13 @@ import {
   PlatformConfig,
   Service,
 } from 'homebridge';
+import { match } from 'ts-pattern';
 import AccessoryFactory from './accessory/accessory-factory';
 import BaseAccessory from './accessory/base-accessory';
+import { AlexaDeviceError, AlexaError } from './domain/alexa/errors';
 import { SmartHomeDevice } from './domain/alexa/get-devices';
 import { AlexaPlatformConfig } from './domain/homebridge';
-import { AlexaDeviceError, AlexaError } from './domain/alexa/errors';
+import { ValidationError } from './domain/homebridge/errors';
 import * as settings from './settings';
 import * as util from './util';
 import { PluginLogger } from './util/plugin-logger';
@@ -131,11 +133,16 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
   initAccessory(
     device: SmartHomeDevice,
   ): IOEither<AlexaDeviceError, BaseAccessory> {
-    const uuid = this.api.hap.uuid.generate(
-      `${device.id}:${device.providerData.deviceType}`,
-    );
     return pipe(
-      O.bindTo('acc')(
+      E.bindTo('entityId')(util.extractEntityId(device.id)),
+      E.bind('uuid', ({ entityId }) =>
+        E.of(
+          this.api.hap.uuid.generate(
+            `${entityId}:${device.providerData.deviceType}`,
+          ),
+        ),
+      ),
+      E.bind('maybeAcc', ({ uuid }) =>
         pipe(
           this.cachedAccessories,
           A.findFirst(
@@ -143,11 +150,18 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
               cachedUuid === uuid &&
               context.deviceType === device.providerData.deviceType,
           ),
+          E.of<AlexaDeviceError, Option<PlatformAccessory>>,
         ),
       ),
-      O.fold(
-        () => this.addNewAccessory(device, uuid),
-        ({ acc }) => this.restoreExistingAccessory(device, acc),
+      IOE.fromEither,
+      IOE.flatMap(({ maybeAcc, uuid }) =>
+        pipe(
+          maybeAcc,
+          O.fold(
+            () => this.addNewAccessory(device, uuid),
+            (acc) => this.restoreExistingAccessory(device, acc),
+          ),
+        ),
       ),
     );
   }
@@ -331,5 +345,15 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
         staleAccessories,
       );
     }
+  }
+
+  private failIfZeroValidIds({ entityIds: { right: validIds } }) {
+    match(validIds)
+      .when(A.isNonEmpty, constant(TE.of(validIds)))
+      .otherwise(
+        constant(
+          TE.left(new ValidationError('No valid device ids were found')),
+        ),
+      );
   }
 }

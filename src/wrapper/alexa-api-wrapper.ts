@@ -2,9 +2,9 @@ import AlexaRemote, {
   CallbackWithErrorAndBody,
   EntityType,
 } from 'alexa-remote2';
+import { Mutex, MutexInterface, withTimeout } from 'async-mutex';
 import * as E from 'fp-ts/Either';
 import { Either } from 'fp-ts/Either';
-import * as IO from 'fp-ts/IO';
 import * as O from 'fp-ts/Option';
 import { Option, Some } from 'fp-ts/Option';
 import * as RA from 'fp-ts/ReadonlyArray';
@@ -25,12 +25,15 @@ import {
 } from 'fp-ts/lib/function';
 import { Pattern, match } from 'ts-pattern';
 import { Nullable } from '../domain';
-import { CapabilityState } from '../domain/alexa';
+import {
+  CapabilityState,
+  SupportedActionsType,
+  SupportedNamespacesType,
+} from '../domain/alexa';
 import {
   AlexaApiError,
   DeviceOffline,
   HttpError,
-  InvalidRequest,
   InvalidResponse,
   RequestUnsuccessful,
   TimeoutError,
@@ -46,11 +49,6 @@ import GetDevicesResponse from '../domain/alexa/get-devices';
 import SetDeviceStateResponse from '../domain/alexa/set-device-state';
 import * as util from '../util';
 import { PluginLogger } from '../util/plugin-logger';
-import { Mutex, MutexInterface, withTimeout } from 'async-mutex';
-
-const ENTITY_ID_REGEX = new RegExp(
-  /[\da-fA-F]{8}-(?:[\da-fA-F]{4}-){3}[\da-fA-F]{12}/,
-);
 
 export interface DeviceStatesCache {
   lastUpdated: Date;
@@ -72,6 +70,22 @@ export class AlexaApiWrapper {
     this.mutex = withTimeout(
       new Mutex(new TimeoutError('Alexa API Timeout')),
       30_000,
+    );
+  }
+
+  getCacheValue(deviceId: string, namespace: SupportedNamespacesType) {
+    return pipe(
+      this.deviceStatesCache.cachedStates,
+      RRecord.lookup(deviceId),
+      O.flatMap(
+        A.findFirstMap((cache) =>
+          pipe(
+            cache,
+            O.exists(({ namespace: cachedNS }) => cachedNS === namespace),
+            fpMatch(constant(O.none), constant(cache)),
+          ),
+        ),
+      ),
     );
   }
 
@@ -100,24 +114,18 @@ export class AlexaApiWrapper {
     return this.deviceStatesCache.cachedStates;
   }
 
-  updateCacheValue(deviceId: string, capabilityState: CapabilityState) {
+  updateCacheValue(
+    deviceId: string,
+    newState: {
+      namespace: SupportedNamespacesType;
+      value: string | number | boolean;
+    },
+  ) {
     pipe(
-      this.deviceStatesCache.cachedStates,
-      RRecord.lookup(deviceId),
-      O.flatMap(
-        A.findFirstMap((cache) =>
-          pipe(
-            cache,
-            O.exists(
-              ({ namespace }) => namespace === capabilityState.namespace,
-            ),
-            fpMatch(constant(O.none), constant(cache)),
-          ),
-        ),
-      ),
-      O.tap((x) => {
-        x.value = capabilityState.value;
-        return O.none;
+      this.getCacheValue(deviceId, newState.namespace),
+      O.tap((cs) => {
+        cs.value = newState.value;
+        return O.of(cs);
       }),
     );
     return this.deviceStatesCache.cachedStates;
@@ -151,17 +159,6 @@ export class AlexaApiWrapper {
         deviceIds,
       );
 
-    const failIfZeroValidIds = ({ entityIds: { right: validIds } }) =>
-      match(validIds)
-        .when(A.isNonEmpty, constant(TE.of(validIds)))
-        .otherwise(
-          constant(
-            TE.left(
-              new InvalidRequest('No valid device ids to retrieve state for'),
-            ),
-          ),
-        );
-
     return pipe(
       TE.tryCatch(
         () => this.mutex.acquire(),
@@ -174,12 +171,6 @@ export class AlexaApiWrapper {
             pipe(
               TE.of(deviceIds),
               TE.tapIO(() => this.log.debug('Updating device states')),
-              TE.map(A.map(AlexaApiWrapper.extractEntityId)),
-              TE.bind('entityIds', (ids) => TE.of(A.separate(ids))),
-              TE.tapIO(({ entityIds: { left: errors } }) =>
-                this.handleGetStateErrors(errors),
-              ),
-              TE.flatMap(failIfZeroValidIds),
               TE.flatMap((entityIds) =>
                 this.queryDeviceStates(entityIds, entityType),
               ),
@@ -220,27 +211,24 @@ export class AlexaApiWrapper {
 
   setDeviceState(
     deviceId: string,
-    action: 'turnOn' | 'turnOff' | 'setBrightness',
+    action: SupportedActionsType,
     parameters: Record<string, string> = {},
     entityType: EntityType = 'APPLIANCE',
   ): TaskEither<AlexaApiError, void> {
     return pipe(
-      TE.fromEither(AlexaApiWrapper.extractEntityId(deviceId)),
-      TE.flatMap((entityId) =>
-        TE.tryCatch(
-          () =>
-            this.changeDeviceState(
-              entityId,
-              { action, ...parameters },
-              entityType,
-            ),
-          (reason) =>
-            new HttpError(
-              `Error setting smart home device state. Reason: ${
-                (reason as Error).message
-              }`,
-            ),
-        ),
+      TE.tryCatch(
+        () =>
+          this.changeDeviceState(
+            deviceId,
+            { action, ...parameters },
+            entityType,
+          ),
+        (reason) =>
+          new HttpError(
+            `Error setting smart home device state. Reason: ${
+              (reason as Error).message
+            }`,
+          ),
       ),
       TE.flatMapEither(AlexaApiWrapper.validateSetStateSuccessful),
       TE.map(constVoid),
@@ -260,19 +248,6 @@ export class AlexaApiWrapper {
         parameters as any,
         entityType,
       ),
-    );
-  }
-
-  private static extractEntityId(id: string): Either<AlexaApiError, string> {
-    return pipe(
-      E.bindTo('matches')(E.of(id.match(ENTITY_ID_REGEX))),
-      E.filterOrElse(
-        ({ matches }) => !!matches,
-        constant(
-          new InvalidRequest(`id: '${id}' is not a valid Smart Home device id`),
-        ),
-      ),
-      E.map(({ matches }) => matches![0]),
     );
   }
 
@@ -409,13 +384,14 @@ export class AlexaApiWrapper {
       match(j)
         .with(
           {
-            namespace: Pattern.string,
+            namespace: Pattern.select('namespace', Pattern.string),
             value: Pattern.union(
-              Pattern.string,
-              Pattern.number,
-              Pattern.boolean,
+              Pattern.select('value', Pattern.string),
+              Pattern.select('value', Pattern.number),
+              Pattern.select('value', Pattern.boolean),
+              { name: Pattern.select('value', Pattern.string) },
             ),
-            name: Pattern._,
+            name: Pattern.select('name', Pattern._),
           },
           (jr) => O.of(jr as CapabilityState),
         )
@@ -430,9 +406,4 @@ export class AlexaApiWrapper {
   private isCacheFresh = () =>
     this.deviceStatesCache.lastUpdated.getTime() >
     new Date().getTime() - this.cacheTTL;
-
-  private handleGetStateErrors = flow(
-    A.map((e: AlexaApiError) => this.log.error('Get Device States', e)),
-    A.sequence(IO.Applicative),
-  );
 }

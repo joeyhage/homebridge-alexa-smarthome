@@ -1,11 +1,11 @@
 import * as O from 'fp-ts/Option';
 import * as TE from 'fp-ts/TaskEither';
 import * as A from 'fp-ts/lib/Array';
-import { flow, identity, pipe } from 'fp-ts/lib/function';
+import { constant, flow, identity, pipe } from 'fp-ts/lib/function';
 import { CharacteristicValue, Service } from 'homebridge';
-import BaseAccessory from './base-accessory';
-import * as mapper from '../util/mapper';
 import { SupportedNamespaces } from '../domain/alexa';
+import * as mapper from '../util/mapper';
+import BaseAccessory from './base-accessory';
 
 export interface OutletState {
   namespace: keyof typeof SmartPlugNamespaces &
@@ -38,9 +38,10 @@ export default class OutletAccessory extends BaseAccessory {
   }
 
   async handlePowerGet(): Promise<boolean> {
+    const alexaNamespace = 'Alexa.PowerController';
     const determinePowerState = flow(
       O.filterMap<OutletState[], OutletState>(
-        A.findFirst(({ namespace }) => namespace === 'Alexa.PowerController'),
+        A.findFirst(({ namespace }) => namespace === alexaNamespace),
       ),
       O.map(({ value }) => value === 'ON'),
       O.tap((s) =>
@@ -48,20 +49,18 @@ export default class OutletAccessory extends BaseAccessory {
       ),
     );
 
-    const hapChar = this.Characteristic.On;
-    const hapValue = this.getHapValue(hapChar);
+    const cacheValue = this.getCacheValue(alexaNamespace);
     this.logWithContext(
       'debug',
-      `Triggered get power. Cached value before update: ${hapValue}`,
+      `Triggered get power. Cached value before update: ${O.getOrElse(
+        constant('' as CharacteristicValue),
+      )(cacheValue)}`,
     );
 
     return await pipe(
       this.getState(determinePowerState),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get power', e);
-        setTimeout(() => {
-          this.updateHapValue(hapChar, hapValue);
-        }, 2000);
         throw this.serviceCommunicationError;
       }, identity),
     )();

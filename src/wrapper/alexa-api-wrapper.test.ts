@@ -6,7 +6,6 @@ import { constVoid } from 'fp-ts/lib/function';
 import { DeviceResponse } from '../domain/alexa';
 import {
   HttpError,
-  InvalidRequest,
   RequestUnsuccessful,
 } from '../domain/alexa/errors';
 import GetDeviceStatesResponse, {
@@ -90,21 +89,6 @@ describe('setDeviceState', () => {
 
     // then
     await expect(actual).resolves.toStrictEqual(E.of(constVoid()));
-  });
-
-  test('should return error given invalid device id', async () => {
-    // given
-    const wrapper = getAlexaApiWrapper();
-
-    // when
-    const actual = wrapper.setDeviceState('invalid', 'turnOff')();
-
-    // then
-    await expect(actual).resolves.toStrictEqual(
-      E.left(
-        new InvalidRequest('id: \'invalid\' is not a valid Smart Home device id'),
-      ),
-    );
   });
 
   test('should return HttpError given HTTP error', async () => {
@@ -252,19 +236,6 @@ describe('getDeviceStates', () => {
       E.of({ statesByDevice: expectedStates, fromCache: true }),
     );
     expect(mockAlexa.querySmarthomeDevices).toHaveBeenCalledTimes(1);
-  });
-
-  test('should return error given invalid device id', async () => {
-    // given
-    const wrapper = getAlexaApiWrapper();
-
-    // when
-    const actual = wrapper.getDeviceStates(['invalid'])();
-
-    // then
-    await expect(actual).resolves.toStrictEqual(
-      E.left(new InvalidRequest('No valid device ids to retrieve state for')),
-    );
   });
 
   test('should return HttpError given HTTP error', async () => {
