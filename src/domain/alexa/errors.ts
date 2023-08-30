@@ -1,4 +1,4 @@
-import { SupportedDeviceTypes } from '.';
+import { SupportedDeviceTypes } from './index';
 import { Nullable } from '../index';
 import { SmartHomeDevice } from './get-devices';
 

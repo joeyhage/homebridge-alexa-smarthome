@@ -3,8 +3,8 @@ import * as O from 'fp-ts/Option';
 import { Option } from 'fp-ts/Option';
 import * as TE from 'fp-ts/TaskEither';
 import { TaskEither } from 'fp-ts/TaskEither';
-import * as A from 'fp-ts/lib/Array';
-import * as RRecord from 'fp-ts/lib/ReadonlyRecord';
+import * as A from 'fp-ts/Array';
+import * as RRecord from 'fp-ts/ReadonlyRecord';
 import { identity, pipe } from 'fp-ts/lib/function';
 import {
   Characteristic,

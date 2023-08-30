@@ -1,7 +1,7 @@
 import * as E from 'fp-ts/Either';
 import { constant } from 'fp-ts/lib/function';
 import { PLUGIN_NAME } from '../settings';
-import * as util from '.';
+import * as util from './index';
 
 describe('getAuthentication', () => {
   test('should return auth given valid, existing auth file', () => {

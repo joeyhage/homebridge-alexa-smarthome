@@ -12,8 +12,8 @@ import {
 import { Authentication } from '../domain/alexa';
 import { PLUGIN_NAME } from '../settings';
 import { getAuthentication } from '../util';
-import { AlexaApiWrapper } from './alexa-api-wrapper';
 import { PluginLogger } from '../util/plugin-logger';
+import { AlexaApiWrapper } from './alexa-api-wrapper';
 
 let alexa: AlexaRemote;
 beforeAll(async () => {
