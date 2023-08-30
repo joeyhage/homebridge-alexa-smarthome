@@ -7,8 +7,8 @@ import * as J from 'fp-ts/Json';
 import * as O from 'fp-ts/Option';
 import { Option } from 'fp-ts/Option';
 import * as TE from 'fp-ts/TaskEither';
-import * as A from 'fp-ts/lib/Array';
-import { match as fpMatch } from 'fp-ts/lib/boolean';
+import * as A from 'fp-ts/Array';
+import { match as fpMatch } from 'fp-ts/boolean';
 import { constVoid, constant, flow, identity, pipe } from 'fp-ts/lib/function';
 import fs from 'fs';
 import {
@@ -97,6 +97,11 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     const deviceFilter = this.config.devices ?? [];
     return pipe(
       this.alexaApi.getDevices(),
+      TE.tapIO((devices) =>
+        this.log.debug(
+          `Found ${devices.length} devices connected to the current Alexa account.`,
+        ),
+      ),
       TE.map(
         A.filter((d: SmartHomeDevice) =>
           A.isEmpty(deviceFilter) ? true : deviceFilter.includes(d.displayName),

@@ -1,6 +1,6 @@
 import * as O from 'fp-ts/Option';
 import * as TE from 'fp-ts/TaskEither';
-import * as A from 'fp-ts/lib/Array';
+import * as A from 'fp-ts/Array';
 import { constant, flow, identity, pipe } from 'fp-ts/lib/function';
 import { CharacteristicValue, Service } from 'homebridge';
 import { SupportedNamespaces } from '../domain/alexa';

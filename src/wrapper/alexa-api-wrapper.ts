@@ -3,51 +3,35 @@ import AlexaRemote, {
   EntityType,
 } from 'alexa-remote2';
 import { Mutex, MutexInterface, withTimeout } from 'async-mutex';
-import * as E from 'fp-ts/Either';
-import { Either } from 'fp-ts/Either';
+import * as A from 'fp-ts/Array';
 import * as O from 'fp-ts/Option';
-import { Option, Some } from 'fp-ts/Option';
+import { Option } from 'fp-ts/Option';
 import * as RA from 'fp-ts/ReadonlyArray';
 import * as RRecord from 'fp-ts/ReadonlyRecord';
 import * as TE from 'fp-ts/TaskEither';
 import { TaskEither } from 'fp-ts/TaskEither';
-import * as A from 'fp-ts/lib/Array';
-import { Json } from 'fp-ts/lib/Json';
-import { match as fpMatch } from 'fp-ts/lib/boolean';
-import {
-  constFalse,
-  constTrue,
-  constVoid,
-  constant,
-  flow,
-  identity,
-  pipe,
-} from 'fp-ts/lib/function';
-import { Pattern, match } from 'ts-pattern';
-import { Nullable } from '../domain';
+import { match as fpMatch } from 'fp-ts/boolean';
+import { constVoid, constant, identity, pipe } from 'fp-ts/lib/function';
 import {
   CapabilityState,
   SupportedActionsType,
   SupportedNamespacesType,
 } from '../domain/alexa';
-import {
-  AlexaApiError,
-  DeviceOffline,
-  HttpError,
-  InvalidResponse,
-  RequestUnsuccessful,
-  TimeoutError,
-} from '../domain/alexa/errors';
+import { AlexaApiError, HttpError, TimeoutError } from '../domain/alexa/errors';
 import GetDeviceStatesResponse, {
-  CapabilityStates,
   CapabilityStatesByDevice,
-  OptionalCapabilityStates,
   ValidCapabilityStates,
   ValidStatesByDevice,
+  extractCapabilityStates,
+  validateGetStatesSuccessful,
 } from '../domain/alexa/get-device-states';
-import GetDevicesResponse from '../domain/alexa/get-devices';
-import SetDeviceStateResponse from '../domain/alexa/set-device-state';
-import * as util from '../util';
+import GetDevicesResponse, {
+  SmartHomeDevice,
+  validateGetDevicesSuccessful,
+} from '../domain/alexa/get-devices';
+import SetDeviceStateResponse, {
+  validateSetStateSuccessful,
+} from '../domain/alexa/set-device-state';
 import { PluginLogger } from '../util/plugin-logger';
 
 export interface DeviceStatesCache {
@@ -131,18 +115,21 @@ export class AlexaApiWrapper {
     return this.deviceStatesCache.cachedStates;
   }
 
-  getDevices(): TaskEither<AlexaApiError, GetDevicesResponse> {
-    return TE.tryCatch(
-      () =>
-        AlexaApiWrapper.toPromise<GetDevicesResponse>(
-          this.alexaRemote.getSmarthomeEntities.bind(this.alexaRemote),
-        ),
-      (reason) =>
-        new HttpError(
-          `Error getting smart home devices. Reason: ${
-            (reason as Error).message
-          }`,
-        ),
+  getDevices(): TaskEither<AlexaApiError, SmartHomeDevice[]> {
+    return pipe(
+      TE.tryCatch(
+        () =>
+          AlexaApiWrapper.toPromise<GetDevicesResponse>(
+            this.alexaRemote.getSmarthomeEntities.bind(this.alexaRemote),
+          ),
+        (reason) =>
+          new HttpError(
+            `Error getting smart home devices. Reason: ${
+              (reason as Error).message
+            }`,
+          ),
+      ),
+      TE.flatMapEither(validateGetDevicesSuccessful),
     );
   }
 
@@ -174,8 +161,8 @@ export class AlexaApiWrapper {
               TE.flatMap((entityIds) =>
                 this.queryDeviceStates(entityIds, entityType),
               ),
-              TE.flatMapEither(AlexaApiWrapper.validateGetStatesSuccessful),
-              TE.map(AlexaApiWrapper.extractCapabilityStates),
+              TE.flatMapEither(validateGetStatesSuccessful),
+              TE.map(extractCapabilityStates),
               TE.map(
                 ({ statesByDevice }) =>
                   ({
@@ -230,7 +217,7 @@ export class AlexaApiWrapper {
             }`,
           ),
       ),
-      TE.flatMapEither(AlexaApiWrapper.validateSetStateSuccessful),
+      TE.flatMapEither(validateSetStateSuccessful),
       TE.map(constVoid),
     );
   }
@@ -250,57 +237,6 @@ export class AlexaApiWrapper {
       ),
     );
   }
-
-  private static validateSetStateSuccessful = E.fromPredicate<
-    SetDeviceStateResponse,
-    AlexaApiError
-  >(
-    (response) =>
-      match(response)
-        .with(
-          {
-            controlResponses: Pattern.intersection(
-              Pattern.not([]),
-              Pattern.array({ code: 'SUCCESS' }),
-            ),
-          },
-          constTrue,
-        )
-        .otherwise(constFalse),
-    (r) =>
-      new RequestUnsuccessful(
-        `Error setting smart home device state. Response: ${JSON.stringify(r)}`,
-        r.errors?.[0]?.code,
-      ),
-  );
-
-  private static validateGetStatesSuccessful = E.fromPredicate<
-    GetDeviceStatesResponse,
-    AlexaApiError
-  >(
-    (response) =>
-      match(response)
-        .with({ deviceStates: Pattern.not([]) }, constTrue)
-        .otherwise(constFalse),
-    (response) =>
-      match(response)
-        .with(
-          {
-            deviceStates: Pattern.optional([]),
-            errors: [{ code: DeviceOffline.code }],
-          },
-          constant(new DeviceOffline()),
-        )
-        .otherwise(
-          (r) =>
-            new RequestUnsuccessful(
-              `Error getting smart home device state. Response: ${JSON.stringify(
-                r,
-              )}`,
-              r.errors?.[0]?.code,
-            ),
-        ),
-  );
 
   private static async toPromise<T>(
     fn: (cb: CallbackWithErrorAndBody) => void,
@@ -340,63 +276,6 @@ export class AlexaApiWrapper {
         ),
     );
   }
-
-  private static extractCapabilityStates(
-    getDeviceStatesResponse: GetDeviceStatesResponse,
-  ): CapabilityStates {
-    const toCapabilityStates = (
-      capabilityStates: Nullable<string[]>,
-    ): OptionalCapabilityStates => {
-      return O.Functor.map(
-        O.fromNullable(capabilityStates),
-        flow(
-          A.map(util.parseJson),
-          A.map(AlexaApiWrapper.validateCapabilityState),
-          A.filter(
-            (
-              maybeCs,
-            ): maybeCs is Either<AlexaApiError, Some<CapabilityState>> =>
-              E.isLeft(maybeCs) || E.exists(O.isSome)(maybeCs),
-          ),
-          A.map(E.map(({ value }) => value)),
-        ),
-      );
-    };
-
-    return pipe(
-      O.fromNullable(getDeviceStatesResponse.deviceStates),
-      O.map(
-        A.reduce({} as CapabilityStatesByDevice, (acc, cur) => {
-          acc[cur.entity.entityId] = toCapabilityStates(cur.capabilityStates);
-          return acc;
-        }),
-      ),
-      O.map((statesByDevice) => ({ statesByDevice, fromCache: false })),
-      O.getOrElse(
-        constant({ statesByDevice: {}, fromCache: false } as CapabilityStates),
-      ),
-    );
-  }
-
-  private static validateCapabilityState = E.bimap(
-    (e: AlexaApiError) => new InvalidResponse(e.message),
-    (j: Json) =>
-      match(j)
-        .with(
-          {
-            namespace: Pattern.select('namespace', Pattern.string),
-            value: Pattern.union(
-              Pattern.select('value', Pattern.string),
-              Pattern.select('value', Pattern.number),
-              Pattern.select('value', Pattern.boolean),
-              { name: Pattern.select('value', Pattern.string) },
-            ),
-            name: Pattern.select('name', Pattern._),
-          },
-          (jr) => O.of(jr as CapabilityState),
-        )
-        .otherwise(constant(O.none)),
-  );
 
   private doesCacheContainAllIds = (cachedIds: string[], queryIds: string[]) =>
     queryIds.every((id) => {

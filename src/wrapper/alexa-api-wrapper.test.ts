@@ -6,6 +6,7 @@ import { constVoid } from 'fp-ts/lib/function';
 import { DeviceResponse } from '../domain/alexa';
 import {
   HttpError,
+  InvalidResponse,
   RequestUnsuccessful,
 } from '../domain/alexa/errors';
 import GetDeviceStatesResponse, {
@@ -14,6 +15,7 @@ import GetDeviceStatesResponse, {
 import SetDeviceStateResponse from '../domain/alexa/set-device-state';
 import { PluginLogger } from '../util/plugin-logger';
 import { AlexaApiWrapper } from './alexa-api-wrapper';
+import GetDevicesResponse from '../domain/alexa/get-devices';
 
 jest.mock('alexa-remote2');
 const alexaRemoteMocks = AlexaRemote as jest.MockedClass<typeof AlexaRemote>;
@@ -280,6 +282,42 @@ describe('getDeviceStates', () => {
           'TestError',
         ),
       ),
+    );
+  });
+});
+
+describe('getDevices', () => {
+  test('should return error given empty response', async () => {
+    // given
+    const wrapper = getAlexaApiWrapper();
+    const mockAlexa = getMockedAlexaRemote();
+    mockAlexa.getSmarthomeEntities.mockImplementationOnce((cb) =>
+      cb(undefined, undefined as GetDevicesResponse),
+    );
+
+    // when
+    const actual = wrapper.getDevices()();
+
+    // then
+    await expect(actual).resolves.toStrictEqual(
+      E.left(new InvalidResponse('No Alexa devices were found for the current Alexa account')),
+    );
+  });
+
+  test('should return error given invalid response', async () => {
+    // given
+    const wrapper = getAlexaApiWrapper();
+    const mockAlexa = getMockedAlexaRemote();
+    mockAlexa.getSmarthomeEntities.mockImplementationOnce((cb) =>
+      cb(undefined, {} as GetDevicesResponse),
+    );
+
+    // when
+    const actual = wrapper.getDevices()();
+
+    // then
+    await expect(actual).resolves.toStrictEqual(
+      E.left(new InvalidResponse('Invalid list of Alexa devices found for the current Alexa account')),
     );
   });
 });
