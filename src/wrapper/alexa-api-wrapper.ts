@@ -11,12 +11,8 @@ import * as RRecord from 'fp-ts/ReadonlyRecord';
 import * as TE from 'fp-ts/TaskEither';
 import { TaskEither } from 'fp-ts/TaskEither';
 import { match as fpMatch } from 'fp-ts/boolean';
-import { constVoid, constant, identity, pipe } from 'fp-ts/lib/function';
-import {
-  CapabilityState,
-  SupportedActionsType,
-  SupportedNamespacesType,
-} from '../domain/alexa';
+import { constVoid, constant, pipe } from 'fp-ts/lib/function';
+import { CapabilityState, SupportedActionsType } from '../domain/alexa';
 import { AlexaApiError, HttpError, TimeoutError } from '../domain/alexa/errors';
 import GetDeviceStatesResponse, {
   CapabilityStatesByDevice,
@@ -57,7 +53,10 @@ export class AlexaApiWrapper {
     );
   }
 
-  getCacheValue(deviceId: string, namespace: SupportedNamespacesType) {
+  getCacheValue(
+    deviceId: string,
+    { namespace, name }: Omit<CapabilityState, 'value'>,
+  ): Option<CapabilityState> {
     return pipe(
       this.deviceStatesCache.cachedStates,
       RRecord.lookup(deviceId),
@@ -65,7 +64,10 @@ export class AlexaApiWrapper {
         A.findFirstMap((cache) =>
           pipe(
             cache,
-            O.exists(({ namespace: cachedNS }) => cachedNS === namespace),
+            O.exists(
+              ({ namespace: cachedNS, name: cachedName }) =>
+                cachedNS === namespace && (!name || cachedName === name),
+            ),
             fpMatch(constant(O.none), constant(cache)),
           ),
         ),
@@ -85,7 +87,7 @@ export class AlexaApiWrapper {
             ? pipe(
               statesByDevice,
               RRecord.lookup(id),
-              O.flatMap(identity),
+              O.flatten,
               O.map(A.map(O.getRight)),
               O.getOrElse(constant(new Array<Option<CapabilityState>>())),
             )
@@ -98,15 +100,9 @@ export class AlexaApiWrapper {
     return this.deviceStatesCache.cachedStates;
   }
 
-  updateCacheValue(
-    deviceId: string,
-    newState: {
-      namespace: SupportedNamespacesType;
-      value: string | number | boolean;
-    },
-  ) {
+  updateCacheValue(deviceId: string, newState: CapabilityState) {
     pipe(
-      this.getCacheValue(deviceId, newState.namespace),
+      this.getCacheValue(deviceId, newState),
       O.tap((cs) => {
         cs.value = newState.value;
         return O.of(cs);

@@ -264,8 +264,11 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
       IOE.Do,
       IOE.tapIO(() =>
         this.log.debug(
-          'Attempting to restore existing accessory from cache:',
-          device,
+          `Attempting to restore existing accessory from cache:: ${JSON.stringify(
+            device,
+            undefined,
+            2,
+          )}`,
         ),
       ),
       IOE.flatMapEither(() =>
@@ -298,7 +301,13 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     return pipe(
       IOE.Do,
       IOE.tapIO(() =>
-        this.log.debug('Attempting to add new accessory:', device),
+        this.log.debug(
+          `Attempting to add new accessory: ${JSON.stringify(
+            device,
+            undefined,
+            2,
+          )}`,
+        ),
       ),
       IOE.flatMapEither(() =>
         AccessoryFactory.createAccessory(this, acc, device),

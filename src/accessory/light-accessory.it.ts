@@ -25,6 +25,7 @@ it('should update power state, cache new value on success, and use cached new va
   const powerState = await acc.handlePowerGet();
   await acc.handlePowerSet(!powerState);
   const updatedState = await acc.handlePowerGet();
+  await acc.handlePowerSet(powerState);
 
   // then
   expect(powerState).toBeDefined();
