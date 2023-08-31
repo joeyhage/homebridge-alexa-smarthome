@@ -132,7 +132,13 @@ describe('setDeviceState', () => {
     await expect(actual).resolves.toStrictEqual(
       E.left(
         new RequestUnsuccessful(
-          'Error setting smart home device state. Response: {"errors":[{"code":"TestError"}]}',
+          `Error setting smart home device state. Response: ${JSON.stringify(
+            {
+              errors: [{ code: 'TestError' }],
+            },
+            undefined,
+            2,
+          )}`,
           'TestError',
         ),
       ),
@@ -278,7 +284,14 @@ describe('getDeviceStates', () => {
     await expect(actual).resolves.toStrictEqual(
       E.left(
         new RequestUnsuccessful(
-          'Error getting smart home device state. Response: {"deviceStates":[],"errors":[{"code":"TestError"}]}',
+          `Error getting smart home device state. Response: ${JSON.stringify(
+            {
+              deviceStates: [],
+              errors: [{ code: 'TestError' }],
+            },
+            undefined,
+            2,
+          )}`,
           'TestError',
         ),
       ),
@@ -300,7 +313,11 @@ describe('getDevices', () => {
 
     // then
     await expect(actual).resolves.toStrictEqual(
-      E.left(new InvalidResponse('No Alexa devices were found for the current Alexa account')),
+      E.left(
+        new InvalidResponse(
+          'No Alexa devices were found for the current Alexa account',
+        ),
+      ),
     );
   });
 
@@ -309,7 +326,7 @@ describe('getDevices', () => {
     const wrapper = getAlexaApiWrapper();
     const mockAlexa = getMockedAlexaRemote();
     mockAlexa.getSmarthomeEntities.mockImplementationOnce((cb) =>
-      cb(undefined, {} as GetDevicesResponse),
+      cb(undefined, 'some error' as unknown as GetDevicesResponse),
     );
 
     // when
@@ -317,7 +334,11 @@ describe('getDevices', () => {
 
     // then
     await expect(actual).resolves.toStrictEqual(
-      E.left(new InvalidResponse('Invalid list of Alexa devices found for the current Alexa account')),
+      E.left(
+        new InvalidResponse(
+          'Invalid list of Alexa devices found for the current Alexa account: "some error"',
+        ),
+      ),
     );
   });
 });

@@ -22,7 +22,11 @@ export const validateSetStateSuccessful = E.fromPredicate<
       .otherwise(constFalse),
   (r) =>
     new RequestUnsuccessful(
-      `Error setting smart home device state. Response: ${JSON.stringify(r)}`,
+      `Error setting smart home device state. Response: ${JSON.stringify(
+        r,
+        undefined,
+        2,
+      )}`,
       r.errors?.[0]?.code,
     ),
 );

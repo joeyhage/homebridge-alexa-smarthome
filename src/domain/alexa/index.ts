@@ -36,6 +36,8 @@ export interface DeviceResponse {
 export const SupportedNamespaces = {
   'Alexa.PowerController': 'Alexa.PowerController',
   'Alexa.BrightnessController': 'Alexa.BrightnessController',
+  'Alexa.TemperatureSensor': 'Alexa.TemperatureSensor',
+  'Alexa.ThermostatController': 'Alexa.ThermostatController',
 } as const;
 
 export type SupportedNamespacesType = keyof typeof SupportedNamespaces;
@@ -44,12 +46,13 @@ export const SupportedActions = {
   turnOn: 'turnOn',
   turnOff: 'turnOff',
   setBrightness: 'setBrightness',
+  setTargetTemperature: 'setTargetTemperature',
 } as const;
 
 export type SupportedActionsType = keyof typeof SupportedActions;
 
 export interface CapabilityState {
-  namespace: string;
+  namespace: SupportedNamespacesType;
   name?: Nullable<string>;
-  value: string | number | boolean;
+  value: string | number | boolean | Record<string, string | number>;
 }

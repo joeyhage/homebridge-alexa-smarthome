@@ -1,19 +1,14 @@
+import * as A from 'fp-ts/Array';
 import * as IO from 'fp-ts/IO';
 import * as O from 'fp-ts/Option';
 import { Option } from 'fp-ts/Option';
+import * as RRecord from 'fp-ts/ReadonlyRecord';
 import * as TE from 'fp-ts/TaskEither';
 import { TaskEither } from 'fp-ts/TaskEither';
-import * as A from 'fp-ts/Array';
-import * as RRecord from 'fp-ts/ReadonlyRecord';
 import { identity, pipe } from 'fp-ts/lib/function';
-import {
-  Characteristic,
-  CharacteristicValue,
-  PlatformAccessory,
-  Service,
-} from 'homebridge';
+import { Characteristic, PlatformAccessory, Service } from 'homebridge';
 import { match } from 'ts-pattern';
-import { CapabilityState, SupportedNamespacesType } from '../domain/alexa';
+import { CapabilityState } from '../domain/alexa';
 import {
   AlexaApiError,
   DeviceOffline,
@@ -92,12 +87,6 @@ export default abstract class BaseAccessory {
     );
   }
 
-  get serviceCommunicationError() {
-    return new this.platform.api.hap.HapStatusError(
-      this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE,
-    );
-  }
-
   getState<S, C>(
     toCharacteristicStateFn: (fa: O.Option<S[]>) => O.Option<C>,
   ): TaskEither<AlexaApiError, C> {
@@ -125,18 +114,16 @@ export default abstract class BaseAccessory {
   }
 
   getCacheValue(
-    namespace: SupportedNamespacesType,
-  ): Option<CharacteristicValue> {
+    namespace: CapabilityState['namespace'],
+    name?: CapabilityState['name'],
+  ): Option<CapabilityState['value']> {
     return pipe(
-      this.platform.alexaApi.getCacheValue(this.device.id, namespace),
+      this.platform.alexaApi.getCacheValue(this.device.id, { namespace, name }),
       O.flatMap(({ value }) => O.fromNullable(value)),
     );
   }
 
-  updateCacheValue(newState: {
-    namespace: SupportedNamespacesType;
-    value: string | number | boolean;
-  }) {
+  updateCacheValue(newState: CapabilityState) {
     return IO.of(
       this.platform.alexaApi.updateCacheValue(this.device.id, newState),
     );
@@ -146,19 +133,32 @@ export default abstract class BaseAccessory {
     return this.service.getCharacteristic(characteristic)?.value ?? null;
   }
 
-  updateHapValue(
-    characteristic: Parameters<Service['getCharacteristic']>[0],
-    value: CharacteristicValue | null,
-  ) {
-    return this.service.getCharacteristic(characteristic)?.updateValue(value);
+  get serviceCommunicationError() {
+    return new this.platform.api.hap.HapStatusError(
+      this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE,
+    );
+  }
+
+  get readOnlyError() {
+    return new this.platform.api.hap.HapStatusError(
+      this.platform.api.hap.HAPStatus.READ_ONLY_CHARACTERISTIC,
+    );
+  }
+
+  get notAllowedError() {
+    return new this.platform.api.hap.HapStatusError(
+      this.platform.api.hap.HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE,
+    );
+  }
+
+  get invalidValueError() {
+    return new this.platform.api.hap.HapStatusError(
+      this.platform.api.hap.HAPStatus.INVALID_VALUE_IN_REQUEST,
+    );
   }
 
   private extractStates<T>(maybeStates: Option<CapabilityState>[]): T[] {
-    return pipe(
-      maybeStates,
-      A.map(O.map(({ namespace, value }) => ({ namespace, value } as T))),
-      A.filterMap(identity),
-    );
+    return pipe(maybeStates as Option<T>[], A.filterMap(identity));
   }
 
   abstract configureServices(): void;

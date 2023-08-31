@@ -19,7 +19,8 @@ export const validateGetDevicesSuccessful = flow(
         ? E.of(devices)
         : E.left(
           new InvalidResponse(
-            'Invalid list of Alexa devices found for the current Alexa account',
+            'Invalid list of Alexa devices found for the current Alexa account: ' +
+                JSON.stringify(devices, undefined, 2),
           ),
         ),
   ),
@@ -34,6 +35,11 @@ export interface SmartHomeDevice {
     enabled: string;
     categoryType: string;
     deviceType: string;
+    dmsDeviceIdentifiers?: Nullable<
+      {
+        deviceSerialNumber: Nullable<string>;
+      }[]
+    >;
   };
 }
 

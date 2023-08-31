@@ -1,24 +1,18 @@
+import * as A from 'fp-ts/Array';
 import * as O from 'fp-ts/Option';
 import * as TE from 'fp-ts/TaskEither';
-import * as A from 'fp-ts/Array';
-import { constant, flow, identity, pipe } from 'fp-ts/lib/function';
+import { flow, identity, pipe } from 'fp-ts/lib/function';
 import { CharacteristicValue, Service } from 'homebridge';
-import { SupportedNamespaces, SupportedNamespacesType } from '../domain/alexa';
-import * as mapper from '../util/mapper';
+import {
+  SupportedActionsType,
+  SupportedNamespacesType,
+} from '../domain/alexa';
+import { LightbulbNamespaces, LightbulbState } from '../domain/alexa/lightbulb';
+import * as mapper from '../mapper/power-mapper';
 import BaseAccessory from './base-accessory';
 
-export interface LightbulbState {
-  namespace: keyof typeof LightbulbNamespaces &
-    keyof typeof SupportedNamespaces;
-  value: NonNullable<string | number | boolean>;
-}
-
-const LightbulbNamespaces = {
-  'Alexa.PowerController': 'Alexa.PowerController',
-  'Alexa.BrightnessController': 'Alexa.BrightnessController',
-} as const;
-
 export default class LightAccessory extends BaseAccessory {
+  static requiredOperations: SupportedActionsType[] = ['turnOn', 'turnOff'];
   service: Service;
   namespaces = LightbulbNamespaces;
 
@@ -30,15 +24,10 @@ export default class LightAccessory extends BaseAccessory {
         this.device.displayName,
       );
 
-    if (
-      this.device.supportedOperations.includes('turnOn') &&
-      this.device.supportedOperations.includes('turnOff')
-    ) {
-      this.service
-        .getCharacteristic(this.Characteristic.On)
-        .onGet(this.handlePowerGet.bind(this))
-        .onSet(this.handlePowerSet.bind(this));
-    }
+    this.service
+      .getCharacteristic(this.Characteristic.On)
+      .onGet(this.handlePowerGet.bind(this))
+      .onSet(this.handlePowerSet.bind(this));
 
     if (this.device.supportedOperations.includes('setBrightness')) {
       this.service
@@ -60,15 +49,7 @@ export default class LightAccessory extends BaseAccessory {
       ),
     );
 
-    const cacheValue = this.getCacheValue(alexaNamespace);
-    this.logWithContext(
-      'debug',
-      `Triggered get power. Cached value before update: ${O.getOrElse(
-        constant('' as CharacteristicValue),
-      )(cacheValue)}`,
-    );
-
-    return await pipe(
+    return pipe(
       this.getState(determinePowerState),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get power', e);
@@ -80,7 +61,7 @@ export default class LightAccessory extends BaseAccessory {
   async handlePowerSet(value: CharacteristicValue): Promise<void> {
     this.logWithContext('debug', `Triggered set power: ${value}`);
     if (typeof value !== 'boolean') {
-      return;
+      throw this.invalidValueError;
     }
     const action = mapper.mapHomeKitPowerToAlexaAction(value);
     try {
@@ -91,13 +72,6 @@ export default class LightAccessory extends BaseAccessory {
             value: mapper.mapHomeKitPowerToAlexaValue(value),
             namespace: 'Alexa.PowerController',
           }),
-        ),
-        TE.tap(() =>
-          TE.of(
-            this.service
-              .getCharacteristic(this.Characteristic.On)
-              .updateValue(value),
-          ),
         ),
       )();
     } catch (e) {
@@ -112,21 +86,15 @@ export default class LightAccessory extends BaseAccessory {
       O.filterMap<LightbulbState[], LightbulbState>(
         A.findFirst(({ namespace }) => namespace === alexaNamespace),
       ),
-      O.map(({ value }) => value as number),
+      O.flatMap(({ value }) =>
+        typeof value === 'number' ? O.of(value) : O.none,
+      ),
       O.tap((s) =>
         O.of(this.logWithContext('debug', `Get brightness result: ${s}`)),
       ),
     );
 
-    const cacheValue = this.getCacheValue(alexaNamespace);
-    this.logWithContext(
-      'debug',
-      `Triggered get brightness. Cached value before update: ${O.getOrElse(
-        constant('' as CharacteristicValue),
-      )(cacheValue)}`,
-    );
-
-    return await pipe(
+    return pipe(
       this.getState(determineBrightnessState),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get brightness', e);
@@ -138,7 +106,7 @@ export default class LightAccessory extends BaseAccessory {
   async handleBrightnessSet(value: CharacteristicValue): Promise<void> {
     this.logWithContext('debug', `Triggered set brightness: ${value}`);
     if (typeof value !== 'number') {
-      return;
+      throw this.invalidValueError;
     }
     const newBrightness = value.toString(10);
     try {
@@ -151,13 +119,6 @@ export default class LightAccessory extends BaseAccessory {
             value: newBrightness,
             namespace: 'Alexa.BrightnessController',
           }),
-        ),
-        TE.tap(() =>
-          TE.of(
-            this.service
-              .getCharacteristic(this.Characteristic.Brightness)
-              .updateValue(newBrightness),
-          ),
         ),
       )();
     } catch (e) {

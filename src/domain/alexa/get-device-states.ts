@@ -44,6 +44,8 @@ export const validateGetStatesSuccessful = E.fromPredicate<
           new RequestUnsuccessful(
             `Error getting smart home device state. Response: ${JSON.stringify(
               r,
+              undefined,
+              2,
             )}`,
             r.errors?.[0]?.code,
           ),
@@ -92,13 +94,8 @@ const validateCapabilityState = E.bimap(
       .with(
         {
           namespace: Pattern.select('namespace', Pattern.string),
-          value: Pattern.union(
-            Pattern.select('value', Pattern.string),
-            Pattern.select('value', Pattern.number),
-            Pattern.select('value', Pattern.boolean),
-            { name: Pattern.select('value', Pattern.string) },
-          ),
-          name: Pattern.select('name', Pattern._),
+          name: Pattern.select('name'),
+          value: Pattern.select('value'),
         },
         (jr) => O.of(jr as CapabilityState),
       )

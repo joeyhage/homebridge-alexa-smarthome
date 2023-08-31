@@ -1,40 +1,27 @@
+import * as A from 'fp-ts/Array';
 import * as O from 'fp-ts/Option';
 import * as TE from 'fp-ts/TaskEither';
-import * as A from 'fp-ts/Array';
-import { constant, flow, identity, pipe } from 'fp-ts/lib/function';
+import { flow, identity, pipe } from 'fp-ts/lib/function';
 import { CharacteristicValue, Service } from 'homebridge';
-import { SupportedNamespaces } from '../domain/alexa';
-import * as mapper from '../util/mapper';
+import { SupportedActionsType } from '../domain/alexa';
+import { OutletNamespaces, OutletState } from '../domain/alexa/outlet';
+import * as mapper from '../mapper/power-mapper';
 import BaseAccessory from './base-accessory';
 
-export interface OutletState {
-  namespace: keyof typeof SmartPlugNamespaces &
-    keyof typeof SupportedNamespaces;
-  value: NonNullable<string | number | boolean>;
-}
-
-const SmartPlugNamespaces = {
-  'Alexa.PowerController': 'Alexa.PowerController',
-} as const;
-
 export default class OutletAccessory extends BaseAccessory {
+  static requiredOperations: SupportedActionsType[] = ['turnOn', 'turnOff'];
   service: Service;
-  namespaces = SmartPlugNamespaces;
+  namespaces = OutletNamespaces;
 
   configureServices() {
     this.service =
       this.platformAcc.getService(this.Service.Outlet) ||
       this.platformAcc.addService(this.Service.Outlet, this.device.displayName);
 
-    if (
-      this.device.supportedOperations.includes('turnOn') &&
-      this.device.supportedOperations.includes('turnOff')
-    ) {
-      this.service
-        .getCharacteristic(this.platform.Characteristic.On)
-        .onGet(this.handlePowerGet.bind(this))
-        .onSet(this.handlePowerSet.bind(this));
-    }
+    this.service
+      .getCharacteristic(this.platform.Characteristic.On)
+      .onGet(this.handlePowerGet.bind(this))
+      .onSet(this.handlePowerSet.bind(this));
   }
 
   async handlePowerGet(): Promise<boolean> {
@@ -49,15 +36,7 @@ export default class OutletAccessory extends BaseAccessory {
       ),
     );
 
-    const cacheValue = this.getCacheValue(alexaNamespace);
-    this.logWithContext(
-      'debug',
-      `Triggered get power. Cached value before update: ${O.getOrElse(
-        constant('' as CharacteristicValue),
-      )(cacheValue)}`,
-    );
-
-    return await pipe(
+    return pipe(
       this.getState(determinePowerState),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get power', e);
@@ -69,7 +48,7 @@ export default class OutletAccessory extends BaseAccessory {
   async handlePowerSet(value: CharacteristicValue): Promise<void> {
     this.logWithContext('debug', `Triggered set power: ${value}`);
     if (typeof value !== 'boolean') {
-      return;
+      throw this.invalidValueError;
     }
     const action = mapper.mapHomeKitPowerToAlexaAction(value);
     try {
@@ -80,13 +59,6 @@ export default class OutletAccessory extends BaseAccessory {
             value: mapper.mapHomeKitPowerToAlexaValue(value),
             namespace: 'Alexa.PowerController',
           }),
-        ),
-        TE.tap(() =>
-          TE.of(
-            this.service
-              .getCharacteristic(this.Characteristic.On)
-              .updateValue(value),
-          ),
         ),
       )();
     } catch (e) {

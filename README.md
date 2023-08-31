@@ -42,14 +42,14 @@ This plugin is in beta and has not been battle tested. Expect to encounter issue
 
 ## Currently supported devices
 
-- Lightbulbs (does not include lightbulb groups)
-- Outlets + smart plugs (does not include groups)
+- Lightbulbs
+- Outlets + smart plugs
+- Thermostats
 - [Request / vote](https://homebridge-alexa-smarthome.canny.io/feedback?selectedCategory=supported-device-types) on device types you would like to see supported.
 
 ## Features
 
 - Devices already linked to your Alexa account can be integrated with HomeKit automatically.
-- Device groups created in the Alexa app can be integrated with HomeKit (possible but not yet supported). For example, a group of lights configured in Alexa could be automatically configured in HomeKit.
 - Only Amazon credentials needed to configure this plugin rather than credentials for all your devices.
 - This plugin does not store your Amazon username or password. Instead, it uses session cookies that are valid for up to 14 days.
 
