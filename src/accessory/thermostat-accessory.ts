@@ -2,7 +2,13 @@ import * as A from 'fp-ts/Array';
 import * as O from 'fp-ts/Option';
 import { Option, Some } from 'fp-ts/Option';
 import * as TE from 'fp-ts/TaskEither';
-import { flow, identity, pipe } from 'fp-ts/lib/function';
+import {
+  constFalse,
+  constTrue,
+  flow,
+  identity,
+  pipe,
+} from 'fp-ts/lib/function';
 import { CharacteristicValue, Service } from 'homebridge';
 import { CapabilityState, SupportedActionsType } from '../domain/alexa';
 import {
@@ -168,16 +174,8 @@ export default class ThermostatAccessory extends BaseAccessory {
       ),
     );
 
-    const maybeMode = this.getCacheValue(
-      'Alexa.ThermostatController',
-      'thermostatMode',
-    );
     const targetTempOnAuto = this.calculateTargetTemp();
-    if (
-      O.isSome(maybeMode) &&
-      maybeMode.value === 'AUTO' &&
-      O.isSome(targetTempOnAuto)
-    ) {
+    if (this.onInvalidOrAutoMode() && O.isSome(targetTempOnAuto)) {
       return targetTempOnAuto.value;
     } else {
       return pipe(
@@ -192,16 +190,8 @@ export default class ThermostatAccessory extends BaseAccessory {
 
   async handleTargetTempSet(value: CharacteristicValue): Promise<void> {
     this.logWithContext('debug', `Triggered set target temperature: ${value}`);
-    const maybeMode = this.getCacheValue(
-      'Alexa.ThermostatController',
-      'thermostatMode',
-    );
     const maybeTemp = this.getCacheValue('Alexa.TemperatureSensor');
-    if (
-      O.isNone(maybeMode) ||
-      maybeMode.value === 'AUTO' ||
-      !this.isTempWithScale(maybeTemp)
-    ) {
+    if (this.onInvalidOrAutoMode() || !this.isTempWithScale(maybeTemp)) {
       return;
     }
     if (typeof value !== 'number') {
@@ -254,13 +244,18 @@ export default class ThermostatAccessory extends BaseAccessory {
       ),
     );
 
-    return pipe(
-      this.getState(determineCoolTemp),
-      TE.match((e) => {
-        this.logWithContext('errorT', 'Get cooling temperature', e);
-        throw this.serviceCommunicationError;
-      }, identity),
-    )();
+    const autoTemp = this.getAutoTempFromTargetTemp();
+    if (this.onAutoMode() || O.isNone(autoTemp)) {
+      return pipe(
+        this.getState(determineCoolTemp),
+        TE.match((e) => {
+          this.logWithContext('errorT', 'Get cooling temperature', e);
+          throw this.serviceCommunicationError;
+        }, identity),
+      )();
+    } else {
+      return autoTemp.value;
+    }
   }
 
   async handleCoolTempSet(value: CharacteristicValue): Promise<void> {
@@ -328,13 +323,18 @@ export default class ThermostatAccessory extends BaseAccessory {
       ),
     );
 
-    return pipe(
-      this.getState(determineHeatTemp),
-      TE.match((e) => {
-        this.logWithContext('errorT', 'Get heating temperature', e);
-        throw this.serviceCommunicationError;
-      }, identity),
-    )();
+    const autoTemp = this.getAutoTempFromTargetTemp();
+    if (this.onAutoMode() || O.isNone(autoTemp)) {
+      return pipe(
+        this.getState(determineHeatTemp),
+        TE.match((e) => {
+          this.logWithContext('errorT', 'Get heating temperature', e);
+          throw this.serviceCommunicationError;
+        }, identity),
+      )();
+    } else {
+      return autoTemp.value;
+    }
   }
 
   async handleHeatTempSet(value: CharacteristicValue): Promise<void> {
@@ -383,14 +383,31 @@ export default class ThermostatAccessory extends BaseAccessory {
     }
   }
 
+  private getAutoTempFromTargetTemp() {
+    const alexaNamespace: ThermostatNamespacesType =
+      'Alexa.ThermostatController';
+    const alexaValueName = 'targetSetpoint';
+    const maybeTargetTemp = this.getCacheValue(alexaNamespace, alexaValueName);
+    if (this.isTempWithScale(maybeTargetTemp)) {
+      return tstatMapper.mapAlexaTempToHomeKit({
+        value: maybeTargetTemp.value.value,
+        scale: maybeTargetTemp.value.scale.toUpperCase(),
+      });
+    } else {
+      return O.none;
+    }
+  }
+
   private calculateTargetTemp() {
+    const alexaNamespace: ThermostatNamespacesType =
+      'Alexa.ThermostatController';
     const maybeHeatTemp = this.getCacheValue(
       'Alexa.ThermostatController',
-      'lowerSetpoint',
+      alexaNamespace,
     );
     const maybeCoolTemp = this.getCacheValue(
       'Alexa.ThermostatController',
-      'upperSetpoint',
+      alexaNamespace,
     );
     if (
       this.isTempWithScale(maybeHeatTemp) &&
@@ -411,5 +428,19 @@ export default class ThermostatAccessory extends BaseAccessory {
     value: Option<CapabilityState['value']>,
   ): value is Some<ThermostatTemperature> {
     return O.isSome(value) && isThermostatTemperatureValue(value.value);
+  }
+
+  private onInvalidOrAutoMode() {
+    return pipe(
+      this.getCacheValue('Alexa.ThermostatController', 'thermostatMode'),
+      O.match(constTrue, (m) => m === 'AUTO'),
+    );
+  }
+
+  private onAutoMode() {
+    return pipe(
+      this.getCacheValue('Alexa.ThermostatController', 'thermostatMode'),
+      O.match(constFalse, (m) => m === 'AUTO'),
+    );
   }
 }

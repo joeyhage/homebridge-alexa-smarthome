@@ -15,7 +15,7 @@ import {
 } from 'fp-ts/lib/function';
 import fs from 'fs';
 import type { PlatformConfig } from 'homebridge';
-import { Pattern, match } from 'ts-pattern';
+import { Pattern, isMatching, match } from 'ts-pattern';
 import { Authentication } from '../domain/alexa';
 import { AlexaDeviceError } from '../domain/alexa/errors';
 import type { AlexaPlatformConfig } from '../domain/homebridge';
@@ -26,22 +26,35 @@ import {
   ValidationError,
 } from '../domain/homebridge/errors';
 
+const isBetweenIncl = (value: number, min: number, max: number): boolean =>
+  value >= min && value <= max;
+
 export const validateConfig = (
   config: PlatformConfig,
 ): config is AlexaPlatformConfig =>
   match(config)
-    .with(
-      {
-        platform: 'HomebridgeAlexaSmartHome',
-        amazonDomain: Pattern.optional(Pattern.string),
-        auth: {
-          refreshInterval: Pattern.optional(Pattern.number),
-          proxy: { clientHost: Pattern.string, port: Pattern.number },
-        },
-        language: Pattern.optional(Pattern.string),
-        devices: Pattern.optional(Pattern.array(Pattern.string)),
-        debug: Pattern.optional(Pattern.boolean),
-      },
+    .when(
+      (c) =>
+        isMatching(
+          {
+            platform: 'HomebridgeAlexaSmartHome',
+            devices: Pattern.optional(Pattern.array(Pattern.string)),
+            amazonDomain: Pattern.optional(Pattern.string),
+            language: Pattern.optional(Pattern.string),
+            auth: {
+              refreshInterval: Pattern.optional(Pattern.number),
+              proxy: { clientHost: Pattern.string, port: Pattern.number },
+            },
+            performance: Pattern.optional({
+              cacheTTL: Pattern.optional(Pattern.number),
+              backgroundRefresh: Pattern.optional(Pattern.boolean),
+            }),
+            debug: Pattern.optional(Pattern.boolean),
+          },
+          c,
+        ) &&
+        isBetweenIncl(c.auth.proxy.port, 1024, 9999) &&
+        isBetweenIncl(c.performance?.cacheTTL ?? 30, 15, 600),
       constTrue,
     )
     .otherwise(constFalse);

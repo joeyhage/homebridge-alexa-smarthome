@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, unreleased work in progress.
 
+## [0.1.1] - 2023-09-01
+
+### Changed
+
+- Device state cache duration and background refresh can be customized to improve plugin performance and help with 'This plugin slows down Homebridge' messages in the Homebridge logs.
+
 ## [0.1.0] - 2023-08-30
 
 ### Added
@@ -49,7 +55,8 @@ See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, 
 
 - Support for outlets i.e. smart plugs.
 
-[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.1.0...HEAD
+[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.0.19...v0.1.0
 [0.0.19]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.0.18...v0.0.19
 [0.0.18]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.0.17...v0.0.18
