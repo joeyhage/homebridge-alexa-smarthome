@@ -1,17 +1,22 @@
 import { PlatformConfig } from 'homebridge';
 import { AmazonDomain } from '../alexa/index';
+import { Nullable } from '../index';
 
 export interface AlexaPlatformConfig extends PlatformConfig {
   platform: 'HomebridgeAlexaSmartHome';
-  devices?: string[];
-  amazonDomain?: AmazonDomain;
+  devices: Nullable<string[]>;
+  amazonDomain: Nullable<AmazonDomain>;
+  language: Nullable<string>;
   auth: {
     proxy: {
       clientHost: string;
       port: number;
     };
-    refreshInterval?: number;
+    refreshInterval: Nullable<number>;
   };
-  language?: string;
-  debug?: boolean;
+  performance: Nullable<{
+    cacheTTL: Nullable<number>;
+    backgroundRefresh: Nullable<boolean>;
+  }>;
+  debug: Nullable<boolean>;
 }

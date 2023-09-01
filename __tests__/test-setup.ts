@@ -29,8 +29,9 @@ global.createPlatform = (): AlexaSmartHomePlatform =>
 
 global.createPlatformConfig = (): AlexaPlatformConfig => ({
   platform: 'HomebridgeAlexaSmartHome',
-  amazonDomain: 'amazon.com',
   devices: [],
+  amazonDomain: 'amazon.com',
+  language: 'en-US',
   auth: {
     refreshInterval: 0,
     proxy: {
@@ -38,6 +39,9 @@ global.createPlatformConfig = (): AlexaPlatformConfig => ({
       port: 2345,
     },
   },
-  language: 'en-US',
+  performance: {
+    cacheTTL: 30,
+    backgroundRefresh: false,
+  },
   debug: true,
 });

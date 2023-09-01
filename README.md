@@ -37,6 +37,7 @@ This plugin is in beta and has not been battle tested. Expect to encounter issue
 - [Features](#features)
 - [Initial configuration](#initial-configuration)
 - [Issues and questions](#issues-and-questions)
+- [Common issues](#common-issues)
 - [Long-term support](#long-term-support)
 - [Disclaimer](#disclaimer)
 
@@ -75,6 +76,14 @@ The first time this plugin starts, you will need to authenticate using your Amaz
 Please visit the [Canny feedback board](https://homebridge-alexa-smarthome.canny.io/feedback) first to see if your issue or request is currently being worked on. You can also suggest new features and vote on features requested by others.
 
 If you run into issues or you need help please use the [issues template](https://github.com/joeyhage/homebridge-alexa-smarthome/issues/new/choose). Fill all the relevant sections and submit your issue. It is important that you use the templates because I will automatically be assigned to your issue and I will receive an email. If you use the blank template without assigning me, I will most likely miss the Github notification.
+
+## Common issues
+
+
+<details>
+  <summary>This plugin slows down Homebridge</summary>
+  Please update the Performance section of the plugin settings. More information can be found on the plugin settings page.
+</details>
 
 ## Long-term support
 

@@ -29,6 +29,7 @@ import SetDeviceStateResponse, {
   validateSetStateSuccessful,
 } from '../domain/alexa/set-device-state';
 import { PluginLogger } from '../util/plugin-logger';
+import { Nullable } from '../domain';
 
 export interface DeviceStatesCache {
   lastUpdated: Date;
@@ -37,6 +38,8 @@ export interface DeviceStatesCache {
 
 export class AlexaApiWrapper {
   private readonly mutex: MutexInterface;
+
+  public readonly cacheTTL: number;
   public readonly deviceStatesCache: DeviceStatesCache = {
     lastUpdated: new Date(0),
     cachedStates: {},
@@ -45,12 +48,14 @@ export class AlexaApiWrapper {
   constructor(
     private readonly alexaRemote: AlexaRemote,
     private readonly log: PluginLogger,
-    private readonly cacheTTL = 30_000,
+    cacheTTL?: Nullable<number>,
   ) {
     this.mutex = withTimeout(
       new Mutex(new TimeoutError('Alexa API Timeout')),
       30_000,
     );
+    this.cacheTTL =
+      pipe(cacheTTL, O.fromNullable, O.getOrElse(constant(30))) * 1_000;
   }
 
   getCacheValue(
@@ -281,4 +286,7 @@ export class AlexaApiWrapper {
   private isCacheFresh = () =>
     this.deviceStatesCache.lastUpdated.getTime() >
     new Date().getTime() - this.cacheTTL;
+
+  // updated: 0, current: 30, cache: 25 -> false
+  // updated: 0, current: 20, cache: 25 -> true
 }
