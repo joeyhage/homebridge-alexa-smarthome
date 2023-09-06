@@ -402,12 +402,12 @@ export default class ThermostatAccessory extends BaseAccessory {
     const alexaNamespace: ThermostatNamespacesType =
       'Alexa.ThermostatController';
     const maybeHeatTemp = this.getCacheValue(
-      'Alexa.ThermostatController',
       alexaNamespace,
+      'lowerSetpoint',
     );
     const maybeCoolTemp = this.getCacheValue(
-      'Alexa.ThermostatController',
       alexaNamespace,
+      'upperSetpoint',
     );
     if (
       this.isTempWithScale(maybeHeatTemp) &&
