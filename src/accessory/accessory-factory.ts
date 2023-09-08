@@ -14,11 +14,12 @@ import BaseAccessory from './base-accessory';
 import LightAccessory from './light-accessory';
 import OutletAccessory from './outlet-accessory';
 import ThermostatAccessory from './thermostat-accessory';
+import TelevisionAccessory from './television-accessory';
 
 export default class AccessoryFactory {
   static createAccessory(
     platform: AlexaSmartHomePlatform,
-    accessory: PlatformAccessory,
+    platAcc: PlatformAccessory,
     device: SmartHomeDevice,
   ): Either<AlexaDeviceError, BaseAccessory> {
     const toAccessory = (): Either<AlexaDeviceError, BaseAccessory> =>
@@ -27,14 +28,14 @@ export default class AccessoryFactory {
           ([type, ops]) =>
             type === 'LIGHT' &&
             supportsRequiredActions(LightAccessory.requiredOperations, ops),
-          () => E.of(new LightAccessory(platform, device, accessory)),
+          () => E.of(new LightAccessory(platform, device, platAcc)),
         )
         .when(
           ([type, ops]) =>
             type === 'SMARTPLUG' &&
             supportsRequiredActions(OutletAccessory.requiredOperations, ops),
 
-          () => E.of(new OutletAccessory(platform, device, accessory)),
+          () => E.of(new OutletAccessory(platform, device, platAcc)),
         )
         .when(
           ([type, ops]) =>
@@ -43,7 +44,16 @@ export default class AccessoryFactory {
               ThermostatAccessory.requiredOperations,
               ops,
             ),
-          () => E.of(new ThermostatAccessory(platform, device, accessory)),
+          () => E.of(new ThermostatAccessory(platform, device, platAcc)),
+        )
+        .when(
+          ([type, ops]) =>
+            type === 'ALEXA_VOICE_ENABLED' &&
+            supportsRequiredActions(
+              TelevisionAccessory.requiredOperations,
+              ops,
+            ),
+          () => E.of(new TelevisionAccessory(platform, device, platAcc)),
         )
         .otherwise(() => E.left(new UnsupportedDeviceError(device)));
 

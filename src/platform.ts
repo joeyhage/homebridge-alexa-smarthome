@@ -1,4 +1,5 @@
 import AlexaRemote, { InitOptions } from 'alexa-remote2';
+import * as A from 'fp-ts/Array';
 import * as E from 'fp-ts/Either';
 import * as IO from 'fp-ts/IO';
 import * as IOE from 'fp-ts/IOEither';
@@ -7,7 +8,6 @@ import * as J from 'fp-ts/Json';
 import * as O from 'fp-ts/Option';
 import { Option } from 'fp-ts/Option';
 import * as TE from 'fp-ts/TaskEither';
-import * as A from 'fp-ts/Array';
 import { match as fpMatch } from 'fp-ts/boolean';
 import { constVoid, constant, flow, identity, pipe } from 'fp-ts/lib/function';
 import fs from 'fs';
@@ -316,9 +316,9 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     device: SmartHomeDevice,
     uuid: string,
   ): IOEither<AlexaDeviceError, BaseAccessory> {
-    const acc = new this.api.platformAccessory(device.displayName, uuid);
-    acc.context = {
-      ...acc.context,
+    const platAcc = new this.api.platformAccessory(device.displayName, uuid);
+    platAcc.context = {
+      ...platAcc.context,
       deviceId: device.id,
       deviceType: device.providerData.deviceType,
     };
@@ -327,7 +327,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
       IOE.Do,
       IOE.tapIO(() =>
         this.log.debug(
-          `Attempting to add new accessory: ${JSON.stringify(
+          `Attempting to add accessory: ${JSON.stringify(
             device,
             undefined,
             2,
@@ -335,16 +335,19 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
         ),
       ),
       IOE.flatMapEither(() =>
-        AccessoryFactory.createAccessory(this, acc, device),
+        AccessoryFactory.createAccessory(this, platAcc, device),
       ),
       IOE.tapIO(() =>
-        this.log.info('Added new accessory:', device.displayName),
+        this.log.info('Added accessory:', device.displayName),
       ),
-      IOE.tapEither(() => {
-        this.api.registerPlatformAccessories(
+      IOE.tapEither((acc) => {
+        acc.isExternalAccessory ? this.api.publishExternalAccessories(
+          settings.PLUGIN_NAME,
+          [platAcc],
+        ) : this.api.registerPlatformAccessories(
           settings.PLUGIN_NAME,
           settings.PLATFORM_NAME,
-          [acc],
+          [platAcc],
         );
         this.activeDeviceIds.push(device.id);
         return E.of(constVoid());

@@ -31,6 +31,7 @@ This plugin **does not** allow Alexa to control devices in HomeKit. For that, pl
 
 - [Currently supported devices](#currently-supported-devices)
 - [Features](#features)
+  - [Echo devices](#echo-devices)
 - [Initial configuration](#initial-configuration)
 - [Common issues](#common-issues)
 - [Support](#support)
@@ -42,6 +43,10 @@ This plugin **does not** allow Alexa to control devices in HomeKit. For that, pl
 - Lightbulbs
 - Outlets + smart plugs
 - Thermostats
+- Echo smart speakers / smart displays
+  - Play + pause
+  - Next track / previous track
+  - Change volume
 - [Request / vote](https://homebridge-alexa-smarthome.canny.io/feedback?selectedCategory=supported-device-types) on device types you would like to see supported.
 
 ## Features
@@ -49,6 +54,21 @@ This plugin **does not** allow Alexa to control devices in HomeKit. For that, pl
 - Devices already linked to your Alexa account can be integrated with HomeKit automatically.
 - Only Amazon credentials needed to configure this plugin rather than credentials for all your devices.
 - This plugin does not store your Amazon username or password. Instead, it uses session cookies that are valid for up to 14 days.
+
+### Echo devices
+
+Echo devices appear in HomeKit as Televisions which enables media control via the [Control Center](https://support.apple.com/guide/tv/use-ios-or-ipados-control-center-atvb701cadc1/tvos).
+
+To use Control Center, follow [these instructions](https://support.apple.com/guide/tv/use-ios-or-ipados-control-center-atvb701cadc1/tvos) to add the controls to your device. Once Control Center is open, you can change the device you are controlling using the `⌄` arrow next to the device name at the top of the screen.
+
+Control Center features:
+  - Play
+  - Pause
+  - Next (right arrow)
+  - Previous (left arrow)
+  - Volume control (hardware volume buttons, a.k.a. volume button on the side of your iPhone/iPad)
+
+Siri is not supported out of the box but I may be able to support in the future.
 
 ## Initial configuration
 

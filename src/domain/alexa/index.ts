@@ -1,7 +1,7 @@
 import { InitOptions } from 'alexa-remote2';
 import { Nullable } from '../index';
 
-export const SupportedDeviceTypes = ['LIGHT', 'SMARTPLUG', 'THERMOSTAT'];
+export const SupportedDeviceTypes = ['LIGHT', 'SMARTPLUG', 'THERMOSTAT', 'ALEXA_VOICE_ENABLED'];
 
 export type AmazonDomain =
   | 'amazon.com'
@@ -54,5 +54,5 @@ export type SupportedActionsType = keyof typeof SupportedActions;
 export interface CapabilityState {
   namespace: SupportedNamespacesType;
   name?: Nullable<string>;
-  value: string | number | boolean | Record<string, string | number>;
+  value: string | number | boolean | Record<string, unknown>;
 }

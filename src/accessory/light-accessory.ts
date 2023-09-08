@@ -15,6 +15,7 @@ export default class LightAccessory extends BaseAccessory {
   static requiredOperations: SupportedActionsType[] = ['turnOn', 'turnOff'];
   service: Service;
   namespaces = LightbulbNamespaces;
+  isExternalAccessory = false;
 
   configureServices() {
     this.service =
