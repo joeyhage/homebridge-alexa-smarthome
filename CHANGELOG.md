@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, unreleased work in progress.
 
+## [0.2.0] - 2023-09-08
+
+### Added
+
+- Support Echo smart speaker and smart display devices. Currently, Echo support includes play, pause, next track, previous track, and changing volume. See [Echo device features](https://github.com/joeyhage/homebridge-alexa-smarthome#echo-devices) for instructions.
+
 ## [0.1.2] - 2023-09-06
 
 ### Fixed
@@ -61,7 +67,8 @@ See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, 
 
 - Support for outlets i.e. smart plugs.
 
-[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.1.2...HEAD
+[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.0.19...v0.1.0

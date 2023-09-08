@@ -121,7 +121,7 @@ function createLightAccessory() {
   const uuid = platform.api.hap.uuid.generate(device.id);
   const platAcc = new platform.api.platformAccessory(device.displayName, uuid);
   const acc = new LightAccessory(platform, device, platAcc);
-  acc.service = acc.platformAcc.addService(
+  acc.service = platAcc.addService(
     acc.Service.Lightbulb,
     acc.device.displayName,
   );

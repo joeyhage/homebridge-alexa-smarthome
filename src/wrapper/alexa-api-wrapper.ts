@@ -1,6 +1,7 @@
 import AlexaRemote, {
-  CallbackWithErrorAndBody,
-  EntityType,
+  type CallbackWithErrorAndBody,
+  type EntityType,
+  type MessageCommands,
 } from 'alexa-remote2';
 import { Mutex, MutexInterface, withTimeout } from 'async-mutex';
 import * as A from 'fp-ts/Array';
@@ -12,6 +13,7 @@ import * as TE from 'fp-ts/TaskEither';
 import { TaskEither } from 'fp-ts/TaskEither';
 import { match as fpMatch } from 'fp-ts/boolean';
 import { constVoid, constant, pipe } from 'fp-ts/lib/function';
+import { Nullable } from '../domain';
 import { CapabilityState, SupportedActionsType } from '../domain/alexa';
 import { AlexaApiError, HttpError, TimeoutError } from '../domain/alexa/errors';
 import GetDeviceStatesResponse, {
@@ -25,11 +27,14 @@ import GetDevicesResponse, {
   SmartHomeDevice,
   validateGetDevicesSuccessful,
 } from '../domain/alexa/get-devices';
+import GetPlayerInfoResponse, {
+  PlayerInfo,
+  validateGetPlayerInfoSuccessful,
+} from '../domain/alexa/get-player-info';
 import SetDeviceStateResponse, {
   validateSetStateSuccessful,
 } from '../domain/alexa/set-device-state';
 import { PluginLogger } from '../util/plugin-logger';
-import { Nullable } from '../domain';
 
 export interface DeviceStatesCache {
   lastUpdated: Date;
@@ -223,6 +228,115 @@ export class AlexaApiWrapper {
     );
   }
 
+  getPlayerInfo(deviceName: string): TaskEither<AlexaApiError, PlayerInfo> {
+    return pipe(
+      TE.tryCatch(
+        () =>
+          AlexaApiWrapper.toPromise<GetPlayerInfoResponse>(
+            this.alexaRemote.getPlayerInfo.bind(this.alexaRemote, deviceName),
+          ),
+        (reason) =>
+          new HttpError(
+            `Error getting media player information. Reason: ${
+              (reason as Error).message
+            }`,
+          ),
+      ),
+      TE.flatMapEither(validateGetPlayerInfoSuccessful),
+    );
+  }
+
+  setVolume(
+    deviceName: string,
+    volume: number,
+  ): TaskEither<AlexaApiError, void> {
+    return pipe(
+      TE.tryCatch(
+        () =>
+          AlexaApiWrapper.toPromise<void>(
+            this.alexaRemote.sendMessage.bind(
+              this.alexaRemote,
+              deviceName,
+              'volume',
+              volume,
+            ),
+          ),
+        (reason) =>
+          new HttpError(
+            `Error setting volume. Reason: ${(reason as Error).message}`,
+          ),
+      ),
+    );
+  }
+
+  controlMedia(
+    deviceName: string,
+    command: MessageCommands,
+  ): TaskEither<AlexaApiError, void> {
+    return pipe(
+      TE.tryCatch(
+        () =>
+          AlexaApiWrapper.toPromise<void>(
+            this.alexaRemote.sendMessage.bind(
+              this.alexaRemote,
+              deviceName,
+              command,
+              false,
+            ),
+          ),
+        (reason) =>
+          new HttpError(
+            `Error sending ${command} command to media player. Reason: ${
+              (reason as Error).message
+            }`,
+          ),
+      ),
+    );
+  }
+
+  // setVolume(
+  //   deviceName: string,
+  //   volume: number,
+  // ): TaskEither<AlexaApiError, void> {
+  //   return pipe(
+  //     O.fromNullable(this.alexaRemote.find(deviceName)),
+  //     O.filterMap((device: NonNullable<unknown>) =>
+  //       typeof device === 'object' && 'deviceType' in device
+  //         ? O.of(device as Serial)
+  //         : O.none,
+  //     ),
+  //     TE.fromOption(
+  //       constant(new InvalidRequest('Unknown device or serial number')),
+  //     ),
+  //     TE.flatMap(({ deviceType, serialNumber }) =>
+  //       TE.tryCatch(
+  //         () =>
+  //           this.httpRequest<SetVolumeResponse>(
+  //             `/api/devices/${deviceType}/${serialNumber}/audio/v2/speakerVolume`,
+  //             {
+  //               method: 'POST',
+  //               data: JSON.stringify({
+  //                 dsn: serialNumber,
+  //                 deviceType: deviceType,
+  //                 volume,
+  //                 muted: false,
+  //                 synchronous: true,
+  //               }),
+  //             },
+  //           ),
+  //         (reason) =>
+  //           new HttpError(
+  //             `Error setting device volume. Reason: ${
+  //               (reason as Error).message
+  //             }`,
+  //           ),
+  //       ),
+  //     ),
+  //     TE.flatMapEither(validateSetVolumeSuccessful),
+  //     TE.map(constVoid),
+  //   );
+  // }
+
   private changeDeviceState(
     entityId: string,
     parameters: Record<string, string>,
@@ -255,6 +369,15 @@ export class AlexaApiWrapper {
     );
   }
 
+  // private async httpRequest<T>(
+  //   path: string,
+  //   flags: { method: 'GET' | 'POST' | 'PUT'; data: string },
+  // ): Promise<T> {
+  //   return AlexaApiWrapper.toPromise<T>((cb) =>
+  //     this.alexaRemote.httpsGetCall(path, cb, flags),
+  //   );
+  // }
+
   private queryDeviceStates(
     entityIds: string[],
     entityType: string,
@@ -284,9 +407,5 @@ export class AlexaApiWrapper {
     });
 
   private isCacheFresh = () =>
-    this.deviceStatesCache.lastUpdated.getTime() >
-    new Date().getTime() - this.cacheTTL;
-
-  // updated: 0, current: 30, cache: 25 -> false
-  // updated: 0, current: 20, cache: 25 -> true
+    this.deviceStatesCache.lastUpdated.getTime() > Date.now() - this.cacheTTL;
 }

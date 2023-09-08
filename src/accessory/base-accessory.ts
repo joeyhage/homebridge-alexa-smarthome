@@ -163,4 +163,5 @@ export default abstract class BaseAccessory {
 
   abstract configureServices(): void;
   abstract service: Service;
+  abstract isExternalAccessory: boolean;
 }

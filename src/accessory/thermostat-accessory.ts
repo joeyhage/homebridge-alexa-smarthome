@@ -26,6 +26,7 @@ export default class ThermostatAccessory extends BaseAccessory {
   static requiredOperations: SupportedActionsType[] = ['setTargetTemperature'];
   service: Service;
   namespaces = ThermostatNamespaces;
+  isExternalAccessory = false;
 
   configureServices() {
     this.service =

@@ -1,10 +1,13 @@
 import * as E from 'fp-ts/Either';
+import { Either } from 'fp-ts/Either';
 import * as O from 'fp-ts/Option';
 import { constant, flow } from 'fp-ts/lib/function';
 import { Nullable } from '../index';
-import { InvalidResponse } from './errors';
+import { AlexaApiError, InvalidResponse } from './errors';
 
-export const validateGetDevicesSuccessful = flow(
+export const validateGetDevicesSuccessful: (
+  res: GetDevicesResponse,
+) => Either<AlexaApiError, SmartHomeDevice[]> = flow(
   O.fromNullable,
   O.match(
     constant(
@@ -38,6 +41,7 @@ export interface SmartHomeDevice {
     dmsDeviceIdentifiers?: Nullable<
       {
         deviceSerialNumber: Nullable<string>;
+        deviceType: Nullable<string>;
       }[]
     >;
   };

@@ -12,6 +12,7 @@ export default class OutletAccessory extends BaseAccessory {
   static requiredOperations: SupportedActionsType[] = ['turnOn', 'turnOff'];
   service: Service;
   namespaces = OutletNamespaces;
+  isExternalAccessory = false;
 
   configureServices() {
     this.service =
