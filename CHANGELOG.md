@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, unreleased work in progress.
 
+## [0.2.1] - 2023-09-11
+
+### Added
+
+- Support for switches. Currently, changing the power and brightness are supported.
+
 ## [0.2.0] - 2023-09-08
 
 ### Added

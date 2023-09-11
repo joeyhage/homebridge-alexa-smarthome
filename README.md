@@ -41,6 +41,7 @@ This plugin **does not** allow Alexa to control devices in HomeKit. For that, pl
 ## Currently supported devices
 
 - Lightbulbs
+- Switches
 - Outlets + smart plugs
 - Thermostats
 - Echo smart speakers / smart displays

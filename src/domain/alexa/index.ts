@@ -1,7 +1,13 @@
 import { InitOptions } from 'alexa-remote2';
 import { Nullable } from '../index';
 
-export const SupportedDeviceTypes = ['LIGHT', 'SMARTPLUG', 'THERMOSTAT', 'ALEXA_VOICE_ENABLED'];
+export const SupportedDeviceTypes = [
+  'LIGHT',
+  'SWITCH',
+  'SMARTPLUG',
+  'THERMOSTAT',
+  'ALEXA_VOICE_ENABLED',
+];
 
 export type AmazonDomain =
   | 'amazon.com'
