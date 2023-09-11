@@ -15,6 +15,7 @@ import LightAccessory from './light-accessory';
 import OutletAccessory from './outlet-accessory';
 import ThermostatAccessory from './thermostat-accessory';
 import TelevisionAccessory from './television-accessory';
+import SwitchAccessory from './switch-accessory';
 
 export default class AccessoryFactory {
   static createAccessory(
@@ -29,6 +30,12 @@ export default class AccessoryFactory {
             type === 'LIGHT' &&
             supportsRequiredActions(LightAccessory.requiredOperations, ops),
           () => E.of(new LightAccessory(platform, device, platAcc)),
+        )
+        .when(
+          ([type, ops]) =>
+            type === 'SWITCH' &&
+            supportsRequiredActions(SwitchAccessory.requiredOperations, ops),
+          () => E.of(new SwitchAccessory(platform, device, platAcc)),
         )
         .when(
           ([type, ops]) =>
