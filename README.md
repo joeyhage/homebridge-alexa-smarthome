@@ -44,7 +44,7 @@ This plugin **does not** allow Alexa to control devices in HomeKit. For that, pl
 - Switches
 - Outlets + smart plugs
 - Thermostats
-- Echo smart speakers / smart displays
+- Echo smart speakers / Echo smart displays
   - Play + pause
   - Next track / previous track
   - Change volume
@@ -58,11 +58,11 @@ This plugin **does not** allow Alexa to control devices in HomeKit. For that, pl
 
 ### Echo devices
 
-Echo devices appear in HomeKit as Televisions which enables media control via the [Control Center](https://support.apple.com/guide/tv/use-ios-or-ipados-control-center-atvb701cadc1/tvos).
+Echo devices appear in HomeKit as Televisions which enables media control via the [Control Center remote controls](https://support.apple.com/guide/tv/use-ios-or-ipados-control-center-atvb701cadc1/tvos).
 
-To use Control Center, follow [these instructions](https://support.apple.com/guide/tv/use-ios-or-ipados-control-center-atvb701cadc1/tvos) to add the controls to your device. Once Control Center is open, you can change the device you are controlling using the `⌄` arrow next to the device name at the top of the screen.
+To use the Control Center remote controls, follow [these instructions](https://support.apple.com/guide/tv/use-ios-or-ipados-control-center-atvb701cadc1/tvos) to add the remote to your device's Control Center. Once the remote is open, you can change the device you are controlling using the `⌄` arrow next to the device name at the top of the screen.
 
-Control Center features:
+Remote control features - **you must start the media on the Echo (music, audio book, etc) before you can control it. It may take up to a minute for the remote to start working once media is playing**:
   - Play
   - Pause
   - Next (right arrow)
@@ -70,6 +70,8 @@ Control Center features:
   - Volume control (hardware volume buttons, a.k.a. volume button on the side of your iPhone/iPad)
 
 Siri is not supported out of the box but I may be able to support in the future.
+
+AirPlay is unrelated to Homebridge/HomeKit and needs to be supported by the device (the Echo). If you wish to use AirPlay, the best option is to buy an AppleTV or Apple HomePod.
 
 ## Initial configuration
 
@@ -91,8 +93,12 @@ The first time this plugin starts, you will need to authenticate using your Amaz
 ## Common issues
 
 <details>
-  <summary>This plugin slows down Homebridge</summary>
+  <summary><code>This plugin slows down Homebridge</code></summary>
   Please update the Performance section of the plugin settings. More information can be found on the plugin settings page.
+</details>
+<details>
+  <summary><code>No media player information found</code> or <code>Cannot control player because there is no media selected.</code></summary>
+  Echo devices can only be controlled once there is media (e.g. music, audio book, etc) playing.
 </details>
 
 ## Support
