@@ -12,15 +12,18 @@ import {
 import { CharacteristicValue, Service } from 'homebridge';
 import { CapabilityState, SupportedActionsType } from '../domain/alexa';
 import {
-  TemperatureScale,
   ThermostatNamespaces,
   ThermostatNamespacesType,
   ThermostatState,
-  ThermostatTemperature,
-  isThermostatTemperatureValue,
 } from '../domain/alexa/thermostat';
+import * as tempMapper from '../mapper/temperature-mapper';
 import * as tstatMapper from '../mapper/thermostat-mapper';
 import BaseAccessory from './base-accessory';
+import {
+  Temperature,
+  TemperatureScale,
+  isTemperatureValue,
+} from '../domain/alexa/temperature';
 
 export default class ThermostatAccessory extends BaseAccessory {
   static requiredOperations: SupportedActionsType[] = ['setTargetTemperature'];
@@ -86,7 +89,7 @@ export default class ThermostatAccessory extends BaseAccessory {
       O.filterMap<ThermostatState[], ThermostatState>(
         A.findFirst(({ namespace }) => namespace === alexaNamespace),
       ),
-      O.flatMap(({ value }) => tstatMapper.mapAlexaTempToHomeKit(value)),
+      O.flatMap(({ value }) => tempMapper.mapAlexaTempToHomeKit(value)),
       O.tap((s) =>
         O.of(
           this.logWithContext('debug', `Get current temperature result: ${s}`),
@@ -110,7 +113,7 @@ export default class ThermostatAccessory extends BaseAccessory {
         A.findFirst(({ namespace }) => namespace === alexaNamespace),
       ),
       O.flatMap(({ value }) =>
-        tstatMapper.mapAlexaTempUnitsToHomeKit(value, this.Characteristic),
+        tempMapper.mapAlexaTempUnitsToHomeKit(value, this.Characteristic),
       ),
       O.tap((s) => {
         return O.of(
@@ -167,7 +170,7 @@ export default class ThermostatAccessory extends BaseAccessory {
             namespace === alexaNamespace && name === alexaValueName,
         ),
       ),
-      O.flatMap(({ value }) => tstatMapper.mapAlexaTempToHomeKit(value)),
+      O.flatMap(({ value }) => tempMapper.mapAlexaTempToHomeKit(value)),
       O.tap((s) =>
         O.of(
           this.logWithContext('debug', `Get target temperature result: ${s}`),
@@ -199,31 +202,33 @@ export default class ThermostatAccessory extends BaseAccessory {
       throw this.invalidValueError;
     }
     const units = maybeTemp.value.scale.toLowerCase() as TemperatureScale;
-    const newTemp = tstatMapper.mapHomeKitTempToAlexa(value, units);
-    try {
-      await pipe(
-        this.platform.alexaApi.setDeviceState(
-          this.device.id,
-          'setTargetTemperature',
-          {
-            'targetTemperature.scale': units,
-            'targetTemperature.value': newTemp.toString(10),
-          },
-        ),
-        TE.tapIO(
-          this.updateCacheValue.bind(this, {
+    const newTemp = tempMapper.mapHomeKitTempToAlexa(value, units);
+    return pipe(
+      this.platform.alexaApi.setDeviceState(
+        this.device.id,
+        'setTargetTemperature',
+        {
+          'targetTemperature.scale': units,
+          'targetTemperature.value': newTemp.toString(10),
+        },
+      ),
+      TE.match(
+        (e) => {
+          this.logWithContext('errorT', 'Set target temperature', e);
+          throw this.serviceCommunicationError;
+        },
+        () => {
+          this.updateCacheValue({
             value: {
               value: newTemp,
               scale: units.toUpperCase(),
             },
             namespace: 'Alexa.ThermostatController',
             name: 'targetSetpoint',
-          }),
-        ),
-      )();
-    } catch (e) {
-      this.logWithContext('errorT', 'Set target temperature', e);
-    }
+          });
+        },
+      ),
+    )();
   }
 
   async handleCoolTempGet(): Promise<number> {
@@ -237,7 +242,7 @@ export default class ThermostatAccessory extends BaseAccessory {
             namespace === alexaNamespace && name === alexaValueName,
         ),
       ),
-      O.flatMap(({ value }) => tstatMapper.mapAlexaTempToHomeKit(value)),
+      O.flatMap(({ value }) => tempMapper.mapAlexaTempToHomeKit(value)),
       O.tap((s) =>
         O.of(
           this.logWithContext('debug', `Get cooling temperature result: ${s}`),
@@ -273,36 +278,38 @@ export default class ThermostatAccessory extends BaseAccessory {
       throw this.invalidValueError;
     }
     const units = maybeHeatTemp.value.scale.toLowerCase() as TemperatureScale;
-    const newCoolTemp = tstatMapper.mapHomeKitTempToAlexa(value, units);
+    const newCoolTemp = tempMapper.mapHomeKitTempToAlexa(value, units);
 
-    try {
-      await pipe(
-        this.platform.alexaApi.setDeviceState(
-          this.device.id,
-          'setTargetTemperature',
-          {
-            'upperSetTemperature.scale': units,
-            'upperSetTemperature.value': newCoolTemp.toString(10),
-            'lowerSetTemperature.scale': units,
-            'lowerSetTemperature.value': tstatMapper
-              .mapHomeKitTempToAlexa(heatTemp, units)
-              .toString(10),
-          },
-        ),
-        TE.tapIO(
-          this.updateCacheValue.bind(this, {
+    return pipe(
+      this.platform.alexaApi.setDeviceState(
+        this.device.id,
+        'setTargetTemperature',
+        {
+          'upperSetTemperature.scale': units,
+          'upperSetTemperature.value': newCoolTemp.toString(10),
+          'lowerSetTemperature.scale': units,
+          'lowerSetTemperature.value': tempMapper
+            .mapHomeKitTempToAlexa(heatTemp, units)
+            .toString(10),
+        },
+      ),
+      TE.match(
+        (e) => {
+          this.logWithContext('errorT', 'Set cooling temperature', e);
+          throw this.serviceCommunicationError;
+        },
+        () => {
+          this.updateCacheValue({
             value: {
               value: newCoolTemp,
               scale: units.toUpperCase(),
             },
             namespace: 'Alexa.ThermostatController',
             name: 'upperSetpoint',
-          }),
-        ),
-      )();
-    } catch (e) {
-      this.logWithContext('errorT', 'Set cooling temperature', e);
-    }
+          });
+        },
+      ),
+    )();
   }
 
   async handleHeatTempGet(): Promise<number> {
@@ -316,7 +323,7 @@ export default class ThermostatAccessory extends BaseAccessory {
             namespace === alexaNamespace && name === alexaValueName,
         ),
       ),
-      O.flatMap(({ value }) => tstatMapper.mapAlexaTempToHomeKit(value)),
+      O.flatMap(({ value }) => tempMapper.mapAlexaTempToHomeKit(value)),
       O.tap((s) =>
         O.of(
           this.logWithContext('debug', `Get heating temperature result: ${s}`),
@@ -352,36 +359,38 @@ export default class ThermostatAccessory extends BaseAccessory {
       throw this.invalidValueError;
     }
     const units = maybeCoolTemp.value.scale.toLowerCase() as TemperatureScale;
-    const newHeatTemp = tstatMapper.mapHomeKitTempToAlexa(value, units);
+    const newHeatTemp = tempMapper.mapHomeKitTempToAlexa(value, units);
 
-    try {
-      await pipe(
-        this.platform.alexaApi.setDeviceState(
-          this.device.id,
-          'setTargetTemperature',
-          {
-            'lowerSetTemperature.scale': units,
-            'lowerSetTemperature.value': newHeatTemp.toString(10),
-            'upperSetTemperature.scale': units,
-            'upperSetTemperature.value': tstatMapper
-              .mapHomeKitTempToAlexa(coolTemp, units)
-              .toString(10),
-          },
-        ),
-        TE.tapIO(
-          this.updateCacheValue.bind(this, {
+    return pipe(
+      this.platform.alexaApi.setDeviceState(
+        this.device.id,
+        'setTargetTemperature',
+        {
+          'lowerSetTemperature.scale': units,
+          'lowerSetTemperature.value': newHeatTemp.toString(10),
+          'upperSetTemperature.scale': units,
+          'upperSetTemperature.value': tempMapper
+            .mapHomeKitTempToAlexa(coolTemp, units)
+            .toString(10),
+        },
+      ),
+      TE.match(
+        (e) => {
+          this.logWithContext('errorT', 'Set heating temperature', e);
+          throw this.serviceCommunicationError;
+        },
+        () => {
+          this.updateCacheValue({
             value: {
               value: newHeatTemp,
               scale: units.toUpperCase(),
             },
             namespace: 'Alexa.ThermostatController',
             name: 'lowerSetpoint',
-          }),
-        ),
-      )();
-    } catch (e) {
-      this.logWithContext('errorT', 'Set heating temperature', e);
-    }
+          });
+        },
+      ),
+    )();
   }
 
   private getAutoTempFromTargetTemp() {
@@ -390,7 +399,7 @@ export default class ThermostatAccessory extends BaseAccessory {
     const alexaValueName = 'targetSetpoint';
     const maybeTargetTemp = this.getCacheValue(alexaNamespace, alexaValueName);
     if (this.isTempWithScale(maybeTargetTemp)) {
-      return tstatMapper.mapAlexaTempToHomeKit({
+      return tempMapper.mapAlexaTempToHomeKit({
         value: maybeTargetTemp.value.value,
         scale: maybeTargetTemp.value.scale.toUpperCase(),
       });
@@ -402,21 +411,15 @@ export default class ThermostatAccessory extends BaseAccessory {
   private calculateTargetTemp() {
     const alexaNamespace: ThermostatNamespacesType =
       'Alexa.ThermostatController';
-    const maybeHeatTemp = this.getCacheValue(
-      alexaNamespace,
-      'lowerSetpoint',
-    );
-    const maybeCoolTemp = this.getCacheValue(
-      alexaNamespace,
-      'upperSetpoint',
-    );
+    const maybeHeatTemp = this.getCacheValue(alexaNamespace, 'lowerSetpoint');
+    const maybeCoolTemp = this.getCacheValue(alexaNamespace, 'upperSetpoint');
     if (
       this.isTempWithScale(maybeHeatTemp) &&
       this.isTempWithScale(maybeCoolTemp)
     ) {
       const heatTemp = maybeHeatTemp.value.value;
       const coolTemp = maybeCoolTemp.value.value;
-      return tstatMapper.mapAlexaTempToHomeKit({
+      return tempMapper.mapAlexaTempToHomeKit({
         value: (coolTemp + heatTemp) / 2,
         scale: maybeCoolTemp.value.scale.toUpperCase(),
       });
@@ -427,8 +430,8 @@ export default class ThermostatAccessory extends BaseAccessory {
 
   private isTempWithScale(
     value: Option<CapabilityState['value']>,
-  ): value is Some<ThermostatTemperature> {
-    return O.isSome(value) && isThermostatTemperatureValue(value.value);
+  ): value is Some<Temperature> {
+    return O.isSome(value) && isTemperatureValue(value.value);
   }
 
   private onInvalidOrAutoMode() {

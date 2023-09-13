@@ -16,63 +16,10 @@ import SetDeviceStateResponse from '../domain/alexa/set-device-state';
 import { PluginLogger } from '../util/plugin-logger';
 import { AlexaApiWrapper } from './alexa-api-wrapper';
 import GetDevicesResponse from '../domain/alexa/get-devices';
+import DeviceStore from '../store/device-store';
 
 jest.mock('alexa-remote2');
 const alexaRemoteMocks = AlexaRemote as jest.MockedClass<typeof AlexaRemote>;
-
-describe('updateCacheValue', () => {
-  test('should update given device and namespace were previously cached', () => {
-    // given
-    const deviceId = randomUUID();
-    const wrapper = getAlexaApiWrapper();
-    wrapper.deviceStatesCache.cachedStates = {
-      [deviceId]: [
-        O.of({
-          namespace: 'Alexa.PowerController',
-          value: true,
-        }),
-      ],
-    };
-
-    // when
-    const cache = wrapper.updateCacheValue(deviceId, {
-      namespace: 'Alexa.PowerController',
-      value: false,
-    });
-
-    // then
-    expect(cache[deviceId].length).toBe(1);
-    expect(
-      O.Functor.map(cache[deviceId][0], ({ value }) => value),
-    ).toStrictEqual(O.of(false));
-  });
-
-  test('should not update given no previous value', () => {
-    // given
-    const deviceId = randomUUID();
-    const wrapper = getAlexaApiWrapper();
-    wrapper.deviceStatesCache.cachedStates = {
-      [deviceId]: [
-        O.of({
-          namespace: 'Alexa.PowerController',
-          value: true,
-        }),
-      ],
-    };
-
-    // when
-    const cache = wrapper.updateCacheValue(deviceId, {
-      namespace: 'Alexa.BrightnessController',
-      value: 100,
-    });
-
-    // then
-    expect(cache[deviceId].length).toBe(1);
-    expect(
-      O.Functor.map(cache[deviceId][0], ({ value }) => value),
-    ).toStrictEqual(O.of(true));
-  });
-});
 
 describe('setDeviceState', () => {
   test('should set state successfully', async () => {
@@ -185,6 +132,53 @@ describe('getDeviceStates', () => {
               namespace: 'Alexa.PowerController',
               name: 'test',
               value: 'ON',
+            }),
+          ],
+        },
+      }),
+    );
+  });
+
+  test('should get device state instance', async () => {
+    // given
+    const deviceId = randomUUID();
+    const wrapper = getAlexaApiWrapper();
+    const mockAlexa = getMockedAlexaRemote();
+    mockAlexa.querySmarthomeDevices.mockImplementationOnce((_1, _2, _3, cb) =>
+      cb!(undefined, {
+        deviceStates: [
+          {
+            entity: {
+              entityId: deviceId,
+            },
+            capabilityStates: [
+              JSON.stringify({
+                namespace: 'Alexa.RangeController',
+                name: 'rangeValue',
+                value: 68.0,
+                instance: '4',
+              }),
+            ],
+          },
+        ],
+        errors: Array<DeviceResponse>(),
+      } as GetDeviceStatesResponse),
+    );
+
+    // when
+    const actual = await wrapper.getDeviceStates([deviceId])();
+
+    // then
+    expect(actual).toStrictEqual(
+      E.of({
+        fromCache: false,
+        statesByDevice: {
+          [deviceId]: [
+            O.of({
+              namespace: 'Alexa.RangeController',
+              name: 'rangeValue',
+              value: 68.0,
+              instance: '4',
             }),
           ],
         },
@@ -347,6 +341,7 @@ function getAlexaApiWrapper(): AlexaApiWrapper {
   return new AlexaApiWrapper(
     new AlexaRemote(),
     new PluginLogger(global.MockLogger, global.createPlatformConfig()),
+    new DeviceStore(),
   );
 }
 

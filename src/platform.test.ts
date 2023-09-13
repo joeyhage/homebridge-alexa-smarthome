@@ -13,14 +13,14 @@ test('should not initialize devices with invalid ids', async () => {
     description: 'test',
     supportedOperations: ['turnOff', 'turnOn', 'setBrightness'],
     providerData: {
-      enabled: 'true',
+      enabled: true,
       categoryType: 'APPLIANCE',
       deviceType: 'LIGHT',
     },
   };
 
   // when
-  const actual = platform.initAccessory(device)();
+  const actual = platform.initAccessories(device)();
 
   // then
   expect(actual).toStrictEqual(

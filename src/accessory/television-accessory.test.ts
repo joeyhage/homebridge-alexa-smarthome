@@ -7,11 +7,14 @@ import { AlexaSmartHomePlatform } from '../platform';
 import { AlexaApiWrapper } from '../wrapper/alexa-api-wrapper';
 import TelevisionAccessory from './television-accessory';
 import { constVoid } from 'fp-ts/lib/function';
+import DeviceStore from '../store/device-store';
 
 jest.mock('../wrapper/alexa-api-wrapper.ts');
 const alexaApiMocks = AlexaApiWrapper as jest.MockedClass<
   typeof AlexaApiWrapper
 >;
+jest.mock('../store/device-store.ts');
+const deviceStoreMocks = DeviceStore as jest.MockedClass<typeof DeviceStore>;
 
 describe('handleVolumeSelectorSet', () => {
   test('should handle volume increment', async () => {
@@ -35,7 +38,10 @@ describe('handleVolumeSelectorSet', () => {
     const expectedVolume = 20;
     await expect(newVolume).resolves.toBe(expectedVolume);
     expect(mockAlexaApi.setVolume).toHaveBeenCalledTimes(1);
-    expect(mockAlexaApi.setVolume).toHaveBeenCalledWith(acc.device.displayName, expectedVolume);
+    expect(mockAlexaApi.setVolume).toHaveBeenCalledWith(
+      acc.device.displayName,
+      expectedVolume,
+    );
   });
 
   test('should handle volume decrement', async () => {
@@ -59,7 +65,10 @@ describe('handleVolumeSelectorSet', () => {
     const expectedVolume = 0;
     await expect(newVolume).resolves.toBe(expectedVolume);
     expect(mockAlexaApi.setVolume).toHaveBeenCalledTimes(1);
-    expect(mockAlexaApi.setVolume).toHaveBeenCalledWith(acc.device.displayName, expectedVolume);
+    expect(mockAlexaApi.setVolume).toHaveBeenCalledWith(
+      acc.device.displayName,
+      expectedVolume,
+    );
   });
 });
 
@@ -83,7 +92,10 @@ describe('handleRemoteKeySet', () => {
     const expectedCommand = 'play';
     expect(acc.playerInfoCache.playerInfo.state).toBe('PLAYING');
     expect(mockAlexaApi.controlMedia).toHaveBeenCalledTimes(1);
-    expect(mockAlexaApi.controlMedia).toHaveBeenCalledWith(acc.device.displayName, expectedCommand);
+    expect(mockAlexaApi.controlMedia).toHaveBeenCalledWith(
+      acc.device.displayName,
+      expectedCommand,
+    );
   });
 
   test('should handle play/pause when playing', async () => {
@@ -105,7 +117,10 @@ describe('handleRemoteKeySet', () => {
     const expectedCommand = 'pause';
     expect(acc.playerInfoCache.playerInfo.state).toBe('PAUSED');
     expect(mockAlexaApi.controlMedia).toHaveBeenCalledTimes(1);
-    expect(mockAlexaApi.controlMedia).toHaveBeenCalledWith(acc.device.displayName, expectedCommand);
+    expect(mockAlexaApi.controlMedia).toHaveBeenCalledWith(
+      acc.device.displayName,
+      expectedCommand,
+    );
   });
 });
 
@@ -115,9 +130,11 @@ function createPlatform() {
     global.createPlatformConfig(),
     new HomebridgeAPI(),
   );
+  (platform as any).deviceStore = new DeviceStore();
   (platform as any).alexaApi = new AlexaApiWrapper(
     new AlexaRemote(),
     platform.log,
+    platform.deviceStore,
   );
   return platform;
 }
@@ -129,13 +146,13 @@ function createTelevisionAccessory() {
     description: 'test',
     supportedOperations: [],
     providerData: {
-      enabled: 'true',
+      enabled: true,
       categoryType: 'APPLIANCE',
       deviceType: 'ALEXA_VOICE_ENABLED',
     },
   };
   const platform = createPlatform();
-  const uuid = platform.api.hap.uuid.generate(device.id);
+  const uuid = platform.HAP.uuid.generate(device.id);
   const platAcc = new platform.api.platformAccessory(device.displayName, uuid);
   const acc = new TelevisionAccessory(platform, device, platAcc);
   acc.service = platAcc.addService(
@@ -147,6 +164,12 @@ function createTelevisionAccessory() {
 
 function getMockedAlexaApi(): jest.Mocked<AlexaApiWrapper> {
   const mock = alexaApiMocks.mock.instances[0] as jest.Mocked<AlexaApiWrapper>;
+  mockDeviceStore();
+  return mock;
+}
+
+function mockDeviceStore(): jest.Mocked<DeviceStore> {
+  const mock = deviceStoreMocks.mock.instances[0] as jest.Mocked<DeviceStore>;
   mock.getCacheValue.mockReturnValueOnce(O.none);
   return mock;
 }

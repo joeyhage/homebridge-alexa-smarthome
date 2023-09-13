@@ -59,19 +59,21 @@ export default class SwitchAccessory extends BaseAccessory {
       throw this.invalidValueError;
     }
     const action = mapper.mapHomeKitPowerToAlexaAction(value);
-    try {
-      await pipe(
-        this.platform.alexaApi.setDeviceState(this.device.id, action),
-        TE.tapIO(
-          this.updateCacheValue.bind(this, {
+    return pipe(
+      this.platform.alexaApi.setDeviceState(this.device.id, action),
+      TE.match(
+        (e) => {
+          this.logWithContext('errorT', 'Set power', e);
+          throw this.serviceCommunicationError;
+        },
+        () => {
+          this.updateCacheValue({
             value: mapper.mapHomeKitPowerToAlexaValue(value),
             namespace: 'Alexa.PowerController',
-          }),
-        ),
-      )();
-    } catch (e) {
-      this.logWithContext('errorT', 'Set power', e);
-    }
+          });
+        },
+      ),
+    )();
   }
 
   async handleBrightnessGet(): Promise<number> {
@@ -104,20 +106,22 @@ export default class SwitchAccessory extends BaseAccessory {
       throw this.invalidValueError;
     }
     const newBrightness = value.toString(10);
-    try {
-      await pipe(
-        this.platform.alexaApi.setDeviceState(this.device.id, 'setBrightness', {
-          brightness: newBrightness,
-        }),
-        TE.tapIO(
-          this.updateCacheValue.bind(this, {
+    return pipe(
+      this.platform.alexaApi.setDeviceState(this.device.id, 'setBrightness', {
+        brightness: newBrightness,
+      }),
+      TE.match(
+        (e) => {
+          this.logWithContext('errorT', 'Set brightness', e);
+          throw this.serviceCommunicationError;
+        },
+        () => {
+          this.updateCacheValue({
             value: newBrightness,
             namespace: 'Alexa.BrightnessController',
-          }),
-        ),
-      )();
-    } catch (e) {
-      this.logWithContext('errorT', 'Set brightness', e);
-    }
+          });
+        },
+      ),
+    )();
   }
 }

@@ -4,20 +4,13 @@ import AlexaRemote, {
   type MessageCommands,
 } from 'alexa-remote2';
 import { Mutex, MutexInterface, withTimeout } from 'async-mutex';
-import * as A from 'fp-ts/Array';
-import * as O from 'fp-ts/Option';
-import { Option } from 'fp-ts/Option';
-import * as RA from 'fp-ts/ReadonlyArray';
-import * as RRecord from 'fp-ts/ReadonlyRecord';
 import * as TE from 'fp-ts/TaskEither';
 import { TaskEither } from 'fp-ts/TaskEither';
 import { match as fpMatch } from 'fp-ts/boolean';
-import { constVoid, constant, pipe } from 'fp-ts/lib/function';
-import { Nullable } from '../domain';
-import { CapabilityState, SupportedActionsType } from '../domain/alexa';
+import { constVoid, pipe } from 'fp-ts/lib/function';
+import { SupportedActionsType } from '../domain/alexa';
 import { AlexaApiError, HttpError, TimeoutError } from '../domain/alexa/errors';
 import GetDeviceStatesResponse, {
-  CapabilityStatesByDevice,
   ValidCapabilityStates,
   ValidStatesByDevice,
   extractCapabilityStates,
@@ -31,9 +24,13 @@ import GetPlayerInfoResponse, {
   PlayerInfo,
   validateGetPlayerInfoSuccessful,
 } from '../domain/alexa/get-player-info';
+import GetDetailsForDevicesResponse, {
+  extractRangeCapabilities,
+} from '../domain/alexa/save-device-capabilities';
 import SetDeviceStateResponse, {
   validateSetStateSuccessful,
 } from '../domain/alexa/set-device-state';
+import DeviceStore from '../store/device-store';
 import { PluginLogger } from '../util/plugin-logger';
 
 export interface DeviceStatesCache {
@@ -44,81 +41,15 @@ export interface DeviceStatesCache {
 export class AlexaApiWrapper {
   private readonly mutex: MutexInterface;
 
-  public readonly cacheTTL: number;
-  public readonly deviceStatesCache: DeviceStatesCache = {
-    lastUpdated: new Date(0),
-    cachedStates: {},
-  };
-
   constructor(
     private readonly alexaRemote: AlexaRemote,
     private readonly log: PluginLogger,
-    cacheTTL?: Nullable<number>,
+    private readonly deviceStore: DeviceStore,
   ) {
     this.mutex = withTimeout(
       new Mutex(new TimeoutError('Alexa API Timeout')),
       30_000,
     );
-    this.cacheTTL =
-      pipe(cacheTTL, O.fromNullable, O.getOrElse(constant(30))) * 1_000;
-  }
-
-  getCacheValue(
-    deviceId: string,
-    { namespace, name }: Omit<CapabilityState, 'value'>,
-  ): Option<CapabilityState> {
-    return pipe(
-      this.deviceStatesCache.cachedStates,
-      RRecord.lookup(deviceId),
-      O.flatMap(
-        A.findFirstMap((cache) =>
-          pipe(
-            cache,
-            O.exists(
-              ({ namespace: cachedNS, name: cachedName }) =>
-                cachedNS === namespace && (!name || cachedName === name),
-            ),
-            fpMatch(constant(O.none), constant(cache)),
-          ),
-        ),
-      ),
-    );
-  }
-
-  updateCache(
-    deviceIds: string[],
-    statesByDevice: CapabilityStatesByDevice,
-  ): ValidStatesByDevice {
-    pipe(
-      deviceIds,
-      A.map((id) => {
-        this.deviceStatesCache.cachedStates[id] =
-          id in statesByDevice
-            ? pipe(
-              statesByDevice,
-              RRecord.lookup(id),
-              O.flatten,
-              O.map(A.map(O.getRight)),
-              O.getOrElse(constant(new Array<Option<CapabilityState>>())),
-            )
-            : [];
-      }),
-      RA.match(constVoid, () => {
-        this.deviceStatesCache.lastUpdated = new Date();
-      }),
-    );
-    return this.deviceStatesCache.cachedStates;
-  }
-
-  updateCacheValue(deviceId: string, newState: CapabilityState) {
-    pipe(
-      this.getCacheValue(deviceId, newState),
-      O.tap((cs) => {
-        cs.value = newState.value;
-        return O.of(cs);
-      }),
-    );
-    return this.deviceStatesCache.cachedStates;
   }
 
   getDevices(): TaskEither<AlexaApiError, SmartHomeDevice[]> {
@@ -139,6 +70,27 @@ export class AlexaApiWrapper {
     );
   }
 
+  saveDeviceCapabilities(): TaskEither<AlexaApiError, void> {
+    return pipe(
+      TE.tryCatch(
+        () =>
+          AlexaApiWrapper.toPromise<GetDetailsForDevicesResponse>(
+            this.alexaRemote.getSmarthomeDevices.bind(this.alexaRemote),
+          ),
+        (reason) =>
+          new HttpError(
+            `Error getting details for devices. Reason: ${
+              (reason as Error).message
+            }`,
+          ),
+      ),
+      TE.map(extractRangeCapabilities),
+      TE.map((rc) => {
+        this.deviceStore.deviceCapabilities = rc;
+      }),
+    );
+  }
+
   getDeviceStates(
     deviceIds: string[],
     entityType: EntityType | 'ENTITY' = 'ENTITY',
@@ -146,9 +98,9 @@ export class AlexaApiWrapper {
   ): TaskEither<AlexaApiError, ValidCapabilityStates> {
     const shouldReturnCache = () =>
       useCache &&
-      this.isCacheFresh() &&
+      this.deviceStore.isCacheFresh() &&
       this.doesCacheContainAllIds(
-        Object.keys(this.deviceStatesCache.cachedStates),
+        Object.keys(this.deviceStore.cache.states),
         deviceIds,
       );
 
@@ -172,7 +124,10 @@ export class AlexaApiWrapper {
               TE.map(
                 ({ statesByDevice }) =>
                   ({
-                    statesByDevice: this.updateCache(deviceIds, statesByDevice),
+                    statesByDevice: this.deviceStore.updateCache(
+                      deviceIds,
+                      statesByDevice,
+                    ),
                     fromCache: false,
                   } as ValidCapabilityStates),
               ),
@@ -181,7 +136,7 @@ export class AlexaApiWrapper {
             pipe(
               TE.of({
                 fromCache: true,
-                statesByDevice: this.deviceStatesCache.cachedStates,
+                statesByDevice: this.deviceStore.cache.states,
               } as ValidCapabilityStates),
               TE.tapIO(() =>
                 this.log.debug('Obtained device states from cache'),
@@ -294,49 +249,6 @@ export class AlexaApiWrapper {
     );
   }
 
-  // setVolume(
-  //   deviceName: string,
-  //   volume: number,
-  // ): TaskEither<AlexaApiError, void> {
-  //   return pipe(
-  //     O.fromNullable(this.alexaRemote.find(deviceName)),
-  //     O.filterMap((device: NonNullable<unknown>) =>
-  //       typeof device === 'object' && 'deviceType' in device
-  //         ? O.of(device as Serial)
-  //         : O.none,
-  //     ),
-  //     TE.fromOption(
-  //       constant(new InvalidRequest('Unknown device or serial number')),
-  //     ),
-  //     TE.flatMap(({ deviceType, serialNumber }) =>
-  //       TE.tryCatch(
-  //         () =>
-  //           this.httpRequest<SetVolumeResponse>(
-  //             `/api/devices/${deviceType}/${serialNumber}/audio/v2/speakerVolume`,
-  //             {
-  //               method: 'POST',
-  //               data: JSON.stringify({
-  //                 dsn: serialNumber,
-  //                 deviceType: deviceType,
-  //                 volume,
-  //                 muted: false,
-  //                 synchronous: true,
-  //               }),
-  //             },
-  //           ),
-  //         (reason) =>
-  //           new HttpError(
-  //             `Error setting device volume. Reason: ${
-  //               (reason as Error).message
-  //             }`,
-  //           ),
-  //       ),
-  //     ),
-  //     TE.flatMapEither(validateSetVolumeSuccessful),
-  //     TE.map(constVoid),
-  //   );
-  // }
-
   private changeDeviceState(
     entityId: string,
     parameters: Record<string, string>,
@@ -369,15 +281,6 @@ export class AlexaApiWrapper {
     );
   }
 
-  // private async httpRequest<T>(
-  //   path: string,
-  //   flags: { method: 'GET' | 'POST' | 'PUT'; data: string },
-  // ): Promise<T> {
-  //   return AlexaApiWrapper.toPromise<T>((cb) =>
-  //     this.alexaRemote.httpsGetCall(path, cb, flags),
-  //   );
-  // }
-
   private queryDeviceStates(
     entityIds: string[],
     entityType: string,
@@ -405,7 +308,4 @@ export class AlexaApiWrapper {
     queryIds.every((id) => {
       return cachedIds.includes(id);
     });
-
-  private isCacheFresh = () =>
-    this.deviceStatesCache.lastUpdated.getTime() > Date.now() - this.cacheTTL;
 }

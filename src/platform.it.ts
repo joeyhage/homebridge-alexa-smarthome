@@ -1,7 +1,5 @@
 import AlexaRemote from 'alexa-remote2';
-import * as IO from 'fp-ts/IO';
 import * as O from 'fp-ts/Option';
-import { pipe } from 'fp-ts/lib/function';
 import * as hapNodeJs from 'hap-nodejs';
 import type { API } from 'homebridge';
 import { AlexaSmartHomePlatform } from './platform';
@@ -12,12 +10,7 @@ it('should initialize', async () => {
 
   // when
   const alexaRemote = new Promise<AlexaRemote>((resolve, reject) => {
-    platform.initAlexaRemote((result) => {
-      pipe(
-        result,
-        IO.map(O.match(() => resolve(platform.alexaRemote), reject)),
-      )();
-    });
+    platform.initAlexaRemote(O.match(() => resolve(platform.alexaRemote), reject));
   });
 
   // then

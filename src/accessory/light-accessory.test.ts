@@ -7,11 +7,14 @@ import { HttpError } from '../domain/alexa/errors';
 import { AlexaSmartHomePlatform } from '../platform';
 import { AlexaApiWrapper } from '../wrapper/alexa-api-wrapper';
 import LightAccessory from './light-accessory';
+import DeviceStore from '../store/device-store';
 
 jest.mock('../wrapper/alexa-api-wrapper.ts');
 const alexaApiMocks = AlexaApiWrapper as jest.MockedClass<
   typeof AlexaApiWrapper
 >;
+jest.mock('../store/device-store.ts');
+const deviceStoreMocks = DeviceStore as jest.MockedClass<typeof DeviceStore>;
 
 describe('handlePowerGet', () => {
   test('should determine power state', async () => {
@@ -98,9 +101,11 @@ function createPlatform() {
     global.createPlatformConfig(),
     new HomebridgeAPI(),
   );
+  (platform as any).deviceStore = new DeviceStore();
   (platform as any).alexaApi = new AlexaApiWrapper(
     new AlexaRemote(),
     platform.log,
+    platform.deviceStore,
   );
   return platform;
 }
@@ -112,13 +117,13 @@ function createLightAccessory() {
     description: 'test',
     supportedOperations: ['turnOff', 'turnOn', 'setBrightness'],
     providerData: {
-      enabled: 'true',
+      enabled: true,
       categoryType: 'APPLIANCE',
       deviceType: 'LIGHT',
     },
   };
   const platform = createPlatform();
-  const uuid = platform.api.hap.uuid.generate(device.id);
+  const uuid = platform.HAP.uuid.generate(device.id);
   const platAcc = new platform.api.platformAccessory(device.displayName, uuid);
   const acc = new LightAccessory(platform, device, platAcc);
   acc.service = platAcc.addService(
@@ -130,6 +135,13 @@ function createLightAccessory() {
 
 function getMockedAlexaApi(): jest.Mocked<AlexaApiWrapper> {
   const mock = alexaApiMocks.mock.instances[0] as jest.Mocked<AlexaApiWrapper>;
+  mockDeviceStore();
+  return mock;
+}
+
+
+function mockDeviceStore(): jest.Mocked<DeviceStore> {
+  const mock = deviceStoreMocks.mock.instances[0] as jest.Mocked<DeviceStore>;
   mock.getCacheValue.mockReturnValueOnce(O.none);
   return mock;
 }

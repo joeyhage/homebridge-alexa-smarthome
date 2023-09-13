@@ -10,6 +10,7 @@ import { PLUGIN_NAME } from '../settings';
 import { getAuthentication } from '../util';
 import { AlexaApiWrapper } from '../wrapper/alexa-api-wrapper';
 import LightAccessory from './light-accessory';
+import DeviceStore from '../store/device-store';
 
 let alexa: AlexaRemote;
 let spyGetDevices: jest.SpyInstance<any>;
@@ -39,9 +40,11 @@ function createPlatform() {
     global.createPlatformConfig(),
     new HomebridgeAPI(),
   );
+  (platform as any).deviceStore = new DeviceStore();
   (platform as any).alexaApi = new AlexaApiWrapper(
     alexa,
     platform.log,
+    platform.deviceStore,
   );
   platform.activeDeviceIds = [process.env.DEVICE_ID!];
   return platform;
@@ -54,13 +57,13 @@ function createLightAccessory() {
     description: 'test',
     supportedOperations: ['turnOff', 'turnOn', 'setBrightness'],
     providerData: {
-      enabled: 'true',
+      enabled: true,
       categoryType: 'APPLIANCE',
       deviceType: 'LIGHT',
     },
   };
   const platform = createPlatform();
-  const uuid = platform.api.hap.uuid.generate(device.id);
+  const uuid = platform.HAP.uuid.generate(device.id);
   const platAcc = new platform.api.platformAccessory(device.displayName, uuid);
   const acc = new LightAccessory(platform, device, platAcc);
   acc.service = acc.platformAcc.addService(
