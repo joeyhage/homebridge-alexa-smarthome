@@ -58,6 +58,19 @@ This plugin **does not** allow Alexa to control devices in HomeKit. For that, pl
 - Only Amazon credentials needed to configure this plugin rather than credentials for all your devices.
 - This plugin does not store your Amazon username or password. Instead, it uses session cookies that are valid for up to 14 days.
 
+### Air quality monitors
+
+All of the following are supported depending on what your device measures:
+
+- Air quality score (Excellent / Fair / Poor)
+- Particulate matter density (PM2.5)
+- VOC Density
+- Carbon monoxide levels
+- Relative humidity percent
+- Temperature
+
+When you first add an Air Quality Monitor to HomeKit, the above measurements may appear in the Default Room but can be assigned to any room you choose.
+
 ### Echo devices
 
 Echo devices appear in HomeKit as Televisions which enables media control via the [Control Center remote controls](https://support.apple.com/guide/tv/use-ios-or-ipados-control-center-atvb701cadc1/tvos).
