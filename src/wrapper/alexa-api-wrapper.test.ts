@@ -338,10 +338,11 @@ describe('getDevices', () => {
 });
 
 function getAlexaApiWrapper(): AlexaApiWrapper {
+  const log = new PluginLogger(global.MockLogger, global.createPlatformConfig());
   return new AlexaApiWrapper(
     new AlexaRemote(),
-    new PluginLogger(global.MockLogger, global.createPlatformConfig()),
-    new DeviceStore(),
+    log,
+    new DeviceStore(log),
   );
 }
 

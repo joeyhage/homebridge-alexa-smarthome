@@ -101,7 +101,7 @@ function createPlatform() {
     global.createPlatformConfig(),
     new HomebridgeAPI(),
   );
-  (platform as any).deviceStore = new DeviceStore();
+  (platform as any).deviceStore = new DeviceStore(platform.log);
   (platform as any).alexaApi = new AlexaApiWrapper(
     new AlexaRemote(),
     platform.log,

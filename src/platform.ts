@@ -69,7 +69,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
 
     this.persistPath = `${api.user.persistPath()}/.${settings.PLUGIN_NAME}`;
     this.alexaRemote = new AlexaRemote();
-    this.deviceStore = new DeviceStore(this.config.performance?.cacheTTL);
+    this.deviceStore = new DeviceStore(this.log, this.config.performance);
     this.alexaApi = new AlexaApiWrapper(
       this.alexaRemote,
       this.log,

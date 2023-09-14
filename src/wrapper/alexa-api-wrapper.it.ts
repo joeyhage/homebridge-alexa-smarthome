@@ -115,9 +115,10 @@ async function getAlexaRemote(): Promise<AlexaRemote> {
 }
 
 function getAlexaApiWrapper(alexaRemote: AlexaRemote): AlexaApiWrapper {
+  const log = new PluginLogger(global.MockLogger, global.createPlatformConfig());
   return new AlexaApiWrapper(
     alexaRemote,
-    new PluginLogger(global.MockLogger, global.createPlatformConfig()),
-    new DeviceStore(),
+    log,
+    new DeviceStore(log),
   );
 }

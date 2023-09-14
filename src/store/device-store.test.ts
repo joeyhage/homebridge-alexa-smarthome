@@ -1,12 +1,13 @@
 import { randomUUID } from 'crypto';
 import * as O from 'fp-ts/Option';
 import DeviceStore from './device-store';
+import { PluginLogger } from '../util/plugin-logger';
 
 describe('updateCacheValue', () => {
   test('should update given device and namespace were previously cached', () => {
     // given
     const deviceId = randomUUID();
-    const store = new DeviceStore();
+    const store = new DeviceStore(getPluginLogger());
     store.cache.states = {
       [deviceId]: [
         O.of({
@@ -32,7 +33,7 @@ describe('updateCacheValue', () => {
   test('should not update given no previous value', () => {
     // given
     const deviceId = randomUUID();
-    const store = new DeviceStore();
+    const store = new DeviceStore(getPluginLogger());
     store.cache.states = {
       [deviceId]: [
         O.of({
@@ -55,3 +56,6 @@ describe('updateCacheValue', () => {
     ).toStrictEqual(O.of(true));
   });
 });
+
+const getPluginLogger = () =>
+  new PluginLogger(global.MockLogger, global.createPlatformConfig());
