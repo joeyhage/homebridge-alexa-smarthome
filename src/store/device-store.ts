@@ -4,7 +4,6 @@ import { Option } from 'fp-ts/Option';
 import * as RA from 'fp-ts/ReadonlyArray';
 import * as RR from 'fp-ts/ReadonlyRecord';
 import { constVoid, constant, identity, pipe } from 'fp-ts/lib/function';
-import { Nullable } from '../domain';
 import { CapabilityState } from '../domain/alexa';
 import {
   CapabilityStatesByDevice,
@@ -14,12 +13,17 @@ import {
   RangeCapabilityAssets,
   RangeCapabilityAssetsByDevice,
 } from '../domain/alexa/save-device-capabilities';
+import { AlexaPlatformConfig } from '../domain/homebridge';
 import { getOrElseNullable } from '../util/fp-util';
+import { PluginLogger } from '../util/plugin-logger';
+import { match } from 'ts-pattern';
 
 export interface DeviceStatesCache {
   lastUpdated: Date;
   states: ValidStatesByDevice;
 }
+
+const MIN_CACHE_TTL_WHEN_REFRESH_ENABLED = 90;
 
 export default class DeviceStore {
   public readonly cacheTTL: number;
@@ -30,8 +34,35 @@ export default class DeviceStore {
 
   private _deviceCapabilities: RangeCapabilityAssetsByDevice = {};
 
-  constructor(cacheTTL?: Nullable<number>) {
-    this.cacheTTL = getOrElseNullable(cacheTTL, constant(30)) * 1_000;
+  constructor(
+    private readonly log: PluginLogger,
+    performanceSettings?: AlexaPlatformConfig['performance'],
+  ) {
+    const cacheTTL = getOrElseNullable(
+      performanceSettings?.cacheTTL,
+      constant(30),
+    );
+    const refreshEnabled = getOrElseNullable(
+      performanceSettings?.backgroundRefresh,
+      constant(false),
+    );
+    this.cacheTTL =
+      1_000 *
+      match([cacheTTL, refreshEnabled])
+        .when(
+          ([ttl, refresh]) => ttl < 90 && refresh,
+          ([ttl]) => {
+            this.log.info(
+              'Overriding device state cache lifetime setting from ' +
+                ttl +
+                ' seconds to ' +
+                MIN_CACHE_TTL_WHEN_REFRESH_ENABLED +
+                ' seconds because background refresh is enabled. Device states will be updated every 60 seconds.',
+            );
+            return MIN_CACHE_TTL_WHEN_REFRESH_ENABLED;
+          },
+        )
+        .otherwise(([ttl]) => ttl);
   }
 
   get deviceCapabilities(): RangeCapabilityAssetsByDevice {
