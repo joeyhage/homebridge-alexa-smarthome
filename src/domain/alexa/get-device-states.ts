@@ -1,6 +1,7 @@
+import * as A from 'fp-ts/Array';
 import * as E from 'fp-ts/Either';
 import { Either } from 'fp-ts/Either';
-import * as A from 'fp-ts/Array';
+import { Json } from 'fp-ts/Json';
 import {
   constant,
   constFalse,
@@ -8,7 +9,6 @@ import {
   flow,
   pipe,
 } from 'fp-ts/lib/function';
-import { Json } from 'fp-ts/Json';
 import * as O from 'fp-ts/Option';
 import { Option, Some } from 'fp-ts/Option';
 import { match, Pattern } from 'ts-pattern';
@@ -87,18 +87,23 @@ export const extractCapabilityStates = (
   );
 };
 
+const baseCapStatePattern = {
+  namespace: Pattern.select('namespace', Pattern.string),
+  name: Pattern.select('name', Pattern.string),
+  value: Pattern.select('value'),
+};
 const validateCapabilityState = E.bimap(
   (e: AlexaApiError) => new InvalidResponse(e.message),
   (j: Json) =>
     match(j)
       .with(
         {
-          namespace: Pattern.select('namespace', Pattern.string),
-          name: Pattern.select('name'),
-          value: Pattern.select('value'),
+          ...baseCapStatePattern,
+          instance: Pattern.select('instance', Pattern.string),
         },
         (jr) => O.of(jr as CapabilityState),
       )
+      .with(baseCapStatePattern, (jr) => O.of(jr as CapabilityState))
       .otherwise(constant(O.none)),
 );
 

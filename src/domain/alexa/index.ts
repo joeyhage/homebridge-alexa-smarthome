@@ -7,6 +7,7 @@ export const SupportedDeviceTypes = [
   'SMARTPLUG',
   'THERMOSTAT',
   'ALEXA_VOICE_ENABLED',
+  'AIR_QUALITY_MONITOR',
 ];
 
 export type AmazonDomain =
@@ -44,6 +45,7 @@ export const SupportedNamespaces = {
   'Alexa.BrightnessController': 'Alexa.BrightnessController',
   'Alexa.TemperatureSensor': 'Alexa.TemperatureSensor',
   'Alexa.ThermostatController': 'Alexa.ThermostatController',
+  'Alexa.RangeController': 'Alexa.RangeController',
 } as const;
 
 export type SupportedNamespacesType = keyof typeof SupportedNamespaces;
@@ -61,4 +63,5 @@ export interface CapabilityState {
   namespace: SupportedNamespacesType;
   name?: Nullable<string>;
   value: string | number | boolean | Record<string, unknown>;
+  instance?: Nullable<string>;
 }

@@ -1,8 +1,7 @@
 import * as A from 'fp-ts/Array';
-import * as IO from 'fp-ts/IO';
 import * as O from 'fp-ts/Option';
 import { Option } from 'fp-ts/Option';
-import * as RRecord from 'fp-ts/ReadonlyRecord';
+import * as RR from 'fp-ts/ReadonlyRecord';
 import * as TE from 'fp-ts/TaskEither';
 import { TaskEither } from 'fp-ts/TaskEither';
 import { identity, pipe } from 'fp-ts/lib/function';
@@ -15,18 +14,20 @@ import {
   InvalidResponse,
 } from '../domain/alexa/errors';
 import { SmartHomeDevice } from '../domain/alexa/get-devices';
+import { RangeCapabilityAssets } from '../domain/alexa/save-device-capabilities';
 import { AlexaSmartHomePlatform } from '../platform';
 import { PluginLogLevel, PluginLogger } from '../util/plugin-logger';
 
 export default abstract class BaseAccessory {
-  public readonly Service: typeof Service = this.platform.api.hap.Service;
+  public readonly Service: typeof Service = this.platform.Service;
 
   public readonly Characteristic: typeof Characteristic =
-    this.platform.api.hap.Characteristic;
+    this.platform.Characteristic;
 
   readonly log: PluginLogger;
 
   _initialized = false;
+  readonly rangeCapabilities: RangeCapabilityAssets;
 
   constructor(
     readonly platform: AlexaSmartHomePlatform,
@@ -35,6 +36,8 @@ export default abstract class BaseAccessory {
   ) {
     this.log = platform.log;
     this.addAccessoryInfoService();
+    this.rangeCapabilities =
+      this.platform.deviceStore.getRangeCapabilitiesForDevice(this.device.id);
   }
 
   logWithContext(
@@ -88,7 +91,7 @@ export default abstract class BaseAccessory {
   }
 
   getState<S, C>(
-    toCharacteristicStateFn: (fa: O.Option<S[]>) => O.Option<C>,
+    toCharacteristicStateFn: (fa: Option<S[]>) => Option<C>,
   ): TaskEither<AlexaApiError, C> {
     return pipe(
       TE.bindTo('allCapStates')(
@@ -98,7 +101,7 @@ export default abstract class BaseAccessory {
         TE.of(
           pipe(
             statesByDevice,
-            RRecord.lookup(this.device.id),
+            RR.lookup(this.device.id),
             O.map(this.extractStates<S>),
           ),
         ),
@@ -116,17 +119,20 @@ export default abstract class BaseAccessory {
   getCacheValue(
     namespace: CapabilityState['namespace'],
     name?: CapabilityState['name'],
+    instance?: CapabilityState['instance'],
   ): Option<CapabilityState['value']> {
     return pipe(
-      this.platform.alexaApi.getCacheValue(this.device.id, { namespace, name }),
+      this.platform.deviceStore.getCacheValue(this.device.id, {
+        namespace,
+        name,
+        instance,
+      }),
       O.flatMap(({ value }) => O.fromNullable(value)),
     );
   }
 
   updateCacheValue(newState: CapabilityState) {
-    return IO.of(
-      this.platform.alexaApi.updateCacheValue(this.device.id, newState),
-    );
+    return this.platform.deviceStore.updateCacheValue(this.device.id, newState);
   }
 
   getHapValue(characteristic: Parameters<Service['getCharacteristic']>[0]) {
@@ -134,26 +140,26 @@ export default abstract class BaseAccessory {
   }
 
   get serviceCommunicationError() {
-    return new this.platform.api.hap.HapStatusError(
-      this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE,
+    return new this.platform.HAP.HapStatusError(
+      this.platform.HAP.HAPStatus.SERVICE_COMMUNICATION_FAILURE,
     );
   }
 
   get readOnlyError() {
-    return new this.platform.api.hap.HapStatusError(
-      this.platform.api.hap.HAPStatus.READ_ONLY_CHARACTERISTIC,
+    return new this.platform.HAP.HapStatusError(
+      this.platform.HAP.HAPStatus.READ_ONLY_CHARACTERISTIC,
     );
   }
 
   get notAllowedError() {
-    return new this.platform.api.hap.HapStatusError(
-      this.platform.api.hap.HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE,
+    return new this.platform.HAP.HapStatusError(
+      this.platform.HAP.HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE,
     );
   }
 
   get invalidValueError() {
-    return new this.platform.api.hap.HapStatusError(
-      this.platform.api.hap.HAPStatus.INVALID_VALUE_IN_REQUEST,
+    return new this.platform.HAP.HapStatusError(
+      this.platform.HAP.HAPStatus.INVALID_VALUE_IN_REQUEST,
     );
   }
 

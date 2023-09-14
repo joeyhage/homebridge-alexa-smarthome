@@ -1,6 +1,13 @@
+import { Option } from 'fp-ts/lib/Option';
 import { PlatformConfig } from 'homebridge';
 import { AmazonDomain } from '../alexa/index';
 import { Nullable } from '../index';
+
+export interface HomebridgeAccessoryInfo {
+  deviceType: string;
+  uuid: string;
+  altDeviceName: Option<string>;
+}
 
 export interface AlexaPlatformConfig extends PlatformConfig {
   platform: 'HomebridgeAlexaSmartHome';

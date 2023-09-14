@@ -35,7 +35,7 @@ export interface SmartHomeDevice {
   description: string;
   supportedOperations: string[];
   providerData: {
-    enabled: string;
+    enabled: boolean;
     categoryType: string;
     deviceType: string;
     dmsDeviceIdentifiers?: Nullable<

@@ -13,6 +13,8 @@ import { PlayerInfo } from '../domain/alexa/get-player-info';
 import { AlexaSmartHomePlatform } from '../platform';
 import BaseAccessory from './base-accessory';
 import * as mapper from '../mapper/television-mapper';
+import {matchNullable} from '../util/fp-util';
+import { Nullable } from '../domain';
 
 interface PlayerInfoCache {
   lastUpdated: Date;
@@ -52,7 +54,7 @@ export default class TelevisionAccessory extends BaseAccessory {
   }
 
   configureServices() {
-    this.platformAcc.category = this.platform.api.hap.Categories.TELEVISION;
+    this.platformAcc.category = this.platform.HAP.Categories.TELEVISION;
     this.service =
       this.platformAcc.getService(this.Service.Television) ||
       this.platformAcc.addService(
@@ -170,15 +172,16 @@ export default class TelevisionAccessory extends BaseAccessory {
         ({ playerInfo: { state } }) => {
           this.logWithContext(
             'debug',
-            'Get active result: ' + JSON.stringify(state),
+            `Get active result: ${matchNullable(
+              state,
+              constant('No media player information found'),
+              JSON.stringify,
+            )}`,
           );
-          return pipe(
+          return matchNullable(
             state,
-            O.fromNullable,
-            O.match(
-              constant(this.Characteristic.Active.INACTIVE),
-              constant(this.Characteristic.Active.ACTIVE),
-            ),
+            constant(this.Characteristic.Active.INACTIVE),
+            constant(this.Characteristic.Active.ACTIVE),
           );
         },
       ),
@@ -196,14 +199,13 @@ export default class TelevisionAccessory extends BaseAccessory {
         ({ playerInfo: { volume } }) => {
           this.logWithContext(
             'debug',
-            'Get volume result: ' + JSON.stringify(volume),
+            `Get active result: ${matchNullable(
+              volume,
+              constant('No media player information found'),
+              JSON.stringify,
+            )}`,
           );
-          return pipe(
-            volume,
-            O.fromNullable,
-            O.flatMap(({ volume }) => pipe(volume, O.fromNullable)),
-            O.match(constant(0), identity),
-          );
+          return this.getVolumeElseZero(volume);
         },
       ),
     )();
@@ -214,35 +216,30 @@ export default class TelevisionAccessory extends BaseAccessory {
     if (typeof value !== 'number') {
       throw this.invalidValueError;
     }
-    try {
-      await pipe(
-        TE.tryCatch(
-          () => this.commandMutex.acquire(),
-          (e) => e as TimeoutError,
-        ),
-        TE.flatMap(() =>
-          this.platform.alexaApi.setVolume(this.device.displayName, value),
-        ),
-        TE.mapBoth(
-          (e) => {
-            this.commandMutex.release();
-            this.logWithContext('errorT', 'Set volume', e);
-            throw this.serviceCommunicationError;
-          },
-          () => {
-            this.commandMutex.release();
-            this.playerInfoCache.playerInfo.volume = {
-              ...(this.playerInfoCache.playerInfo.volume ?? {}),
-              volume: value,
-              muted: value === 0,
-            };
-          },
-        ),
-      )();
-    } catch (e) {
-      this.logWithContext('errorT', 'Set volume', e);
-      throw this.serviceCommunicationError;
-    }
+    return pipe(
+      TE.tryCatch(
+        () => this.commandMutex.acquire(),
+        (e) => e as TimeoutError,
+      ),
+      TE.flatMap(() =>
+        this.platform.alexaApi.setVolume(this.device.displayName, value),
+      ),
+      TE.match(
+        (e) => {
+          this.commandMutex.release();
+          this.logWithContext('errorT', 'Set volume', e);
+          throw this.serviceCommunicationError;
+        },
+        () => {
+          this.commandMutex.release();
+          this.playerInfoCache.playerInfo.volume = {
+            ...(this.playerInfoCache.playerInfo.volume ?? {}),
+            volume: value,
+            muted: value === 0,
+          };
+        },
+      ),
+    )();
   }
 
   async handleVolumeSelectorSet(value: CharacteristicValue): Promise<void> {
@@ -252,20 +249,13 @@ export default class TelevisionAccessory extends BaseAccessory {
     }
     const volumeDelta =
       value === this.Characteristic.VolumeSelector.INCREMENT ? 1 : -1;
-    await pipe(
+    return pipe(
       TE.tryCatch(
         () => this.commandMutex.acquire(),
         (e) => e as TimeoutError,
       ),
       TE.flatMap(() => this.getPlayerInfo()),
-      TE.map(({ playerInfo: { volume } }) =>
-        pipe(
-          volume,
-          O.fromNullable,
-          O.flatMap(({ volume }) => pipe(volume, O.fromNullable)),
-          O.match(constant(0), identity),
-        ),
-      ),
+      TE.map(({ playerInfo: { volume } }) => this.getVolumeElseZero(volume)),
       TE.map((prevVol) =>
         Math.min(
           100,
@@ -275,7 +265,7 @@ export default class TelevisionAccessory extends BaseAccessory {
       TE.tap((newVolume) =>
         this.platform.alexaApi.setVolume(this.device.displayName, newVolume),
       ),
-      TE.mapBoth(
+      TE.match(
         (e) => {
           this.commandMutex.release();
           this.logWithContext('errorT', 'Set volume selector', e);
@@ -298,7 +288,7 @@ export default class TelevisionAccessory extends BaseAccessory {
     if (typeof value !== 'number') {
       throw this.invalidValueError;
     }
-    await pipe(
+    return pipe(
       TE.tryCatch(
         () => this.commandMutex.acquire(),
         (e) => e as TimeoutError,
@@ -325,7 +315,7 @@ export default class TelevisionAccessory extends BaseAccessory {
       TE.tap((command) =>
         this.platform.alexaApi.controlMedia(this.device.displayName, command),
       ),
-      TE.mapBoth(
+      TE.match(
         (e) => {
           this.commandMutex.release();
           this.logWithContext('errorT', 'Remote control', e);
@@ -391,6 +381,17 @@ export default class TelevisionAccessory extends BaseAccessory {
           return res;
         },
       ),
+    );
+  }
+
+  private getVolumeElseZero(
+    volume: Nullable<{ muted?: Nullable<boolean>; volume?: Nullable<number> }>,
+  ): number {
+    return pipe(
+      volume,
+      O.fromNullable,
+      O.flatMap(({ volume }) => pipe(volume, O.fromNullable)),
+      O.match(constant(0), identity),
     );
   }
 

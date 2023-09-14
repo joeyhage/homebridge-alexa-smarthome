@@ -25,6 +25,7 @@ import {
   PluginError,
   ValidationError,
 } from '../domain/homebridge/errors';
+import { AlexaSmartHomePlatform } from '../platform';
 
 const isBetweenIncl = (value: number, min: number, max: number): boolean =>
   value >= min && value <= max;
@@ -145,3 +146,14 @@ export const extractEntityId = (id: string): Either<AlexaDeviceError, string> =>
 export const round = (value: number, decimals: number) => {
   return Number(Math.round(Number(value + 'e' + decimals)) + 'e-' + decimals);
 };
+
+export const isRecord = <T extends string | number | symbol>(
+  obj: unknown,
+): obj is Record<T, unknown> =>
+    !!obj && typeof obj === 'object' && !Array.isArray(obj);
+
+export const generateUuid = (
+  platform: AlexaSmartHomePlatform,
+  entityId: string,
+  deviceType: string,
+): string => platform.HAP.uuid.generate(`${entityId}:${deviceType}`);

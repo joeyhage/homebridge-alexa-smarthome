@@ -3,10 +3,7 @@ import * as O from 'fp-ts/Option';
 import * as TE from 'fp-ts/TaskEither';
 import { flow, identity, pipe } from 'fp-ts/lib/function';
 import { CharacteristicValue, Service } from 'homebridge';
-import {
-  SupportedActionsType,
-  SupportedNamespacesType,
-} from '../domain/alexa';
+import { SupportedActionsType, SupportedNamespacesType } from '../domain/alexa';
 import { LightbulbNamespaces, LightbulbState } from '../domain/alexa/lightbulb';
 import * as mapper from '../mapper/power-mapper';
 import BaseAccessory from './base-accessory';
@@ -65,19 +62,21 @@ export default class LightAccessory extends BaseAccessory {
       throw this.invalidValueError;
     }
     const action = mapper.mapHomeKitPowerToAlexaAction(value);
-    try {
-      await pipe(
-        this.platform.alexaApi.setDeviceState(this.device.id, action),
-        TE.tapIO(
-          this.updateCacheValue.bind(this, {
+    return pipe(
+      this.platform.alexaApi.setDeviceState(this.device.id, action),
+      TE.match(
+        (e) => {
+          this.logWithContext('errorT', 'Set power', e);
+          throw this.serviceCommunicationError;
+        },
+        () => {
+          this.updateCacheValue({
             value: mapper.mapHomeKitPowerToAlexaValue(value),
             namespace: 'Alexa.PowerController',
-          }),
-        ),
-      )();
-    } catch (e) {
-      this.logWithContext('errorT', 'Set power', e);
-    }
+          });
+        },
+      ),
+    )();
   }
 
   async handleBrightnessGet(): Promise<number> {
@@ -110,20 +109,22 @@ export default class LightAccessory extends BaseAccessory {
       throw this.invalidValueError;
     }
     const newBrightness = value.toString(10);
-    try {
-      await pipe(
-        this.platform.alexaApi.setDeviceState(this.device.id, 'setBrightness', {
-          brightness: newBrightness,
-        }),
-        TE.tapIO(
-          this.updateCacheValue.bind(this, {
+    return pipe(
+      this.platform.alexaApi.setDeviceState(this.device.id, 'setBrightness', {
+        brightness: newBrightness,
+      }),
+      TE.match(
+        (e) => {
+          this.logWithContext('errorT', 'Set brightness', e);
+          throw this.serviceCommunicationError;
+        },
+        () => {
+          this.updateCacheValue({
             value: newBrightness,
             namespace: 'Alexa.BrightnessController',
-          }),
-        ),
-      )();
-    } catch (e) {
-      this.logWithContext('errorT', 'Set brightness', e);
-    }
+          });
+        },
+      ),
+    )();
   }
 }

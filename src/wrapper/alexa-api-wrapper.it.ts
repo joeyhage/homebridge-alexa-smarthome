@@ -14,6 +14,7 @@ import { PLUGIN_NAME } from '../settings';
 import { getAuthentication } from '../util';
 import { PluginLogger } from '../util/plugin-logger';
 import { AlexaApiWrapper } from './alexa-api-wrapper';
+import DeviceStore from '../store/device-store';
 
 let alexa: AlexaRemote;
 beforeAll(async () => {
@@ -117,5 +118,6 @@ function getAlexaApiWrapper(alexaRemote: AlexaRemote): AlexaApiWrapper {
   return new AlexaApiWrapper(
     alexaRemote,
     new PluginLogger(global.MockLogger, global.createPlatformConfig()),
+    new DeviceStore(),
   );
 }

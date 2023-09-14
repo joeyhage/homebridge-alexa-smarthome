@@ -1,3 +1,4 @@
+/* eslint-disable no-var */
 import { HomebridgeAPI } from 'homebridge/lib/api';
 import { Logger } from 'homebridge/lib/logger';
 import { AlexaPlatformConfig } from '../src/domain/homebridge';
@@ -45,3 +46,9 @@ global.createPlatformConfig = (): AlexaPlatformConfig => ({
   },
   debug: true,
 });
+
+declare global {
+  var MockLogger: Logger;
+  var createPlatform: () => AlexaSmartHomePlatform;
+  var createPlatformConfig: () => AlexaPlatformConfig;
+}

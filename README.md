@@ -44,6 +44,8 @@ This plugin **does not** allow Alexa to control devices in HomeKit. For that, pl
 - Switches
 - Outlets + smart plugs
 - Thermostats
+- Air Quality Monitors
+  - Only confirmed to work with Amazon Air Quality Monitor. Please report an issue if it doesn't work with your air quality monitor.
 - Echo smart speakers / Echo smart displays
   - Play + pause
   - Next track / previous track
@@ -63,11 +65,12 @@ Echo devices appear in HomeKit as Televisions which enables media control via th
 To use the Control Center remote controls, follow [these instructions](https://support.apple.com/guide/tv/use-ios-or-ipados-control-center-atvb701cadc1/tvos) to add the remote to your device's Control Center. Once the remote is open, you can change the device you are controlling using the `⌄` arrow next to the device name at the top of the screen.
 
 Remote control features - **you must start the media on the Echo (music, audio book, etc) before you can control it. It may take up to a minute for the remote to start working once media is playing**:
-  - Play
-  - Pause
-  - Next (right arrow)
-  - Previous (left arrow)
-  - Volume control (hardware volume buttons, a.k.a. volume button on the side of your iPhone/iPad)
+
+- Play
+- Pause
+- Next (right arrow)
+- Previous (left arrow)
+- Volume control (hardware volume buttons, a.k.a. volume button on the side of your iPhone/iPad)
 
 Siri is not supported out of the box but I may be able to support in the future.
 
@@ -83,9 +86,9 @@ The first time this plugin starts, you will need to authenticate using your Amaz
    1. ![failed to initialize screenshot](./docs/img/2-failed-to-initialize.png)
 3. Visit the url in your browser to open a login screen. It is a real login screen proxied so the plugin can capture the session cookie. The username/password are not stored by the plugin.
    1. ![login screenshot](./docs/img/3-alexa-login.png)
-4. Enter your MFA code if you have MFA enabled on your Amazon Alexa account. Again, the plugin does not store this value.
+4. Enter your MFA code if you have MFA enabled on your Amazon Alexa account. Again, the plugin does not store this value. This plugin may not work and I cannot provide support or help troubleshoot if you do not have MFA enabled. The instructions to enable 2FA can be found on Amazon's website.
    1. ![mfa screenshot](./docs/img/4-alexa-mfa.png)
-5. If successful, you should see a message that the Amazon Alexa cookie was successfully retrieved.
+5. If successful, you should see a message that the Amazon Alexa cookie was successfully retrieved. If you see a 404 page, return to step 3 and start over.
    1. ![login successful screenshot](./docs/img/5-login-success.png)
 6. The homebridge logs will also show a message such as "Successfully authenticated Alexa account".
    1. ![authentication successful screenshot](./docs/img/6-homebridge-success.png)
@@ -93,12 +96,28 @@ The first time this plugin starts, you will need to authenticate using your Amaz
 ## Common issues
 
 <details>
+  <summary>Alexa login errors or <code>Failed to initialize connection to Alexa.`</code></summary>
+  <ol>
+    <li>Please ensure you have the Alexa app installed on your device (iPhone, iPad, etc).</li>
+    <li>Enable Two-factor authentication (2FA). The instructions to enable 2FA can be found on Amazon's website.</li>
+    <li>Repeat <a href="#initial-configuration">initial configuration</a> steps again.</li>
+    <li>Delete the <code>persist/.homebridge-alexa-smarthome</code> file in your homebridge installation directory and then restart Homebridge.</li>
+  </ol>
+</details>
+<details>
   <summary><code>This plugin slows down Homebridge</code></summary>
   Please update the Performance section of the plugin settings. More information can be found on the plugin settings page.
 </details>
 <details>
   <summary><code>No media player information found</code> or <code>Cannot control player because there is no media selected.</code></summary>
   Echo devices can only be controlled once there is media (e.g. music, audio book, etc) playing.
+</details>
+<details>
+  <summary>I can't find my device in HomeKit/Apple Home app.</summary>
+  <ul>
+    <li>Please check the Default Room for the device. Air quality, humidity, and temperature sensors appear as statuses at the top of the room, not as device tiles.</li>
+    <li>Double check the name of the device in the Alexa app matches the name specified in the plugin settings. Spaces, uppercase, and lowercase matter.</li>
+  </ul>
 </details>
 
 ## Support
@@ -109,7 +128,7 @@ If you run into issues or you need help please use the [issues template](https:/
 
 ## Long-term support
 
-Please consider supporting the development of this plugin by sponsoring me. Sponsorship will encourage me to continue improving this plugin, support more devices, adapt to changes in the Alexa API, and fuel my late-night coding sessions. :coffee: 
+Please consider supporting the development of this plugin by sponsoring me. Sponsorship will encourage me to continue improving this plugin, support more devices, adapt to changes in the Alexa API, and fuel my late-night coding sessions. :coffee:
 
 ## Disclaimer
 

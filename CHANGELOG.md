@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, unreleased work in progress.
 
+## [1.0.0] - 2023-09-13
+
+### Added
+
+- Support for air quality monitors. Includes overall air quality, particulate matter density, VOC density, Carbon Monoxide levels, humidity, and temperature. Only tested with Amazon Air Quality Monitor as of now.
+
+### Changed
+
+- Automatically remove stored Alexa authentication cookie if a `401 Unauthenticated` error occurs on startup. You may need to restart Homebridge to retry the login step.
+- Remove `http://` or `https://` from `clientHost` setting if found since these will cause login issues.
+
 ## [0.2.1] - 2023-09-11
 
 ### Added
@@ -73,7 +84,8 @@ See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, 
 
 - Support for outlets i.e. smart plugs.
 
-[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.2.1...HEAD
+[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.2.1...v1.0.0
 [0.2.1]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.1.1...v0.1.2
