@@ -1,8 +1,6 @@
-<p style="text-align: center;">
-    <img alt="homebridge-logo" src="https://github.com/homebridge/branding/raw/master/logos/homebridge-wordmark-logo-vertical.png" width="150">
+<p align="center">
+  <img alt="homebridge-logo" src="https://github.com/homebridge/branding/raw/master/logos/homebridge-wordmark-logo-vertical.png" width="150">
 </p>
-
-# Homebridge Alexa Smart Home
 
 <p align="center">
   <a href="https://github.com/joeyhage/homebridge-alexa-smarthome/blob/main/LICENSE">
@@ -22,6 +20,8 @@
   <a href="https://discord.com/channels/432663330281226270/1144780172084654190">
     <img alt="Discord" src="https://img.shields.io/discord/432663330281226270?cacheSeconds=3600&logo=discord&color=728ED5&label=discord-channel"></a>
 </p>
+
+# Homebridge Alexa Smart Home
 
 This plugin enables smart home device integration between HomeKit and Alexa which allows HomeKit/Siri to control smart home devices that are connected via Amazon Alexa.
 
