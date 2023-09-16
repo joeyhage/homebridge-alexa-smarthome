@@ -232,12 +232,35 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
           `Found ${devices.length} devices connected to the current Alexa account.`,
         ),
       ),
+      TE.tap(
+        flow(
+          A.filterMap(({ displayName, providerData }) =>
+            providerData.categoryType !== 'GROUP'
+              ? O.of({ displayName, deviceType: providerData.deviceType })
+              : O.none,
+          ),
+          util.stringifyJson,
+          TE.fromEither,
+          TE.tapIO((json) =>
+            this.log.debug(`Devices connected to Alexa account: ${json}`),
+          ),
+        ),
+      ),
       TE.map(
         A.filter((d: SmartHomeDevice) =>
           A.isEmpty(deviceFilter)
             ? true
             : deviceFilter.includes(d.displayName.trim()),
         ),
+      ),
+      TE.tapIO((devices) =>
+        devices.length === deviceFilter.length
+          ? this.log.debug(
+            `Found all ${deviceFilter.length} devices in plugin settings.`,
+          )
+          : this.log.warn(
+            `${deviceFilter.length} devices found in plugin settings but only ${devices.length} matched.`,
+          ),
       ),
     );
   }

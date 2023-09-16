@@ -88,7 +88,12 @@ export const readFile = (path: string) =>
 
 export const parseJson = flow(
   J.parse,
-  E.mapLeft((e) => new JsonFormatError('Invalid JSON. ' + e)),
+  E.mapLeft((e) => new JsonFormatError('Error converting string to JSON', e)),
+);
+
+export const stringifyJson = flow(
+  J.stringify,
+  E.mapLeft((e) => new JsonFormatError('Error converting JSON to string', e)),
 );
 
 export const getAuthentication = (

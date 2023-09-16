@@ -43,6 +43,13 @@ export class PluginLogger {
           { name: DeviceOffline.name, message: Pattern.select(Pattern.string) },
           (m) => this.debug(`${prefix} - ${m}`)(),
         )
+        .with(
+          {
+            message: Pattern.select('message', Pattern.string),
+            cause: Pattern.select('cause'),
+          },
+          ({ cause, message }) => this.errorT(`${prefix} - ${message}. Caused by`, cause)(),
+        )
         .with({ message: Pattern.select(Pattern.string) }, (m) =>
           this.logger.error(`${prefix} - ${m}`),
         )
