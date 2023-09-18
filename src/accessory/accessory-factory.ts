@@ -14,6 +14,7 @@ import BaseAccessory from './base-accessory';
 import CarbonMonoxideAccessory from './co-accessory';
 import HumidityAccessory from './humidity-accessory';
 import LightAccessory from './light-accessory';
+import LockAccessory from './lock-accessory';
 import OutletAccessory from './outlet-accessory';
 import SwitchAccessory from './switch-accessory';
 import TelevisionAccessory from './television-accessory';
@@ -34,6 +35,9 @@ export default class AccessoryFactory {
         )
         .with(platform.Service.Switch.UUID, () =>
           E.of(new SwitchAccessory(platform, device, platAcc)),
+        )
+        .with(platform.Service.LockMechanism.UUID, () =>
+          E.of(new LockAccessory(platform, device, platAcc)),
         )
         .with(platform.Service.Outlet.UUID, () =>
           E.of(new OutletAccessory(platform, device, platAcc)),
