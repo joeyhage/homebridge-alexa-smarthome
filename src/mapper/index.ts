@@ -4,6 +4,7 @@ import * as O from 'fp-ts/Option';
 import { pipe } from 'fp-ts/lib/function';
 import { Pattern, match } from 'ts-pattern';
 import LightAccessory from '../accessory/light-accessory';
+import LockAccessory from '../accessory/lock-accessory';
 import OutletAccessory from '../accessory/outlet-accessory';
 import SwitchAccessory from '../accessory/switch-accessory';
 import TelevisionAccessory from '../accessory/television-accessory';
@@ -102,6 +103,23 @@ const determineSupportedHomeKitAccessories = (
               device.providerData.deviceType,
             ),
           },
+        ]),
+    )
+    .when(
+    ([type, ops]) =>
+        type === 'SMARTLOCK' &&
+        supportsRequiredActions(LockAccessory.requiredOperations, ops),
+    () =>
+        E.of([
+            {
+                altDeviceName: O.none,
+                deviceType: platform.Service.LockMechanism.UUID,
+                uuid: generateUuid(
+                    platform,
+                    entityId,
+                    device.providerData.deviceType,
+                ),
+            },
         ]),
     )
     .when(
