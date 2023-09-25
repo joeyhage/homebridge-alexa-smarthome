@@ -1,19 +1,19 @@
 import * as A from 'fp-ts/Array';
 import * as O from 'fp-ts/Option';
 import * as TE from 'fp-ts/TaskEither';
-import {
-  flow,
-  identity,
-  pipe,
-} from 'fp-ts/lib/function';
+import { flow, identity, pipe } from 'fp-ts/lib/function';
 import { CharacteristicValue, Service } from 'homebridge';
 import * as mapper from '../mapper/lock-mapper';
 import BaseAccessory from './base-accessory';
-import { LockNamespaces, LockNamespacesType, LockState } from '../domain/alexa/lock';
+import {
+  LockNamespaces,
+  LockNamespacesType,
+  LockState,
+} from '../domain/alexa/lock';
 import { SupportedActionsType } from '../domain/alexa';
 
 export default class LockAccessory extends BaseAccessory {
-  static requiredOperations: SupportedActionsType[] = [];
+  static requiredOperations: SupportedActionsType[] = ['lockAction'];
   service: Service;
   namespaces = LockNamespaces;
   isExternalAccessory = false;
@@ -48,10 +48,10 @@ export default class LockAccessory extends BaseAccessory {
       ),
       O.map(({ value }) =>
         mapper.mapAlexaCurrentStateToHomeKit(value, this.Characteristic),
-           ),
+      ),
       O.tap((s) =>
         O.of(this.logWithContext('debug', `Get lock state result: ${s}`)),
-           ),
+      ),
     );
 
     return pipe(
@@ -75,16 +75,18 @@ export default class LockAccessory extends BaseAccessory {
       ),
       O.map(({ value }) =>
         mapper.mapAlexaTargetStateToHomeKit(value, this.Characteristic),
-           ),
+      ),
       O.tap((s) =>
-        O.of(this.logWithContext('debug', `Get lock state result: ${s}`)),
-           ),
+        O.of(
+          this.logWithContext('debug', `Get lock target state result: ${s}`),
+        ),
+      ),
     );
 
     return pipe(
       this.getState(determineTargetState),
       TE.match((e) => {
-        this.logWithContext('errorT', 'Get lock state', e);
+        this.logWithContext('errorT', 'Get lock target state', e);
         throw this.serviceCommunicationError;
       }, identity),
     )();
@@ -96,13 +98,9 @@ export default class LockAccessory extends BaseAccessory {
       throw this.invalidValueError;
     }
     return pipe(
-      this.platform.alexaApi.setDeviceState(
-        this.device.id,
-        'lockAction',
-        {
-          'targetLockState.value': mapper.mapHomeKitTargetStateToAlexaTargetState(value)
-        }
-      ),
+      this.platform.alexaApi.setDeviceState(this.device.id, 'lockAction', {
+        'targetLockState.value': mapper.mapHomeKitTargetStateToAlexa(value),
+      }),
       TE.match(
         (e) => {
           this.logWithContext('errorT', 'Set target lock state', e);
@@ -110,13 +108,12 @@ export default class LockAccessory extends BaseAccessory {
         },
         () => {
           this.updateCacheValue({
-            value: mapper.mapHomeKitTargetStateToAlexaTargetState(value),
+            value: mapper.mapHomeKitTargetStateToAlexa(value),
             namespace: 'Alexa.LockController',
-            name: 'lockState'
+            name: 'lockState',
           });
         },
       ),
     )();
   }
-
 }
