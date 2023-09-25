@@ -106,20 +106,20 @@ const determineSupportedHomeKitAccessories = (
         ]),
     )
     .when(
-    ([type, ops]) =>
+      ([type, ops]) =>
         type === 'SMARTLOCK' &&
         supportsRequiredActions(LockAccessory.requiredOperations, ops),
-    () =>
+      () =>
         E.of([
-            {
-                altDeviceName: O.none,
-                deviceType: platform.Service.LockMechanism.UUID,
-                uuid: generateUuid(
-                    platform,
-                    entityId,
-                    device.providerData.deviceType,
-                ),
-            },
+          {
+            altDeviceName: O.none,
+            deviceType: platform.Service.LockMechanism.UUID,
+            uuid: generateUuid(
+              platform,
+              entityId,
+              device.providerData.deviceType,
+            ),
+          },
         ]),
     )
     .when(

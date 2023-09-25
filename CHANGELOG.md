@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, unreleased work in progress.
 
+## [1.0.3] - 2023-09-25
+
+### Added
+
+- Support for smart locks. Only tested with Schlage Encode so far.
+
 ## [1.0.2] - 2023-09-16
 
 ### Added
@@ -96,7 +102,8 @@ See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, 
 
 - Support for outlets i.e. smart plugs.
 
-[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v1.0.2...HEAD
+[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v1.0.3...HEAD
+[1.0.3]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.2.1...v1.0.0

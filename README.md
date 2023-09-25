@@ -31,6 +31,7 @@ This plugin **does not** allow Alexa to control devices in HomeKit. For that, pl
 
 - [Currently supported devices](#currently-supported-devices)
 - [Features](#features)
+  - [Air quality monitors](#air-quality-monitors)
   - [Echo devices](#echo-devices)
 - [Initial configuration](#initial-configuration)
 - [Common issues](#common-issues)
@@ -76,6 +77,8 @@ When you first add an Air Quality Monitor to HomeKit, the above measurements may
 
 Echo devices appear in HomeKit as Televisions which enables media control via the [Control Center remote controls](https://support.apple.com/guide/tv/use-ios-or-ipados-control-center-atvb701cadc1/tvos).
 
+Echo devices are added to HomeKit as external accessories that need to be added manually. Restart Homebridge and review the Homebridge logs for a message similar to: `Please add [DEVICE NAME] manually in Home app. Setup Code: xxx-xx-xxx`
+
 To use the Control Center remote controls, follow [these instructions](https://support.apple.com/guide/tv/use-ios-or-ipados-control-center-atvb701cadc1/tvos) to add the remote to your device's Control Center. Once the remote is open, you can change the device you are controlling using the `⌄` arrow next to the device name at the top of the screen.
 
 Remote control features - **you must start the media on the Echo (music, audio book, etc) before you can control it. It may take up to a minute for the remote to start working once media is playing**:
@@ -94,17 +97,20 @@ AirPlay is unrelated to Homebridge/HomeKit and needs to be supported by the devi
 
 The first time this plugin starts, you will need to authenticate using your Amazon Alexa account. Please follow these steps in order - screenshots included.
 
-1. Verify that your plugin configuration is correct. Specifically, the proxy `clientHost` and `port` and the `amazonDomain`. The `clientHost` should be the same host you use to access homebridge. For example, if you access homebridge via the url `http://my-homebridge-server.local:8581` then `clientHost` should be `my-homebridge-server.local`. The `port` should be a different value from homebridge (not 8581).
+1. Verify that your plugin configuration is correct. Specifically, the proxy `clientHost` and `port`. The `clientHost` should be the same host you use to access homebridge. For example, if you access homebridge via the url `http://my-homebridge-server.local:8581` then `clientHost` should be `my-homebridge-server.local`. The `port` should be a different value from homebridge (not 8581).
    1. ![config screenshot](./docs/img/1-config.png)
-2. Check the homebridge logs for an error that you must manually open the url to authenticate.
+2. Download the Alexa app onto a device of your choosing (smartphone, tablet, etc) and sign in using the Amazon account your devices are linked to. Confirm the `amazonDomain` plugin setting matches what you see in the Alexa app. Go to Settings -> About, scroll to the bottom, and look for Host Name. The Host Names you see should end with the `amazonDomain` you choose in the plugin settings, it will not match exactly.
+   1. <img alt="Alexa app settings" src="./docs/img/1a-alexa-app.jpeg" width="60%" />
+   2. <img alt="Alexa app host" src="./docs/img/1b-host.jpeg"/>
+3. Check the homebridge logs for an error that you must manually open the url to authenticate.
    1. ![failed to initialize screenshot](./docs/img/2-failed-to-initialize.png)
-3. Visit the url in your browser to open a login screen. It is a real login screen proxied so the plugin can capture the session cookie. The username/password are not stored by the plugin.
+4. Visit the url in your browser to open a login screen. It is a real login screen proxied so the plugin can capture the session cookie. The username/password are not stored by the plugin.
    1. ![login screenshot](./docs/img/3-alexa-login.png)
-4. Enter your MFA code if you have MFA enabled on your Amazon Alexa account. Again, the plugin does not store this value. This plugin may not work and I cannot provide support or help troubleshoot if you do not have MFA enabled. The instructions to enable 2FA can be found on Amazon's website.
+5. Enter your MFA code if you have MFA enabled on your Amazon Alexa account. Again, the plugin does not store this value. This plugin may not work and I cannot provide support or help troubleshoot if you do not have MFA enabled. The instructions to enable 2FA can be found on Amazon's website.
    1. ![mfa screenshot](./docs/img/4-alexa-mfa.png)
-5. If successful, you should see a message that the Amazon Alexa cookie was successfully retrieved. If you see a 404 page, return to step 3 and start over.
+6. If successful, you should see a message that the Amazon Alexa cookie was successfully retrieved. If you see a 404 page, return to step 3 and start over.
    1. ![login successful screenshot](./docs/img/5-login-success.png)
-6. The homebridge logs will also show a message such as "Successfully authenticated Alexa account".
+7. The homebridge logs will also show a message such as "Successfully authenticated Alexa account".
    1. ![authentication successful screenshot](./docs/img/6-homebridge-success.png)
 
 ## Common issues
@@ -131,6 +137,7 @@ The first time this plugin starts, you will need to authenticate using your Amaz
   <ul>
     <li>Please check the Default Room for the device. Air quality, humidity, and temperature sensors appear as statuses at the top of the room, not as device tiles.</li>
     <li>Double check the name of the device in the Alexa app matches the name specified in the plugin settings. Spaces, uppercase, and lowercase matter.</li>
+    <li>Echo devices are added to HomeKit as external accessories that need to be added manually. Restart Homebridge and review the Homebridge logs for a message similar to: <code>Please add [DEVICE NAME] manually in Home app. Setup Code: xxx-xx-xxx</code></li>
   </ul>
 </details>
 

@@ -6,6 +6,8 @@ labels: bug
 assignees: joeyhage
 ---
 
+<!-- Please review the common issues (https://github.com/joeyhage/homebridge-alexa-smarthome#common-issues) section of the documentation before submitting a request -->
+
 <!-- You must use the issue template below when submitting a bug -->
 
 **Describe The Bug:**
