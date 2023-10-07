@@ -29,6 +29,7 @@ This plugin **does not** allow Alexa to control devices in HomeKit. For that, pl
 
 ## Table of Contents
 
+- [Compatibility](#compatibility)
 - [Currently supported devices](#currently-supported-devices)
 - [Features](#features)
   - [Air quality monitors](#air-quality-monitors)
@@ -38,6 +39,12 @@ This plugin **does not** allow Alexa to control devices in HomeKit. For that, pl
 - [Support](#support)
 - [Long-term support](#long-term-support)
 - [Disclaimer](#disclaimer)
+
+## Compatibility
+
+Compatibility is not guaranteed with HOOBS and I am unable to provide support for HOOBS users since I do not use HOOBS.
+
+Node.js versions supported: 16.x, 18.x, 20.x
 
 ## Currently supported devices
 
@@ -122,6 +129,7 @@ The first time this plugin starts, you will need to authenticate using your Amaz
     <li>Enable Two-factor authentication (2FA). The instructions to enable 2FA can be found on Amazon's website.</li>
     <li>Repeat <a href="#initial-configuration">initial configuration</a> steps again.</li>
     <li>Delete the <code>persist/.homebridge-alexa-smarthome</code> file in your homebridge installation directory and then restart Homebridge.</li>
+    <li>Try an incognito window with Javascript disabled. <a href="https://github.com/Apollon77/ioBroker.alexa2#problems-with-cookie-determination-via-e-mailpassword">Detailed instructions</a></li>
   </ol>
 </details>
 <details>

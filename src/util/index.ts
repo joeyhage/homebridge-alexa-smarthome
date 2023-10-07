@@ -61,15 +61,12 @@ export const validateConfig = (
     .otherwise(constFalse);
 
 export const isValidAuthentication = (
-  maybeCookieData: J.Json,
+  maybeCookieData: J.Json | { readonly [key: string]: J.Json | undefined },
 ): maybeCookieData is Authentication =>
   match(maybeCookieData)
     .with(
       {
         localCookie: Pattern.string,
-        deviceSerial: Pattern.string,
-        deviceId: Pattern.string,
-        deviceAppName: Pattern.string,
         refreshToken: Pattern.string,
         macDms: {
           device_private_key: Pattern.string,
@@ -91,10 +88,17 @@ export const parseJson = flow(
   E.mapLeft((e) => new JsonFormatError('Error converting string to JSON', e)),
 );
 
-export const stringifyJson = flow(
-  J.stringify,
-  E.mapLeft((e) => new JsonFormatError('Error converting JSON to string', e)),
-);
+export const stringifyJson = (json: unknown) =>
+  pipe(
+    E.tryCatch(() => {
+      const s = JSON.stringify(json, undefined, 2);
+      if (typeof s !== 'string') {
+        throw new Error('Converting unsupported structure to JSON');
+      }
+      return s;
+    }, identity),
+    E.mapLeft((e) => new JsonFormatError('Error converting JSON to string', e)),
+  );
 
 export const getAuthentication = (
   persistPath: string,
