@@ -19,6 +19,7 @@ import {
   PlatformConfig,
   Service,
 } from 'homebridge';
+import { match } from 'ts-pattern';
 import AccessoryFactory from './accessory/accessory-factory';
 import BaseAccessory from './accessory/base-accessory';
 import { AlexaDeviceError, AlexaError } from './domain/alexa/errors';
@@ -59,6 +60,23 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     this.log = new PluginLogger(logger, config);
 
     if (util.validateConfig(config)) {
+      const clientHost = config.auth.proxy.clientHost.replace(
+        /^https?:\/\//,
+        '',
+      );
+      if (clientHost.includes('/') || clientHost.includes(':')) {
+        pipe(
+          this.log.error(
+            `Invalid proxy client host provided: ${clientHost}. The host should not include a port number or a slash (/).`,
+          ),
+          IO.flatMap(() =>
+            this.log.error(
+              'Examples of correct hosts: 192.168.1.100, homebridge-vm.local',
+            ),
+          ),
+        )();
+        return;
+      }
       this.config = config;
     } else {
       this.log.error(
@@ -148,9 +166,10 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     this.alexaRemote.on('cookie', () => {
       const cookieData = this.alexaRemote.cookieData;
       if (util.isValidAuthentication(cookieData as unknown as J.Json)) {
-        this.log.debug('Cookie updated. Do not share with anyone.', {
-          cookieData,
-        })();
+        this.log.info(
+          'Alexa login cookie updated. Storing cookie in file:',
+          this.persistPath,
+        )();
         fs.writeFileSync(this.persistPath, JSON.stringify({ cookieData }));
       }
     });
@@ -197,6 +216,8 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
             ),
             proxyPort: this.config.auth.proxy.port,
             useWsMqtt: false,
+            logger: this.alexaRemoteLogger.bind(this),
+            proxyLogLevel: 'error',
           } as InitOptions,
           (error) => {
             pipe(
@@ -242,7 +263,9 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
           util.stringifyJson,
           TE.fromEither,
           TE.tapIO((json) =>
-            this.log.debug(`Devices connected to Alexa account: ${json}`),
+            this.log.debug(
+              `BEGIN devices connected to Alexa account\n\n ${json}\n\nEND devices connected to Alexa account`,
+            ),
           ),
         ),
       ),
@@ -259,7 +282,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
             `Found all ${deviceFilter.length} devices in plugin settings.`,
           )
           : this.log.warn(
-            `${deviceFilter.length} devices found in plugin settings but only ${devices.length} matched.`,
+            `${deviceFilter.length} devices provided in settings but ${devices.length} matching Alexa smart home devices were discovered.`,
           ),
       ),
     );
@@ -316,16 +339,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
         ),
       ),
       IOE.fromEither,
-      IOE.tapIO(() => {
-        const deviceJson = JSON.stringify(device, undefined, 2);
-        return this.log.debug(
-          `Attempting to add accessory(s) for device: ${deviceJson}. Current state: ${JSON.stringify(
-            this.deviceStore.getCacheStatesForDevice(device.id),
-          )}. Range capabilities: ${JSON.stringify(
-            this.deviceStore.getRangeCapabilitiesForDevice(device.id),
-          )}`,
-        );
-      }),
+      IOE.tap(this.logDeviceInfo(device)),
       IOE.flatMap((hkDevices) =>
         pipe(
           hkDevices,
@@ -458,5 +472,85 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
         staleAccessories,
       );
     }
+  }
+
+  private logDeviceInfo(device: SmartHomeDevice) {
+    return () =>
+      pipe(
+        IOE.bindTo('deviceJson')(IOE.fromEither(util.stringifyJson(device))),
+        IOE.bind('state', () =>
+          IOE.fromEither(
+            util.stringifyJson(
+              this.deviceStore.getCacheStatesForDevice(device.id),
+            ),
+          ),
+        ),
+        IOE.bind('rangeCapabilities', () =>
+          IOE.fromEither(
+            util.stringifyJson(
+              this.deviceStore.getRangeCapabilitiesForDevice(device.id),
+            ),
+          ),
+        ),
+        IOE.tapIO(({ deviceJson }) =>
+          this.log.debug(
+            `${device.displayName} ::: Attempting to add accessory(s) for device: ${deviceJson}`,
+          ),
+        ),
+        IOE.tapIO(({ state }) =>
+          this.log.debug(`${device.displayName} ::: Current state: ${state}`),
+        ),
+        IOE.tapIO(({ rangeCapabilities }) =>
+          this.log.debug(
+            `${device.displayName} ::: Range capabilities: ${rangeCapabilities}`,
+          ),
+        ),
+      );
+  }
+
+  private alexaRemoteLogger(...args: unknown[]) {
+    return match(args[0])
+      .when(
+        (msg) =>
+          typeof msg !== 'string' ||
+          msg.trim().length === 0 ||
+          msg.startsWith('Alexa-Remote: No authentication check needed') ||
+          msg.startsWith('Alexa-Remote: Response') ||
+          msg.startsWith('Alexa-Remote: Sending Request') ||
+          msg.startsWith('Alexa-Remote: Use as') ||
+          msg.startsWith('Alexa-Cookie: Sending Request') ||
+          msg.startsWith('Alexa-Cookie: Headers') ||
+          msg.startsWith('Alexa-Cookie: Use as') ||
+          msg.startsWith('Alexa-Cookie: Cookies handled') ||
+          msg.startsWith('Alexa-Cookie: Proxy catched cookie') ||
+          msg.startsWith('Alexa-Cookie: Proxy catched parameters') ||
+          msg.startsWith('Alexa-Cookie: Modify headers') ||
+          msg.startsWith('Alexa-Cookie: Proxy') ||
+          msg.startsWith('Alexa-Cookie: Initial Page Request') ||
+          msg.startsWith('Final Registration Result') ||
+          msg.startsWith('[HPM]') ||
+          msg.startsWith('Proxy Init') ||
+          msg.startsWith('Router') ||
+          msg.startsWith('{'),
+        constVoid,
+      )
+      .when(
+        (msg) =>
+          typeof msg !== 'string' ||
+          msg.startsWith('Get User data Response') ||
+          msg.startsWith('Register App Response') ||
+          msg.startsWith('Exchange Token Response') ||
+          msg.startsWith('Handle token registration Start'),
+        (msg) =>
+          this.log.debug(
+            `Alexa-Cookie: ${(msg as string).substring(0, 250)}...`,
+          )(),
+      )
+      .otherwise((msg) => {
+        const params = args.slice(1);
+        params.length > 0
+          ? this.log.debug(msg as string, params)()
+          : this.log.debug(msg as string)();
+      });
   }
 }
