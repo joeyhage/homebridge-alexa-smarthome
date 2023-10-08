@@ -104,20 +104,21 @@ AirPlay is unrelated to Homebridge/HomeKit and needs to be supported by the devi
 
 The first time this plugin starts, you will need to authenticate using your Amazon Alexa account. Please follow these steps in order - screenshots included.
 
-1. Verify that your plugin configuration is correct. Specifically, the proxy `clientHost` and `port`. The `clientHost` should be the same host you use to access homebridge. For example, if you access homebridge via the url `http://my-homebridge-server.local:8581` then `clientHost` should be `my-homebridge-server.local`. The `port` should be a different value from homebridge (not 8581).
+1. Verify that your plugin configuration is correct. Specifically, the proxy `clientHost` and `port`. The `clientHost` should be the same host you use to access homebridge. For example, if you access homebridge via the url `http://my-homebridge-server.local:8581` then `clientHost` should be `my-homebridge-server.local`. The `port` should be a different value from homebridge (not 8581). Restart Homebridge if you made any changes to the settings.
    1. ![config screenshot](./docs/img/1-config.png)
 2. Download the Alexa app onto a device of your choosing (smartphone, tablet, etc) and sign in using the Amazon account your devices are linked to. Confirm the `amazonDomain` plugin setting matches what you see in the Alexa app. Go to Settings -> About, scroll to the bottom, and look for Host Name. The Host Names you see should end with the `amazonDomain` you choose in the plugin settings, it will not match exactly.
    1. <img alt="Alexa app settings" src="./docs/img/1a-alexa-app.jpeg" width="60%" />
    2. <img alt="Alexa app host" src="./docs/img/1b-host.jpeg"/>
-3. Check the homebridge logs for an error that you must manually open the url to authenticate.
+3. **This plugin may not work and support or help troubleshooting will not be provided** if you do not use multi-factor authentication / two-step verification or if you use SMS for the verification code. Again, SMS two step verification will **not** work. Please download an authenticator app such as AWS Virtual MFA, Google Authenticator, Microsoft Authenticator and follow the instructions to enable two step verification on Amazon's website.
+4. Check the homebridge logs for an error that you must manually open the url to authenticate.
    1. ![failed to initialize screenshot](./docs/img/2-failed-to-initialize.png)
-4. Visit the url in your browser to open a login screen. It is a real login screen proxied so the plugin can capture the session cookie. The username/password are not stored by the plugin.
+5. Visit the url in your browser to open a login screen. It is a real login screen proxied so the plugin can capture the session cookie. The username/password are not stored by the plugin.
    1. ![login screenshot](./docs/img/3-alexa-login.png)
-5. Enter your MFA code if you have MFA enabled on your Amazon Alexa account. Again, the plugin does not store this value. This plugin may not work and I cannot provide support or help troubleshoot if you do not have MFA enabled. The instructions to enable 2FA can be found on Amazon's website.
+6. Enter your MFA code if you have MFA enabled on your Amazon Alexa account. Again, the plugin does not store this value.
    1. ![mfa screenshot](./docs/img/4-alexa-mfa.png)
-6. If successful, you should see a message that the Amazon Alexa cookie was successfully retrieved. If you see a 404 page, return to step 3 and start over.
+7. If successful, you should see a message that the Amazon Alexa cookie was successfully retrieved. If you see a 404 page, return to step 3 and start over.
    1. ![login successful screenshot](./docs/img/5-login-success.png)
-7. The homebridge logs will also show a message such as "Successfully authenticated Alexa account".
+8. The homebridge logs will also show a message such as "Successfully authenticated Alexa account".
    1. ![authentication successful screenshot](./docs/img/6-homebridge-success.png)
 
 ## Common issues
@@ -126,7 +127,7 @@ The first time this plugin starts, you will need to authenticate using your Amaz
   <summary>Alexa login errors or <code>Failed to initialize connection to Alexa.`</code></summary>
   <ol>
     <li>Please ensure you have the Alexa app installed on your device (iPhone, iPad, etc).</li>
-    <li>Enable Two-factor authentication (2FA). The instructions to enable 2FA can be found on Amazon's website.</li>
+    <li>Please download an authenticator app such as AWS Virtual MFA, Google Authenticator, Microsoft Authenticator and follow the instructions to enable two step verification on Amazon's website. SMS two-step verification does not work with this plugin.</li>
     <li>Repeat <a href="#initial-configuration">initial configuration</a> steps again.</li>
     <li>Delete the <code>persist/.homebridge-alexa-smarthome</code> file in your homebridge installation directory and then restart Homebridge.</li>
     <li>Try an incognito window with Javascript disabled. <a href="https://github.com/Apollon77/ioBroker.alexa2#problems-with-cookie-determination-via-e-mailpassword">Detailed instructions</a></li>
