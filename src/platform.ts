@@ -141,7 +141,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
                     .finally(() => {
                       scheduleRefresh();
                     });
-                }, this.deviceStore.cacheTTL - 30_000);
+                }, this.deviceStore.cacheTTL - 60_000);
               };
               scheduleRefresh();
             }

@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, unreleased work in progress.
 
+## [2.0.1] - 2023-10-11
+
+### Changed
+
+- Increased Alexa API timeouts for requests to get device list and get device states.
+
 ## [2.0.0] - 2023-10-07
 
 ### Added
@@ -112,7 +118,8 @@ See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, 
 
 - Support for outlets i.e. smart plugs.
 
-[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.0.0...HEAD
+[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.0.1...HEAD
+[2.0.1]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v1.0.3...v2.0.0
 [1.0.3]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v1.0.1...v1.0.2

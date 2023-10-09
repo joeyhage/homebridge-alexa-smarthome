@@ -42,7 +42,7 @@ export const validateGetStatesSuccessful = E.fromPredicate<
       .otherwise(
         (r) =>
           new RequestUnsuccessful(
-            `Error getting smart home device state. Response: ${JSON.stringify(
+            `Error getting smart home device state(s). Response: ${JSON.stringify(
               r,
               undefined,
               2,
