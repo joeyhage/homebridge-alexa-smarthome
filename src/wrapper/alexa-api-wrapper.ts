@@ -33,6 +33,10 @@ import SetDeviceStateResponse, {
 import DeviceStore from '../store/device-store';
 import { PluginLogger } from '../util/plugin-logger';
 
+const ADDTNL_ALEXA_HEADERS = {
+  'Routines-Version': '3.0.128540',
+};
+
 export interface DeviceStatesCache {
   lastUpdated: Date;
   cachedStates: ValidStatesByDevice;
@@ -48,7 +52,7 @@ export class AlexaApiWrapper {
   ) {
     this.mutex = withTimeout(
       new Mutex(new TimeoutError('Alexa API Timeout')),
-      30_000,
+      65_000,
     );
   }
 
@@ -56,8 +60,16 @@ export class AlexaApiWrapper {
     return pipe(
       TE.tryCatch(
         () =>
-          AlexaApiWrapper.toPromise<GetDevicesResponse>(
-            this.alexaRemote.getSmarthomeEntities.bind(this.alexaRemote),
+          AlexaApiWrapper.toPromise<GetDevicesResponse>((cb) =>
+            this.alexaRemote.httpsGet(
+              false,
+              '/api/behaviors/entities?skillId=amzn1.ask.1p.smarthome',
+              cb,
+              {
+                headers: ADDTNL_ALEXA_HEADERS,
+                timeout: 60_000,
+              },
+            ),
           ),
         (reason) =>
           new HttpError(
@@ -292,7 +304,6 @@ export class AlexaApiWrapper {
             this.alexaRemote,
             entityIds,
             entityType as EntityType,
-            20_000,
           ),
         ),
       (reason) =>

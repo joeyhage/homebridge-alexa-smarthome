@@ -23,7 +23,7 @@ export interface DeviceStatesCache {
   states: ValidStatesByDevice;
 }
 
-const MIN_CACHE_TTL_WHEN_REFRESH_ENABLED = 90;
+const MIN_CACHE_TTL_WHEN_REFRESH_ENABLED = 120;
 
 export default class DeviceStore {
   public readonly cacheTTL: number;
@@ -50,7 +50,8 @@ export default class DeviceStore {
       1_000 *
       match([cacheTTL, refreshEnabled])
         .when(
-          ([ttl, refresh]) => ttl < 90 && refresh,
+          ([ttl, refresh]) =>
+            ttl < MIN_CACHE_TTL_WHEN_REFRESH_ENABLED && refresh,
           ([ttl]) => {
             this.log.info(
               'Overriding device state cache lifetime setting from ' +

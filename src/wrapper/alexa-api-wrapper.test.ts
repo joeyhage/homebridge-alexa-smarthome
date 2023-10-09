@@ -1,4 +1,4 @@
-import AlexaRemote from 'alexa-remote2';
+import AlexaRemote, { CallbackWithErrorAndBody } from 'alexa-remote2';
 import { randomUUID } from 'crypto';
 import * as E from 'fp-ts/Either';
 import * as O from 'fp-ts/Option';
@@ -99,24 +99,26 @@ describe('getDeviceStates', () => {
     const deviceId = randomUUID();
     const wrapper = getAlexaApiWrapper();
     const mockAlexa = getMockedAlexaRemote();
-    mockAlexa.querySmarthomeDevices.mockImplementationOnce((_1, _2, _3, cb) =>
-      cb!(undefined, {
-        deviceStates: [
-          {
-            entity: {
-              entityId: deviceId,
+    mockAlexa.querySmarthomeDevices.mockImplementationOnce(
+      (_1, _2, cb) =>
+        typeof cb === 'function' &&
+        cb(undefined, {
+          deviceStates: [
+            {
+              entity: {
+                entityId: deviceId,
+              },
+              capabilityStates: [
+                JSON.stringify({
+                  namespace: 'Alexa.PowerController',
+                  name: 'test',
+                  value: 'ON',
+                }),
+              ],
             },
-            capabilityStates: [
-              JSON.stringify({
-                namespace: 'Alexa.PowerController',
-                name: 'test',
-                value: 'ON',
-              }),
-            ],
-          },
-        ],
-        errors: Array<DeviceResponse>(),
-      } as GetDeviceStatesResponse),
+          ],
+          errors: Array<DeviceResponse>(),
+        } as GetDeviceStatesResponse),
     );
 
     // when
@@ -144,25 +146,27 @@ describe('getDeviceStates', () => {
     const deviceId = randomUUID();
     const wrapper = getAlexaApiWrapper();
     const mockAlexa = getMockedAlexaRemote();
-    mockAlexa.querySmarthomeDevices.mockImplementationOnce((_1, _2, _3, cb) =>
-      cb!(undefined, {
-        deviceStates: [
-          {
-            entity: {
-              entityId: deviceId,
+    mockAlexa.querySmarthomeDevices.mockImplementationOnce(
+      (_1, _2, cb) =>
+        typeof cb === 'function' &&
+        cb(undefined, {
+          deviceStates: [
+            {
+              entity: {
+                entityId: deviceId,
+              },
+              capabilityStates: [
+                JSON.stringify({
+                  namespace: 'Alexa.RangeController',
+                  name: 'rangeValue',
+                  value: 68.0,
+                  instance: '4',
+                }),
+              ],
             },
-            capabilityStates: [
-              JSON.stringify({
-                namespace: 'Alexa.RangeController',
-                name: 'rangeValue',
-                value: 68.0,
-                instance: '4',
-              }),
-            ],
-          },
-        ],
-        errors: Array<DeviceResponse>(),
-      } as GetDeviceStatesResponse),
+          ],
+          errors: Array<DeviceResponse>(),
+        } as GetDeviceStatesResponse),
     );
 
     // when
@@ -202,24 +206,26 @@ describe('getDeviceStates', () => {
     };
     const wrapper = getAlexaApiWrapper();
     const mockAlexa = getMockedAlexaRemote();
-    mockAlexa.querySmarthomeDevices.mockImplementationOnce((_1, _2, _3, cb) =>
-      cb!(undefined, {
-        deviceStates: [
-          {
-            entity: {
-              entityId: deviceId1,
+    mockAlexa.querySmarthomeDevices.mockImplementationOnce(
+      (_1, _2, cb) =>
+        typeof cb === 'function' &&
+        cb(undefined, {
+          deviceStates: [
+            {
+              entity: {
+                entityId: deviceId1,
+              },
+              capabilityStates: [JSON.stringify(cs1)],
             },
-            capabilityStates: [JSON.stringify(cs1)],
-          },
-          {
-            entity: {
-              entityId: deviceId2,
+            {
+              entity: {
+                entityId: deviceId2,
+              },
+              capabilityStates: [JSON.stringify(cs2)],
             },
-            capabilityStates: [JSON.stringify(cs2)],
-          },
-        ],
-        errors: Array<DeviceResponse>(),
-      }),
+          ],
+          errors: Array<DeviceResponse>(),
+        }),
     );
 
     // when
@@ -244,8 +250,10 @@ describe('getDeviceStates', () => {
     // given
     const wrapper = getAlexaApiWrapper();
     const mockAlexa = getMockedAlexaRemote();
-    mockAlexa.querySmarthomeDevices.mockImplementationOnce((_1, _2, _3, cb) =>
-      cb!(new Error('error for getDeviceStates test')),
+    mockAlexa.querySmarthomeDevices.mockImplementationOnce(
+      (_1, _2, cb) =>
+        typeof cb === 'function' &&
+        cb(new Error('error for getDeviceStates test')),
     );
     // when
     const actual = wrapper.getDeviceStates([randomUUID()])();
@@ -264,11 +272,13 @@ describe('getDeviceStates', () => {
     // given
     const wrapper = getAlexaApiWrapper();
     const mockAlexa = getMockedAlexaRemote();
-    mockAlexa.querySmarthomeDevices.mockImplementationOnce((_1, _2, _3, cb) =>
-      cb!(undefined, {
-        deviceStates: Array<DeviceStateResponse>(),
-        errors: [{ code: 'TestError' }],
-      } as GetDeviceStatesResponse),
+    mockAlexa.querySmarthomeDevices.mockImplementationOnce(
+      (_1, _2, cb) =>
+        typeof cb === 'function' &&
+        cb(undefined, {
+          deviceStates: Array<DeviceStateResponse>(),
+          errors: [{ code: 'TestError' }],
+        } as GetDeviceStatesResponse),
     );
 
     // when
@@ -278,7 +288,7 @@ describe('getDeviceStates', () => {
     await expect(actual).resolves.toStrictEqual(
       E.left(
         new RequestUnsuccessful(
-          `Error getting smart home device state. Response: ${JSON.stringify(
+          `Error getting smart home device state(s). Response: ${JSON.stringify(
             {
               deviceStates: [],
               errors: [{ code: 'TestError' }],
@@ -298,8 +308,9 @@ describe('getDevices', () => {
     // given
     const wrapper = getAlexaApiWrapper();
     const mockAlexa = getMockedAlexaRemote();
-    mockAlexa.getSmarthomeEntities.mockImplementationOnce((cb) =>
-      cb(undefined, undefined as GetDevicesResponse),
+    mockAlexa.httpsGet.mockImplementationOnce(
+      (_1, _2, cb: CallbackWithErrorAndBody) =>
+        cb(undefined, undefined as GetDevicesResponse),
     );
 
     // when
@@ -319,8 +330,9 @@ describe('getDevices', () => {
     // given
     const wrapper = getAlexaApiWrapper();
     const mockAlexa = getMockedAlexaRemote();
-    mockAlexa.getSmarthomeEntities.mockImplementationOnce((cb) =>
-      cb(undefined, 'some error' as unknown as GetDevicesResponse),
+    mockAlexa.httpsGet.mockImplementationOnce(
+      (_1, _2, cb: CallbackWithErrorAndBody) =>
+        cb(undefined, 'some error' as unknown as GetDevicesResponse),
     );
 
     // when
@@ -338,12 +350,11 @@ describe('getDevices', () => {
 });
 
 function getAlexaApiWrapper(): AlexaApiWrapper {
-  const log = new PluginLogger(global.MockLogger, global.createPlatformConfig());
-  return new AlexaApiWrapper(
-    new AlexaRemote(),
-    log,
-    new DeviceStore(log),
+  const log = new PluginLogger(
+    global.MockLogger,
+    global.createPlatformConfig(),
   );
+  return new AlexaApiWrapper(new AlexaRemote(), log, new DeviceStore(log));
 }
 
 function getMockedAlexaRemote(): jest.Mocked<AlexaRemote> {
