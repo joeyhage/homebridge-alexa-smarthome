@@ -21,7 +21,11 @@
     <img alt="Discord" src="https://img.shields.io/discord/432663330281226270?cacheSeconds=3600&logo=discord&color=728ED5&label=discord-channel"></a>
 </p>
 
-# Homebridge Alexa Smart Home
+# Homebridge Alexa Smart Home [FORK]
+
+## Instead of building support for a fan in this repo, this fork just adds a fan as a switch in a lazy way.
+
+Install by running `npm i -g homebridge-alexa-smarthome-lazyfan`
 
 This plugin enables smart home device integration between HomeKit and Alexa which allows HomeKit/Siri to control smart home devices that are connected via Amazon Alexa.
 
