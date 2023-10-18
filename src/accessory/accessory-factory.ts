@@ -36,6 +36,9 @@ export default class AccessoryFactory {
         .with(platform.Service.Switch.UUID, () =>
           E.of(new SwitchAccessory(platform, device, platAcc)),
         )
+        .with(platform.Service.Fan.UUID, () =>
+          E.of(new SwitchAccessory(platform, device, platAcc)),
+        )
         .with(platform.Service.LockMechanism.UUID, () =>
           E.of(new LockAccessory(platform, device, platAcc)),
         )

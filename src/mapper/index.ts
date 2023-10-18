@@ -90,7 +90,7 @@ const determineSupportedHomeKitAccessories = (
     )
     .when(
       ([type, ops]) =>
-        type === 'SWITCH' &&
+        type === 'SWITCH' || type === 'FAN' &&
         supportsRequiredActions(SwitchAccessory.requiredOperations, ops),
       () =>
         E.of([
