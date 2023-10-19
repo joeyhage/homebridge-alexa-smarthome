@@ -22,7 +22,7 @@
   },
   "main": "dist/index.js",
   "scripts": {
-    "build": "rimraf ./dist && tsc",
+    "build": "rimraf ./dist && tsc -p tsconfig.prod.json",
     "format": "prettier --ignore-path .gitignore --write \"**/*.+(js|ts|json)\"",
     "lint": "eslint src/**.ts --max-warnings=0",
     "pre-commit": "lint-staged",

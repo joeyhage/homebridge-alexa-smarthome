@@ -50,6 +50,7 @@ Node.js versions supported: 16.x, 18.x, 20.x
 
 - Lightbulbs
 - Switches
+  - HomeKit switches do not support brightness so any switches you have that support brightness will appear in HomeKit as Lightbulbs.
 - Outlets + smart plugs
 - Thermostats
 - Locks
