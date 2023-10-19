@@ -20,6 +20,7 @@ import { RangeCapabilityAssets } from '../domain/alexa/save-device-capabilities'
 import { HomebridgeAccessoryInfo } from '../domain/homebridge';
 import type { AlexaSmartHomePlatform } from '../platform';
 import { generateUuid } from '../util';
+import { SupportedActions } from '../domain/alexa';
 
 export const mapAlexaDeviceToHomeKitAccessoryInfos = (
   platform: AlexaSmartHomePlatform,
@@ -74,6 +75,24 @@ const determineSupportedHomeKitAccessories = (
     .when(
       ([type, ops]) =>
         type === 'LIGHT' &&
+        supportsRequiredActions(LightAccessory.requiredOperations, ops),
+      () =>
+        E.of([
+          {
+            altDeviceName: O.none,
+            deviceType: platform.Service.Lightbulb.UUID,
+            uuid: generateUuid(
+              platform,
+              entityId,
+              device.providerData.deviceType,
+            ),
+          },
+        ]),
+    )
+    .when(
+      ([type, ops]) =>
+        type === 'SWITCH' &&
+        ops.includes(SupportedActions.setBrightness) &&
         supportsRequiredActions(LightAccessory.requiredOperations, ops),
       () =>
         E.of([

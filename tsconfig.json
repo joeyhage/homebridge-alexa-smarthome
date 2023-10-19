@@ -13,5 +13,5 @@
     "noImplicitAny": false,
     "strictPropertyInitialization": false
   },
-  "include": ["src/"]
+  "include": ["src/", "__tests__/"]
 }

@@ -5,7 +5,4 @@ module.exports = {
   setupFiles: ['dotenv/config'],
   setupFilesAfterEnv: ['<rootDir>/__tests__/test-setup.ts'],
   testMatch: ['**/?(*.)+(spec|test|it).ts?(x)'],
-  transform: {
-    '\\.[jt]sx?$': ['ts-jest', { tsconfig: './tsconfig.test.json' }],
-  },
 };
