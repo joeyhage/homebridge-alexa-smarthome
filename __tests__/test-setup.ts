@@ -3,6 +3,7 @@ import { HomebridgeAPI } from 'homebridge/lib/api';
 import { Logger } from 'homebridge/lib/logger';
 import { AlexaPlatformConfig } from '../src/domain/homebridge';
 import { AlexaSmartHomePlatform } from '../src/platform';
+import { constant } from 'fp-ts/lib/function';
 
 jest.mock('homebridge/lib/logger', () => ({
   Logger: jest.fn().mockImplementation(() => ({
@@ -15,18 +16,23 @@ jest.mock('homebridge/lib/logger', () => ({
   })),
 }));
 
-beforeEach(() => {
+afterEach(() => {
   jest.clearAllMocks();
 });
 
 global.MockLogger = new Logger();
 
-global.createPlatform = (): AlexaSmartHomePlatform =>
-  new AlexaSmartHomePlatform(
+global.TEST_UUID = 'd3588548-bbbb-4c95-b60d-57fea062ca5b';
+
+global.createPlatform = (): AlexaSmartHomePlatform => {
+  const api = new HomebridgeAPI();
+  api.hap.uuid.generate = constant(TEST_UUID);
+  return new AlexaSmartHomePlatform(
     global.MockLogger,
     global.createPlatformConfig(),
-    new HomebridgeAPI(),
+    api,
   );
+};
 
 global.createPlatformConfig = (): AlexaPlatformConfig => ({
   platform: 'HomebridgeAlexaSmartHome',
@@ -49,6 +55,7 @@ global.createPlatformConfig = (): AlexaPlatformConfig => ({
 
 declare global {
   var MockLogger: Logger;
+  var TEST_UUID: string;
   var createPlatform: () => AlexaSmartHomePlatform;
   var createPlatformConfig: () => AlexaPlatformConfig;
 }
