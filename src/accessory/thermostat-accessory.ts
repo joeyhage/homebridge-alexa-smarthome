@@ -10,7 +10,7 @@ import {
   pipe,
 } from 'fp-ts/lib/function';
 import { CharacteristicValue, Service } from 'homebridge';
-import { CapabilityState, SupportedActionsType } from '../domain/alexa';
+import {CapabilityState, SupportedActionsType, SupportedNamespacesType} from '../domain/alexa';
 import {
   ThermostatNamespaces,
   ThermostatNamespacesType,
@@ -24,6 +24,8 @@ import {
   TemperatureScale,
   isTemperatureValue,
 } from '../domain/alexa/temperature';
+import {SwitchState} from "../domain/alexa/switch";
+import * as mapper from "../mapper/power-mapper";
 
 export default class ThermostatAccessory extends BaseAccessory {
   static requiredOperations: SupportedActionsType[] = ['setTargetTemperature'];
@@ -59,9 +61,7 @@ export default class ThermostatAccessory extends BaseAccessory {
     this.service
       .getCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState)
       .onGet(this.handleTargetStateGet.bind(this))
-      .onSet(() => {
-        throw this.readOnlyError;
-      });
+      .onSet(this.handleTargetStateSet.bind(this));
 
     this.service
       .getCharacteristic(this.platform.Characteristic.TargetTemperature)
@@ -132,6 +132,7 @@ export default class ThermostatAccessory extends BaseAccessory {
   }
 
   async handleTargetStateGet(): Promise<number> {
+    const powerState = await this.handlePowerGet();
     const alexaNamespace: ThermostatNamespacesType =
       'Alexa.ThermostatController';
     const alexaValueName = 'thermostatMode';
@@ -142,8 +143,7 @@ export default class ThermostatAccessory extends BaseAccessory {
             namespace === alexaNamespace && name === alexaValueName,
         ),
       ),
-      O.map(({ value }) =>
-        tstatMapper.mapAlexaModeToHomeKit(value, this.Characteristic),
+      O.map(({ value }) => powerState ? tstatMapper.mapAlexaModeToHomeKit(value, this.Characteristic): tstatMapper.mapAlexaModeToHomeKit(0, this.Characteristic),
       ),
       O.tap((s) =>
         O.of(this.logWithContext('debug', `Get thermostat mode result: ${s}`)),
@@ -157,6 +157,48 @@ export default class ThermostatAccessory extends BaseAccessory {
         throw this.serviceCommunicationError;
       }, identity),
     )();
+  }
+
+  async handleTargetStateSet(value: CharacteristicValue): Promise<void> {
+    this.logWithContext('debug', `Triggered set target state: ${value}`);
+    if (typeof value !== 'number') {
+      throw this.invalidValueError;
+    }
+    if(value === 0) {
+      await this.handlePowerSet(false);
+      this.updateCacheValue({
+        value: tstatMapper.mapHomekitModeToAlexa(value, this.Characteristic),
+        namespace: 'Alexa.ThermostatController',
+        name: 'thermostatMode',
+      });
+    } else {
+      if (!(await this.handlePowerGet())){
+        await this.handlePowerSet(true);
+      } else {
+        return pipe(
+            this.platform.alexaApi.setDeviceState(
+                this.device.id,
+                'setThermostatMode',
+                {
+                  'thermostatMode.value': tstatMapper.mapHomekitModeToAlexa(value, this.Characteristic),
+                },
+            ),
+            TE.match(
+                (e) => {
+                  this.logWithContext('errorT', 'Set mode error', e);
+                  throw this.serviceCommunicationError;
+                },
+                () => {
+                  this.updateCacheValue({
+                    value: tstatMapper.mapHomekitModeToAlexa(value, this.Characteristic),
+                    namespace: 'Alexa.ThermostatController',
+                    name: 'thermostatMode',
+                  });
+                },
+            ),
+        )();
+      }
+    }
   }
 
   async handleTargetTempGet(): Promise<number> {
@@ -390,6 +432,50 @@ export default class ThermostatAccessory extends BaseAccessory {
           });
         },
       ),
+    )();
+  }
+
+  async handlePowerGet(): Promise<boolean> {
+    const alexaNamespace: SupportedNamespacesType = 'Alexa.PowerController';
+    const determinePowerState = flow(
+        O.filterMap<SwitchState[], SwitchState>(
+            A.findFirst(({ namespace }) => namespace === alexaNamespace),
+        ),
+        O.map(({ value }) => value === 'ON'),
+        O.tap((s) =>
+            O.of(this.logWithContext('debug', `Get power status result: ${s}`)),
+        ),
+    );
+
+    return pipe(
+        this.getState(determinePowerState),
+        TE.match((e) => {
+          this.logWithContext('errorT', 'Get power', e);
+          throw this.serviceCommunicationError;
+        }, identity),
+    )();
+  }
+
+  async handlePowerSet(value: CharacteristicValue): Promise<void> {
+    this.logWithContext('debug', `Triggered set power: ${value}`);
+    if (typeof value !== 'boolean') {
+      throw this.invalidValueError;
+    }
+    const action = mapper.mapHomeKitPowerToAlexaAction(value);
+    return pipe(
+        this.platform.alexaApi.setDeviceState(this.device.id, action),
+        TE.match(
+            (e) => {
+              this.logWithContext('errorT', 'Set power', e);
+              throw this.serviceCommunicationError;
+            },
+            () => {
+              this.updateCacheValue({
+                value: mapper.mapHomeKitPowerToAlexaValue(value),
+                namespace: 'Alexa.PowerController',
+              });
+            },
+        ),
     )();
   }
 

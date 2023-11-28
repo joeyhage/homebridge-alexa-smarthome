@@ -58,6 +58,7 @@ export const SupportedActions = {
   turnOff: 'turnOff',
   setBrightness: 'setBrightness',
   setTargetTemperature: 'setTargetTemperature',
+  setThermostatMode: 'setThermostatMode',
 } as const;
 
 export type SupportedActionsType = keyof typeof SupportedActions;
