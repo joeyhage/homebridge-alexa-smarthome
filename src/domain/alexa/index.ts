@@ -18,6 +18,8 @@ export type AmazonDomain =
   | 'amazon.es'
   | 'amazon.fr'
   | 'amazon.it'
+  | 'amazon.in'
+  | 'amazon.nl'
   | 'amazon.co.jp'
   | 'amazon.co.uk'
   | 'amazon.com.au'
