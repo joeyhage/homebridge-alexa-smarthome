@@ -9,6 +9,7 @@ export const SupportedDeviceTypes = [
   'THERMOSTAT',
   'ALEXA_VOICE_ENABLED',
   'AIR_QUALITY_MONITOR',
+  'VACUUM_CLEANER',
 ];
 
 export type AmazonDomain =

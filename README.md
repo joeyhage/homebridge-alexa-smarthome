@@ -54,6 +54,7 @@ Node.js versions supported: 16.x, 18.x, 20.x
 - Outlets + smart plugs
 - Thermostats
 - Locks
+- Vacuum cleaners
 - Air Quality Monitors
   - Only confirmed to work with Amazon Air Quality Monitor. Please report an issue if it doesn't work with your air quality monitor.
 - Echo smart speakers / Echo smart displays
