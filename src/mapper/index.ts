@@ -109,7 +109,7 @@ const determineSupportedHomeKitAccessories = (
     )
     .when(
       ([type, ops]) =>
-        type === 'SWITCH' &&
+        (type === 'SWITCH' || type === 'VACUUM_CLEANER') &&
         supportsRequiredActions(SwitchAccessory.requiredOperations, ops),
       () =>
         E.of([

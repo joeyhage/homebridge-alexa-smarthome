@@ -30,6 +30,8 @@
           { "title": "amazon.es", "enum": ["amazon.es"] },
           { "title": "amazon.fr", "enum": ["amazon.fr"] },
           { "title": "amazon.it", "enum": ["amazon.it"] },
+          { "title": "amazon.in", "enum": ["amazon.in"] },
+          { "title": "amazon.nl", "enum": ["amazon.nl"] },
           { "title": "amazon.co.jp", "enum": ["amazon.co.jp"] },
           { "title": "amazon.co.uk", "enum": ["amazon.co.uk"] },
           { "title": "amazon.com.au", "enum": ["amazon.com.au"] },
