@@ -9,6 +9,7 @@ export const SupportedDeviceTypes = [
   'THERMOSTAT',
   'ALEXA_VOICE_ENABLED',
   'AIR_QUALITY_MONITOR',
+  'VACUUM_CLEANER',
 ];
 
 export type AmazonDomain =
@@ -18,6 +19,8 @@ export type AmazonDomain =
   | 'amazon.es'
   | 'amazon.fr'
   | 'amazon.it'
+  | 'amazon.in'
+  | 'amazon.nl'
   | 'amazon.co.jp'
   | 'amazon.co.uk'
   | 'amazon.com.au'
