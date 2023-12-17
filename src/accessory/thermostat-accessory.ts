@@ -24,8 +24,8 @@ import {
   TemperatureScale,
   isTemperatureValue,
 } from '../domain/alexa/temperature';
-import {SwitchState} from "../domain/alexa/switch";
-import * as mapper from "../mapper/power-mapper";
+import {SwitchState} from '../domain/alexa/switch';
+import * as mapper from '../mapper/power-mapper';
 
 export default class ThermostatAccessory extends BaseAccessory {
   static requiredOperations: SupportedActionsType[] = ['setTargetTemperature'];
@@ -164,7 +164,17 @@ export default class ThermostatAccessory extends BaseAccessory {
     if (typeof value !== 'number') {
       throw this.invalidValueError;
     }
-    if(value === 0) {
+
+    let isDeviceOn: boolean;
+    let isPowerSupported = true;
+    try {
+      isDeviceOn = await this.handlePowerGet();
+    } catch (e) {
+      this.logWithContext('debug', 'Skipping power-related logic for unsupported devices', e);
+      isDeviceOn = true;
+      isPowerSupported = false;
+    }
+    if(value === 0 && isPowerSupported) {
       await this.handlePowerSet(false);
       this.updateCacheValue({
         value: tstatMapper.mapHomekitModeToAlexa(value, this.Characteristic),
@@ -172,30 +182,30 @@ export default class ThermostatAccessory extends BaseAccessory {
         name: 'thermostatMode',
       });
     } else {
-      if (!(await this.handlePowerGet())){
+      if (!isDeviceOn){
         await this.handlePowerSet(true);
       } else {
         return pipe(
-            this.platform.alexaApi.setDeviceState(
-                this.device.id,
-                'setThermostatMode',
-                {
-                  'thermostatMode.value': tstatMapper.mapHomekitModeToAlexa(value, this.Characteristic),
-                },
-            ),
-            TE.match(
-                (e) => {
-                  this.logWithContext('errorT', 'Set mode error', e);
-                  throw this.serviceCommunicationError;
-                },
-                () => {
-                  this.updateCacheValue({
-                    value: tstatMapper.mapHomekitModeToAlexa(value, this.Characteristic),
-                    namespace: 'Alexa.ThermostatController',
-                    name: 'thermostatMode',
-                  });
-                },
-            ),
+          this.platform.alexaApi.setDeviceState(
+            this.device.id,
+            'setThermostatMode',
+            {
+              'thermostatMode.value': tstatMapper.mapHomekitModeToAlexa(value, this.Characteristic),
+            },
+          ),
+          TE.match(
+            (e) => {
+              this.logWithContext('errorT', 'Set mode error', e);
+              throw this.serviceCommunicationError;
+            },
+            () => {
+              this.updateCacheValue({
+                value: tstatMapper.mapHomekitModeToAlexa(value, this.Characteristic),
+                namespace: 'Alexa.ThermostatController',
+                name: 'thermostatMode',
+              });
+            },
+          ),
         )();
       }
     }
@@ -438,21 +448,21 @@ export default class ThermostatAccessory extends BaseAccessory {
   async handlePowerGet(): Promise<boolean> {
     const alexaNamespace: SupportedNamespacesType = 'Alexa.PowerController';
     const determinePowerState = flow(
-        O.filterMap<SwitchState[], SwitchState>(
-            A.findFirst(({ namespace }) => namespace === alexaNamespace),
-        ),
-        O.map(({ value }) => value === 'ON'),
-        O.tap((s) =>
-            O.of(this.logWithContext('debug', `Get power status result: ${s}`)),
-        ),
+      O.filterMap<SwitchState[], SwitchState>(
+        A.findFirst(({ namespace }) => namespace === alexaNamespace),
+      ),
+      O.map(({ value }) => value === 'ON'),
+      O.tap((s) =>
+        O.of(this.logWithContext('debug', `Get power status result: ${s}`)),
+      ),
     );
 
     return pipe(
-        this.getState(determinePowerState),
-        TE.match((e) => {
-          this.logWithContext('errorT', 'Get power', e);
-          throw this.serviceCommunicationError;
-        }, identity),
+      this.getState(determinePowerState),
+      TE.match((e) => {
+        this.logWithContext('errorT', 'Get power', e);
+        throw this.serviceCommunicationError;
+      }, identity),
     )();
   }
 
@@ -463,19 +473,19 @@ export default class ThermostatAccessory extends BaseAccessory {
     }
     const action = mapper.mapHomeKitPowerToAlexaAction(value);
     return pipe(
-        this.platform.alexaApi.setDeviceState(this.device.id, action),
-        TE.match(
-            (e) => {
-              this.logWithContext('errorT', 'Set power', e);
-              throw this.serviceCommunicationError;
-            },
-            () => {
-              this.updateCacheValue({
-                value: mapper.mapHomeKitPowerToAlexaValue(value),
-                namespace: 'Alexa.PowerController',
-              });
-            },
-        ),
+      this.platform.alexaApi.setDeviceState(this.device.id, action),
+      TE.match(
+        (e) => {
+          this.logWithContext('errorT', 'Set power', e);
+          throw this.serviceCommunicationError;
+        },
+        () => {
+          this.updateCacheValue({
+            value: mapper.mapHomeKitPowerToAlexaValue(value),
+            namespace: 'Alexa.PowerController',
+          });
+        },
+      ),
     )();
   }
 
