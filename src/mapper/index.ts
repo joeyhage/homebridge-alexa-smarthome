@@ -10,6 +10,7 @@ import SwitchAccessory from '../accessory/switch-accessory';
 import TelevisionAccessory from '../accessory/television-accessory';
 import ThermostatAccessory from '../accessory/thermostat-accessory';
 import * as airQuality from '../domain/alexa/air-quality-monitor';
+import * as echo from '../domain/alexa/echo';
 import {
   AlexaDeviceError,
   InvalidDeviceError,
@@ -190,6 +191,12 @@ const determineSupportedHomeKitAccessories = (
               device.providerData.deviceType,
             ),
           },
+          ...echo.toSupportedHomeKitAccessories(
+            platform,
+            entityId,
+            device.displayName,
+            platform.deviceStore.getCacheStatesForDevice(entityId),
+          ),
         ]),
     )
     .with(['AIR_QUALITY_MONITOR', Pattern._], () =>
