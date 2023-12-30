@@ -102,6 +102,8 @@ Siri is not supported out of the box but I may be able to support in the future.
 
 AirPlay is unrelated to Homebridge/HomeKit and needs to be supported by the device (the Echo). If you wish to use AirPlay, the best option is to buy an AppleTV or Apple HomePod.
 
+When you first add an Echo device with a temperature sensor to HomeKit, the temperature may appear in the Default Room but can be assigned to any room you choose.
+
 ## Initial configuration
 
 The first time this plugin starts, you will need to authenticate using your Amazon Alexa account. Please follow these steps in order - screenshots included.

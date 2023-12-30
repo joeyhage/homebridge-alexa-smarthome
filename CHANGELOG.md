@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, unreleased work in progress.
 
+## [2.0.6] - 2023-12-29
+
+### Added
+
+- Alexa Echo devices with temperature sensors now report temperature to HomeKit.
+
 ## [2.0.5] - 2023-12-27
 
 ### Fixed
@@ -143,7 +149,8 @@ See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, 
 
 - Support for outlets i.e. smart plugs.
 
-[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.0.5...HEAD
+[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.0.6...HEAD
+[2.0.6]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.0.5...v2.0.6
 [2.0.5]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.0.4...v2.0.5
 [2.0.4]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.0.3...v2.0.4
 [2.0.3]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.0.2...v2.0.3
