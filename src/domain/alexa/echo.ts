@@ -1,7 +1,12 @@
+import * as A from 'fp-ts/Array';
+import * as O from 'fp-ts/Option';
+import { constFalse, constTrue, constant, pipe } from 'fp-ts/lib/function';
 import { Pattern, match } from 'ts-pattern';
+import { AlexaSmartHomePlatform } from '../../platform';
+import { generateUuid } from '../../util';
+import { HomebridgeAccessoryInfo } from '../homebridge';
 import { Nullable } from '../index';
 import { CapabilityState, SupportedNamespaces } from './index';
-import { constFalse, constTrue } from 'fp-ts/lib/function';
 
 const mediaPlayerPattern = {
   state: Pattern.string,
@@ -51,3 +56,28 @@ export interface MediaPlayer {
 export interface MediaPlayback extends MediaPlayer {
   players: MediaPlayer[];
 }
+
+export const toSupportedHomeKitAccessories = (
+  platform: AlexaSmartHomePlatform,
+  entityId: string,
+  deviceName: string,
+  capStates: CapabilityState[],
+): HomebridgeAccessoryInfo[] =>
+  pipe(
+    capStates,
+    A.filterMap((cap) =>
+      match(cap)
+        .with({ namespace: 'Alexa.TemperatureSensor' }, () =>
+          O.of({
+            altDeviceName: O.of(`${deviceName} temperature`),
+            deviceType: platform.Service.TemperatureSensor.UUID,
+            uuid: generateUuid(
+              platform,
+              entityId,
+              platform.Service.TemperatureSensor.UUID,
+            ),
+          }),
+        )
+        .otherwise(constant(O.none)),
+    ),
+  );
