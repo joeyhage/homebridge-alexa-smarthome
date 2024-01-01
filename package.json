@@ -1,7 +1,7 @@
 {
   "displayName": "Homebridge Alexa Smart Home",
   "name": "homebridge-alexa-smarthome",
-  "version": "2.0.6",
+  "version": "2.0.7",
   "description": "Homebridge plugin that can control smart home devices connected to Alexa.",
   "license": "MIT",
   "author": "Joey Hage <contact@jmhage.com>",
