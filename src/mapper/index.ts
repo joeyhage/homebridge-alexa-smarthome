@@ -22,6 +22,9 @@ import { HomebridgeAccessoryInfo } from '../domain/homebridge';
 import type { AlexaSmartHomePlatform } from '../platform';
 import { generateUuid } from '../util';
 import { SupportedActions } from '../domain/alexa';
+import FanAccessory from '../accessory/fan-accessory';
+
+const ALEXA_DEVICES_AS_SWITCHES = ['SWITCH', 'AIR_FRESHENER', 'VACUUM_CLEANER'];
 
 export const mapAlexaDeviceToHomeKitAccessoryInfos = (
   platform: AlexaSmartHomePlatform,
@@ -110,7 +113,7 @@ const determineSupportedHomeKitAccessories = (
     )
     .when(
       ([type, ops]) =>
-        (type === 'SWITCH' || type === 'VACUUM_CLEANER') &&
+        ALEXA_DEVICES_AS_SWITCHES.includes(type) &&
         supportsRequiredActions(SwitchAccessory.requiredOperations, ops),
       () =>
         E.of([
@@ -134,6 +137,23 @@ const determineSupportedHomeKitAccessories = (
           {
             altDeviceName: O.none,
             deviceType: platform.Service.LockMechanism.UUID,
+            uuid: generateUuid(
+              platform,
+              entityId,
+              device.providerData.deviceType,
+            ),
+          },
+        ]),
+    )
+    .when(
+      ([type, ops]) =>
+        type === 'FAN' &&
+        supportsRequiredActions(FanAccessory.requiredOperations, ops),
+      () =>
+        E.of([
+          {
+            altDeviceName: O.none,
+            deviceType: platform.Service.Fanv2.UUID,
             uuid: generateUuid(
               platform,
               entityId,
