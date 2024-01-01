@@ -51,10 +51,13 @@ Node.js versions supported: 16.x, 18.x, 20.x
 - Lightbulbs
 - Switches
   - HomeKit switches do not support brightness so any switches you have that support brightness will appear in HomeKit as Lightbulbs.
+  - The following Alexa devices appear as Switches in HomeKit and only support On and Off currently:
+    - Air fresheners
+    - Vacuum cleaners
+- Fans
 - Outlets + smart plugs
 - Thermostats
 - Locks
-- Vacuum cleaners
 - Air Quality Monitors
   - Only confirmed to work with Amazon Air Quality Monitor. Please report an issue if it doesn't work with your air quality monitor.
 - Echo smart speakers / Echo smart displays

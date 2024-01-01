@@ -96,6 +96,13 @@ export class AlexaApiWrapper {
             }`,
           ),
       ),
+      TE.tapIO((response) =>
+        this.log.debug(
+          'BEGIN capabilities for all devices:',
+          JSON.stringify(response, undefined, 2),
+          'END capabilities for all devices',
+        ),
+      ),
       TE.map(extractRangeCapabilities),
       TE.map((rc) => {
         this.deviceStore.deviceCapabilities = rc;

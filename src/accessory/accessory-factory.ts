@@ -20,6 +20,7 @@ import SwitchAccessory from './switch-accessory';
 import TelevisionAccessory from './television-accessory';
 import TemperatureAccessory from './temperature-accessory';
 import ThermostatAccessory from './thermostat-accessory';
+import FanAccessory from './fan-accessory';
 
 export default class AccessoryFactory {
   static createAccessory(
@@ -35,6 +36,9 @@ export default class AccessoryFactory {
         )
         .with(platform.Service.Switch.UUID, () =>
           E.of(new SwitchAccessory(platform, device, platAcc)),
+        )
+        .with(platform.Service.Fanv2.UUID, () =>
+          E.of(new FanAccessory(platform, device, platAcc)),
         )
         .with(platform.Service.LockMechanism.UUID, () =>
           E.of(new LockAccessory(platform, device, platAcc)),
