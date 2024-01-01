@@ -32,6 +32,7 @@ export default class ThermostatAccessory extends BaseAccessory {
   service: Service;
   namespaces = ThermostatNamespaces;
   isExternalAccessory = false;
+  isPowerSupported = true;
 
   configureServices() {
     this.service =
@@ -132,7 +133,15 @@ export default class ThermostatAccessory extends BaseAccessory {
   }
 
   async handleTargetStateGet(): Promise<number> {
-    const powerState = await this.handlePowerGet();
+    let isDeviceOn: boolean;
+    try {
+      isDeviceOn = this.isPowerSupported ? await this.handlePowerGet() : true;
+    } catch (e) {
+      this.logWithContext('debug', 'Skipping power-related logic for unsupported devices', e);
+      this.isPowerSupported = false;
+      isDeviceOn = true;
+    }
+    
     const alexaNamespace: ThermostatNamespacesType =
       'Alexa.ThermostatController';
     const alexaValueName = 'thermostatMode';
@@ -143,7 +152,7 @@ export default class ThermostatAccessory extends BaseAccessory {
             namespace === alexaNamespace && name === alexaValueName,
         ),
       ),
-      O.map(({ value }) => powerState ? tstatMapper.mapAlexaModeToHomeKit(value, this.Characteristic): tstatMapper.mapAlexaModeToHomeKit(0, this.Characteristic),
+      O.map(({ value }) => isDeviceOn ? tstatMapper.mapAlexaModeToHomeKit(value, this.Characteristic): tstatMapper.mapAlexaModeToHomeKit(0, this.Characteristic),
       ),
       O.tap((s) =>
         O.of(this.logWithContext('debug', `Get thermostat mode result: ${s}`)),
@@ -166,15 +175,15 @@ export default class ThermostatAccessory extends BaseAccessory {
     }
 
     let isDeviceOn: boolean;
-    let isPowerSupported = true;
     try {
-      isDeviceOn = await this.handlePowerGet();
+      isDeviceOn = this.isPowerSupported ? await this.handlePowerGet() : true;
     } catch (e) {
       this.logWithContext('debug', 'Skipping power-related logic for unsupported devices', e);
+      this.isPowerSupported = false;
       isDeviceOn = true;
-      isPowerSupported = false;
     }
-    if(value === 0 && isPowerSupported) {
+
+    if(value === 0 && this.isPowerSupported) {
       await this.handlePowerSet(false);
       this.updateCacheValue({
         value: tstatMapper.mapHomekitModeToAlexa(value, this.Characteristic),
