@@ -51,6 +51,7 @@ export const SupportedNamespaces = {
   'Alexa.TemperatureSensor': 'Alexa.TemperatureSensor',
   'Alexa.ThermostatController': 'Alexa.ThermostatController',
   'Alexa.RangeController': 'Alexa.RangeController',
+  'Alexa.HumiditySensor': 'Alexa.HumiditySensor',
 } as const;
 
 export type SupportedNamespacesType = keyof typeof SupportedNamespaces;

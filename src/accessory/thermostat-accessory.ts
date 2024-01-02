@@ -57,6 +57,10 @@ export default class ThermostatAccessory extends BaseAccessory {
       .onGet(this.handleCurrentTempGet.bind(this));
 
     this.service
+      .getCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity)
+      .onGet(this.handleCurrentRelativeHumidityGet.bind(this));
+
+    this.service
       .getCharacteristic(this.platform.Characteristic.TemperatureDisplayUnits)
       .onGet(this.handleTempUnitsGet.bind(this))
       .onSet(() => {
@@ -106,6 +110,29 @@ export default class ThermostatAccessory extends BaseAccessory {
       this.getState(determineCurrentTemp),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get current temperature', e);
+        throw this.serviceCommunicationError;
+      }, identity),
+    )();
+  }
+
+  async handleCurrentRelativeHumidityGet(): Promise<number> {
+    const alexaNamespace: ThermostatNamespacesType = 'Alexa.HumiditySensor';
+    const determineCurrentRelativeHumidity = flow(
+      O.filterMap<ThermostatState[], ThermostatState>(
+        A.findFirst(({ namespace }) => namespace === alexaNamespace),
+      ),
+      O.flatMap(({ value }) => typeof value === 'number' ? O.of(value) : O.none),
+      O.tap((s) =>
+        O.of(
+          this.logWithContext('debug', `Get current humidity result: ${s}`),
+        ),
+      ),
+    );
+
+    return pipe(
+      this.getState(determineCurrentRelativeHumidity),
+      TE.match((e) => {
+        this.logWithContext('errorT', 'Get current humidity', e);
         throw this.serviceCommunicationError;
       }, identity),
     )();
