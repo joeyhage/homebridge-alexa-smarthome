@@ -312,6 +312,12 @@ export default class ThermostatAccessory extends BaseAccessory {
     }
     const units = maybeTemp.value.scale.toLowerCase() as TemperatureScale;
     const newTemp = tempMapper.mapHomeKitTempToAlexa(value, units);
+    try {
+      const userSelectedState = await this.handleTargetStateGet();
+      await this.handleTargetStateSet(userSelectedState);
+    } catch (e) {
+      this.logWithContext('debug', 'Attempting to reset thermostat state failure, this might not be an issue');
+    }
     return pipe(
       this.platform.alexaApi.setDeviceState(
         this.device.id,
