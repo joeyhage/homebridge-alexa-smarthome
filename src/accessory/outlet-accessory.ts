@@ -20,7 +20,7 @@ export default class OutletAccessory extends BaseAccessory {
       this.platformAcc.addService(this.Service.Outlet, this.device.displayName);
 
     this.service
-      .getCharacteristic(this.platform.Characteristic.On)
+      .getCharacteristic(this.Characteristic.On)
       .onGet(this.handlePowerGet.bind(this))
       .onSet(this.handlePowerSet.bind(this));
   }

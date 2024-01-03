@@ -10,6 +10,8 @@ export const SupportedDeviceTypes = [
   'ALEXA_VOICE_ENABLED',
   'AIR_QUALITY_MONITOR',
   'VACUUM_CLEANER',
+  'GAME_CONSOLE',
+  'AIR_FRESHENER',
 ];
 
 export type AmazonDomain =

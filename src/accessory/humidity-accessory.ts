@@ -40,7 +40,7 @@ export default class HumidityAccessory extends BaseAccessory {
         (asset) => {
           this.service
             .getCharacteristic(
-              this.platform.Characteristic.CurrentRelativeHumidity,
+              this.Characteristic.CurrentRelativeHumidity,
             )
             .onGet(this.handleHumidityGet.bind(this, asset));
         },

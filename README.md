@@ -54,6 +54,7 @@ Node.js versions supported: 16.x, 18.x, 20.x
   - The following Alexa devices appear as Switches in HomeKit and only support On and Off currently:
     - Air fresheners
     - Vacuum cleaners
+    - Game consoles
 - Fans
 - Outlets + smart plugs
 - Thermostats

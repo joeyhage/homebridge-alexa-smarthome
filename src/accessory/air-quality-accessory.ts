@@ -40,7 +40,7 @@ export default class AirQualityAccessory extends BaseAccessory {
           ),
         (asset) => {
           this.service
-            .getCharacteristic(this.platform.Characteristic.AirQuality)
+            .getCharacteristic(this.Characteristic.AirQuality)
             .onGet(this.handleAirQualityGet.bind(this, asset));
         },
       ),
@@ -51,7 +51,7 @@ export default class AirQualityAccessory extends BaseAccessory {
       RR.lookup('Alexa.AirQuality.ParticulateMatter'),
       O.map((asset) => {
         this.service
-          .getCharacteristic(this.platform.Characteristic.PM2_5Density)
+          .getCharacteristic(this.Characteristic.PM2_5Density)
           .onGet(this.handlePM25DensityGet.bind(this, asset));
       }),
     );
@@ -61,7 +61,7 @@ export default class AirQualityAccessory extends BaseAccessory {
       RR.lookup('Alexa.AirQuality.VolatileOrganicCompounds'),
       O.map((asset) => {
         this.service
-          .getCharacteristic(this.platform.Characteristic.VOCDensity)
+          .getCharacteristic(this.Characteristic.VOCDensity)
           .onGet(this.handleVocDensityGet.bind(this, asset));
       }),
     );

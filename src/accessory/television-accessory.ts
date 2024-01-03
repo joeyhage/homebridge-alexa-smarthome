@@ -300,7 +300,7 @@ export default class TelevisionAccessory extends BaseAccessory {
             O.fromNullable(state),
             O.flatMap((prevState) =>
               mapper.mapHomeKitCommandToAlexa(
-                this.platform.Characteristic,
+                this.Characteristic,
                 prevState,
                 value,
               ),
