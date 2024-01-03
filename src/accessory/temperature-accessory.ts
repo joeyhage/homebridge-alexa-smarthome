@@ -23,7 +23,7 @@ export default class TemperatureAccessory extends BaseAccessory {
       );
 
     this.service
-      .getCharacteristic(this.platform.Characteristic.CurrentTemperature)
+      .getCharacteristic(this.Characteristic.CurrentTemperature)
       .onGet(this.handleCurrentTempGet.bind(this));
   }
 

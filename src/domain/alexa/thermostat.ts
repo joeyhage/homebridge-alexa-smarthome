@@ -10,6 +10,7 @@ export interface ThermostatState {
 export const ThermostatNamespaces = {
   'Alexa.TemperatureSensor': 'Alexa.TemperatureSensor',
   'Alexa.ThermostatController': 'Alexa.ThermostatController',
+  'Alexa.HumiditySensor': 'Alexa.HumiditySensor',
 } as const;
 
 export type ThermostatNamespacesType = keyof typeof ThermostatNamespaces;

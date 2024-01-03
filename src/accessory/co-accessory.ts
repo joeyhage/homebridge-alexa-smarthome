@@ -41,11 +41,11 @@ export default class CarbonMonoxideAccessory extends BaseAccessory {
         (asset) => {
           this.service
             .getCharacteristic(
-              this.platform.Characteristic.CarbonMonoxideDetected,
+              this.Characteristic.CarbonMonoxideDetected,
             )
             .onGet(this.handleCarbonMonoxideDetectedGet.bind(this, asset));
           this.service
-            .getCharacteristic(this.platform.Characteristic.CarbonMonoxideLevel)
+            .getCharacteristic(this.Characteristic.CarbonMonoxideLevel)
             .onGet(this.handleCarbonMonoxideLevelGet.bind(this, asset));
         },
       ),

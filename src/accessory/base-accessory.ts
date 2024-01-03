@@ -1,10 +1,11 @@
 import * as A from 'fp-ts/Array';
+import * as IO from 'fp-ts/IO';
 import * as O from 'fp-ts/Option';
 import { Option } from 'fp-ts/Option';
 import * as RR from 'fp-ts/ReadonlyRecord';
 import * as TE from 'fp-ts/TaskEither';
 import { TaskEither } from 'fp-ts/TaskEither';
-import { identity, pipe } from 'fp-ts/lib/function';
+import { constVoid, identity, pipe } from 'fp-ts/lib/function';
 import { Characteristic, PlatformAccessory, Service } from 'homebridge';
 import { match } from 'ts-pattern';
 import { CapabilityState } from '../domain/alexa';
@@ -45,12 +46,20 @@ export default abstract class BaseAccessory {
     message: string,
     e?: unknown,
   ): void {
+    return this._logWithContext(logLevel, message, e)();
+  }
+
+  private _logWithContext(
+    logLevel: PluginLogLevel | 'errorT',
+    message: string,
+    e?: unknown,
+  ): IO.IO<void> {
     const msgAndContext = `${this.device.displayName} - ${message}`;
     return match(logLevel)
       .with('errorT', () => this.log.errorT(msgAndContext, e))
       .otherwise((logLevel: PluginLogLevel) =>
         this.log[logLevel](msgAndContext),
-      )();
+      );
   }
 
   getInitialized() {
@@ -105,6 +114,14 @@ export default abstract class BaseAccessory {
             O.map(this.extractStates<S>),
           ),
         ),
+      ),
+      TE.tapIO(({ allCapStates: { fromCache } }) =>
+        fromCache
+          ? IO.of(constVoid())
+          : this._logWithContext(
+            'debug',
+            'Device state updated successfully using Alexa API',
+          ),
       ),
       TE.flatMapOption(
         ({ capStates }) => toCharacteristicStateFn(capStates),

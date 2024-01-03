@@ -136,6 +136,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
             if (this.config.performance?.backgroundRefresh) {
               const scheduleRefresh = () => {
                 refreshTimeout = setTimeout(() => {
+                  this.log.debug('Starting background refresh');
                   this.alexaApi
                     .getDeviceStates(this.activeDeviceIds, 'ENTITY', false)()
                     .finally(() => {

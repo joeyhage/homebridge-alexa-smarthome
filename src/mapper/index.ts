@@ -24,7 +24,7 @@ import { generateUuid } from '../util';
 import { SupportedActions } from '../domain/alexa';
 import FanAccessory from '../accessory/fan-accessory';
 
-const ALEXA_DEVICES_AS_SWITCHES = ['SWITCH', 'AIR_FRESHENER', 'VACUUM_CLEANER'];
+const ALEXA_DEVICES_AS_SWITCHES = ['SWITCH', 'AIR_FRESHENER', 'VACUUM_CLEANER', 'GAME_CONSOLE'];
 
 export const mapAlexaDeviceToHomeKitAccessoryInfos = (
   platform: AlexaSmartHomePlatform,

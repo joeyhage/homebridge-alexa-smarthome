@@ -10,6 +10,8 @@ export const SupportedDeviceTypes = [
   'ALEXA_VOICE_ENABLED',
   'AIR_QUALITY_MONITOR',
   'VACUUM_CLEANER',
+  'GAME_CONSOLE',
+  'AIR_FRESHENER',
 ];
 
 export type AmazonDomain =
@@ -51,6 +53,7 @@ export const SupportedNamespaces = {
   'Alexa.TemperatureSensor': 'Alexa.TemperatureSensor',
   'Alexa.ThermostatController': 'Alexa.ThermostatController',
   'Alexa.RangeController': 'Alexa.RangeController',
+  'Alexa.HumiditySensor': 'Alexa.HumiditySensor',
 } as const;
 
 export type SupportedNamespacesType = keyof typeof SupportedNamespaces;

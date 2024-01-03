@@ -47,45 +47,50 @@ export default class ThermostatAccessory extends BaseAccessory {
       );
 
     this.service
-      .getCharacteristic(
-        this.platform.Characteristic.CurrentHeatingCoolingState,
-      )
+      .getCharacteristic(this.Characteristic.CurrentHeatingCoolingState)
       .onGet(() => this.Characteristic.CurrentHeatingCoolingState.OFF);
 
     this.service
-      .getCharacteristic(this.platform.Characteristic.CurrentTemperature)
+      .getCharacteristic(this.Characteristic.CurrentTemperature)
       .onGet(this.handleCurrentTempGet.bind(this));
 
     this.service
-      .getCharacteristic(this.platform.Characteristic.TemperatureDisplayUnits)
+      .getCharacteristic(this.Characteristic.TemperatureDisplayUnits)
       .onGet(this.handleTempUnitsGet.bind(this))
       .onSet(() => {
         throw this.readOnlyError;
       });
 
     this.service
-      .getCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState)
+      .getCharacteristic(this.Characteristic.TargetHeatingCoolingState)
       .onGet(this.handleTargetStateGet.bind(this))
       .onSet(this.handleTargetStateSet.bind(this));
 
     this.service
-      .getCharacteristic(this.platform.Characteristic.TargetTemperature)
+      .getCharacteristic(this.Characteristic.TargetTemperature)
       .onGet(this.handleTargetTempGet.bind(this))
       .onSet(this.handleTargetTempSet.bind(this));
 
     this.service
-      .getCharacteristic(
-        this.platform.Characteristic.CoolingThresholdTemperature,
-      )
+      .getCharacteristic(this.Characteristic.CoolingThresholdTemperature)
       .onGet(this.handleCoolTempGet.bind(this))
       .onSet(this.handleCoolTempSet.bind(this));
 
     this.service
-      .getCharacteristic(
-        this.platform.Characteristic.HeatingThresholdTemperature,
-      )
+      .getCharacteristic(this.Characteristic.HeatingThresholdTemperature)
       .onGet(this.handleHeatTempGet.bind(this))
       .onSet(this.handleHeatTempSet.bind(this));
+
+    pipe(
+      this.platform.deviceStore.getCacheValue(this.device.id, {
+        namespace: 'Alexa.HumiditySensor',
+      }),
+      O.map(() => {
+        this.service
+          .getCharacteristic(this.Characteristic.CurrentRelativeHumidity)
+          .onGet(this.handleCurrentRelativeHumidityGet.bind(this));
+      }),
+    );
   }
 
   async handleCurrentTempGet(): Promise<number> {
@@ -106,6 +111,29 @@ export default class ThermostatAccessory extends BaseAccessory {
       this.getState(determineCurrentTemp),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get current temperature', e);
+        throw this.serviceCommunicationError;
+      }, identity),
+    )();
+  }
+
+  async handleCurrentRelativeHumidityGet(): Promise<number> {
+    const alexaNamespace: ThermostatNamespacesType = 'Alexa.HumiditySensor';
+    const determineCurrentRelativeHumidity = flow(
+      O.filterMap<ThermostatState[], ThermostatState>(
+        A.findFirst(({ namespace }) => namespace === alexaNamespace),
+      ),
+      O.flatMap(({ value }) =>
+        typeof value === 'number' ? O.of(value) : O.none,
+      ),
+      O.tap((s) =>
+        O.of(this.logWithContext('debug', `Get current humidity result: ${s}`)),
+      ),
+    );
+
+    return pipe(
+      this.getState(determineCurrentRelativeHumidity),
+      TE.match((e) => {
+        this.logWithContext('errorT', 'Get current humidity', e);
         throw this.serviceCommunicationError;
       }, identity),
     )();
@@ -137,7 +165,7 @@ export default class ThermostatAccessory extends BaseAccessory {
   }
 
   async handleTargetStateGet(): Promise<number> {
-    let isDeviceOn: boolean;
+    let isDeviceOn = true;
     try {
       isDeviceOn = this.isPowerSupported ? await this.handlePowerGet() : true;
     } catch (e) {
@@ -348,19 +376,20 @@ export default class ThermostatAccessory extends BaseAccessory {
 
   async handleCoolTempSet(value: CharacteristicValue): Promise<void> {
     this.logWithContext('debug', `Triggered set cooling temperature: ${value}`);
-    const maybeHeatTemp = this.getCacheValue(
-      'Alexa.ThermostatController',
-      'lowerSetpoint',
-    );
-    if (!this.isTempWithScale(maybeHeatTemp)) {
-      throw this.notAllowedError;
-    }
-    const heatTemp = maybeHeatTemp.value;
-    if (typeof value !== 'number' || typeof heatTemp !== 'number') {
+    if (typeof value !== 'number') {
       throw this.invalidValueError;
     }
-    const units = maybeHeatTemp.value.scale.toLowerCase() as TemperatureScale;
+    const { units, coolTemp, heatTemp } = this.getCachedTemps();
+
     const newCoolTemp = tempMapper.mapHomeKitTempToAlexa(value, units);
+
+    if (newCoolTemp === coolTemp.value) {
+      this.logWithContext(
+        'debug',
+        `Skipping set cool temp since temp is already ${newCoolTemp}`,
+      );
+      return;
+    }
 
     return pipe(
       this.platform.alexaApi.setDeviceState(
@@ -370,9 +399,7 @@ export default class ThermostatAccessory extends BaseAccessory {
           'upperSetTemperature.scale': units,
           'upperSetTemperature.value': newCoolTemp.toString(10),
           'lowerSetTemperature.scale': units,
-          'lowerSetTemperature.value': tempMapper
-            .mapHomeKitTempToAlexa(heatTemp, units)
-            .toString(10),
+          'lowerSetTemperature.value': heatTemp.value.toString(10),
         },
       ),
       TE.match(
@@ -429,19 +456,20 @@ export default class ThermostatAccessory extends BaseAccessory {
 
   async handleHeatTempSet(value: CharacteristicValue): Promise<void> {
     this.logWithContext('debug', `Triggered set heating temperature: ${value}`);
-    const maybeCoolTemp = this.getCacheValue(
-      'Alexa.ThermostatController',
-      'upperSetpoint',
-    );
-    if (!this.isTempWithScale(maybeCoolTemp)) {
-      throw this.notAllowedError;
-    }
-    const coolTemp = maybeCoolTemp.value;
-    if (typeof value !== 'number' || typeof coolTemp !== 'number') {
+    if (typeof value !== 'number') {
       throw this.invalidValueError;
     }
-    const units = maybeCoolTemp.value.scale.toLowerCase() as TemperatureScale;
+    const { units, coolTemp, heatTemp } = this.getCachedTemps();
+
     const newHeatTemp = tempMapper.mapHomeKitTempToAlexa(value, units);
+
+    if (newHeatTemp === heatTemp.value) {
+      this.logWithContext(
+        'debug',
+        `Skipping set heat temp since temp is already ${newHeatTemp}`,
+      );
+      return;
+    }
 
     return pipe(
       this.platform.alexaApi.setDeviceState(
@@ -451,9 +479,7 @@ export default class ThermostatAccessory extends BaseAccessory {
           'lowerSetTemperature.scale': units,
           'lowerSetTemperature.value': newHeatTemp.toString(10),
           'upperSetTemperature.scale': units,
-          'upperSetTemperature.value': tempMapper
-            .mapHomeKitTempToAlexa(coolTemp, units)
-            .toString(10),
+          'upperSetTemperature.value': coolTemp.value.toString(10),
         },
       ),
       TE.match(
@@ -572,5 +598,37 @@ export default class ThermostatAccessory extends BaseAccessory {
       this.getCacheValue('Alexa.ThermostatController', 'thermostatMode'),
       O.match(constFalse, (m) => m === 'AUTO'),
     );
+  }
+
+  private getCachedTemps() {
+    const maybeCoolTemp = this.getCacheValue(
+      'Alexa.ThermostatController',
+      'upperSetpoint',
+    );
+    const maybeHeatTemp = this.getCacheValue(
+      'Alexa.ThermostatController',
+      'lowerSetpoint',
+    );
+    if (
+      !this.isTempWithScale(maybeCoolTemp) ||
+      !this.isTempWithScale(maybeHeatTemp)
+    ) {
+      throw this.notAllowedError;
+    }
+    const coolTemp = maybeCoolTemp.value;
+    const heatTemp = maybeHeatTemp.value;
+    if (
+      typeof coolTemp.value !== 'number' ||
+      typeof heatTemp.value !== 'number'
+    ) {
+      throw this.invalidValueError;
+    }
+
+    const units = coolTemp.scale.toLowerCase() as TemperatureScale;
+    return {
+      units,
+      coolTemp,
+      heatTemp,
+    };
   }
 }

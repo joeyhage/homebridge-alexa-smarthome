@@ -27,11 +27,11 @@ export default class LockAccessory extends BaseAccessory {
       );
 
     this.service
-      .getCharacteristic(this.platform.Characteristic.LockCurrentState)
+      .getCharacteristic(this.Characteristic.LockCurrentState)
       .onGet(this.handleCurrentStateGet.bind(this));
 
     this.service
-      .getCharacteristic(this.platform.Characteristic.LockTargetState)
+      .getCharacteristic(this.Characteristic.LockTargetState)
       .onGet(this.handleTargetStateGet.bind(this))
       .onSet(this.handleTargetStateSet.bind(this));
   }
