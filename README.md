@@ -37,6 +37,7 @@ This plugin **does not** allow Alexa to control devices in HomeKit. For that, pl
 - [Initial configuration](#initial-configuration)
 - [Common issues](#common-issues)
 - [Support](#support)
+- [Contributing](#contributing)
 - [Long-term support](#long-term-support)
 - [Disclaimer](#disclaimer)
 
@@ -113,7 +114,8 @@ When you first add an Echo device with a temperature sensor to HomeKit, the temp
 The first time this plugin starts, you will need to authenticate using your Amazon Alexa account. Please follow these steps in order - screenshots included.
 
 1. Verify that your plugin configuration is correct. Specifically, the proxy `clientHost` and `port`. The `clientHost` should be the same host you use to access homebridge. For example, if you access homebridge via the url `http://my-homebridge-server.local:8581` then `clientHost` should be `my-homebridge-server.local`. The `port` should be a different value from homebridge (not 8581). Restart Homebridge if you made any changes to the settings.
-   1. ![config screenshot](./docs/img/1-config.png)
+   1. It is highly recommended to explicitly provide in the plugin settings the device names you wish to use with this plugin. The plugin performs much better this way.
+   2. ![config screenshot](./docs/img/1-config.png)
 2. Download the Alexa app onto a device of your choosing (smartphone, tablet, etc) and sign in using the Amazon account your devices are linked to. Confirm the `amazonDomain` plugin setting matches what you see in the Alexa app. Go to Settings -> About, scroll to the bottom, and look for Host Name. The Host Names you see should end with the `amazonDomain` you choose in the plugin settings, it will not match exactly.
    1. <img alt="Alexa app settings" src="./docs/img/1a-alexa-app.jpeg" width="60%" />
    2. <img alt="Alexa app host" src="./docs/img/1b-host.jpeg"/>
@@ -163,6 +165,10 @@ The first time this plugin starts, you will need to authenticate using your Amaz
 Please visit the [Canny feedback board](https://homebridge-alexa-smarthome.canny.io/feedback) first to see if your issue or request is currently being worked on. You can also suggest new features and vote on features requested by others.
 
 If you run into issues or you need help please use the [issues template](https://github.com/joeyhage/homebridge-alexa-smarthome/issues/new/choose). Fill all the relevant sections and submit your issue. It is important that you use the templates because I will automatically be assigned to your issue and I will receive an email. If you use the blank template without assigning me, I will most likely miss the Github notification.
+
+## Contributing
+
+Please see [CONTRIBUTING.md](./CONTRIBUTING.md) and [PULL_REQUEST_TEMPLATE.md](./.github/PULL_REQUEST_TEMPLATE.md)
 
 ## Long-term support
 
