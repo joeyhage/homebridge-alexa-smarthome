@@ -11,6 +11,10 @@ See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, 
 
 ## [2.1.1] - 2024-01-15
 
+### Added
+
+- Thermostat current state is now supported to show if the HVAC heating/cooling is running.
+
 ### Fixed
 
 - Resolved an issue with Fan accessories preventing them from being turned on or off.

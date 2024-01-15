@@ -46,14 +46,12 @@ export default class ThermostatAccessory extends BaseAccessory {
         this.device.displayName,
       );
 
-    // Actively Heating, Cooling, or Idle
     this.service
       .getCharacteristic(
         this.platform.Characteristic.CurrentHeatingCoolingState,
       )
       .onGet(this.handleCurrentStateGet.bind(this));
 
-    // Return ambient temperature reading
     this.service
       .getCharacteristic(this.Characteristic.CurrentTemperature)
       .onGet(this.handleCurrentTempGet.bind(this));
@@ -65,7 +63,6 @@ export default class ThermostatAccessory extends BaseAccessory {
         throw this.readOnlyError;
       });
 
-    // Farenheit or Celsius
     this.service
       .getCharacteristic(this.Characteristic.TargetHeatingCoolingState)
       .onGet(this.handleTargetStateGet.bind(this))
@@ -281,27 +278,28 @@ export default class ThermostatAccessory extends BaseAccessory {
     const alexaValueNameCool = 'coolerOperation';
 
     const determineCurrentState = flow(
-      O.map<ThermostatState[], number>((thermostatStateArr) => {
-        return thermostatStateArr.reduce<number>(
-          (curSum, { namespace, name }) => {
+      O.map<ThermostatState[], number>((thermostatStateArr) =>
+        pipe(
+          thermostatStateArr,
+          A.findFirstMap(({ namespace, name }) => {
             if (namespace === alexaNamespace && name === alexaValueNameHeat) {
-              return (curSum += 1);
+              return O.of(this.Characteristic.CurrentHeatingCoolingState.HEAT);
             } else if (
               namespace === alexaNamespace &&
               name === alexaValueNameCool
             ) {
-              return (curSum += 2);
+              return O.of(this.Characteristic.CurrentHeatingCoolingState.COOL);
             }
-            return curSum;
-          },
-          0,
-        );
-      }),
+            return O.none;
+          }),
+          O.getOrElse(() => this.Characteristic.CurrentHeatingCoolingState.OFF),
+        ),
+      ),
       O.tap((s) =>
         O.of(
           this.logWithContext(
             'debug',
-            `Get thermostat cooling state result: ${s}`,
+            `Get thermostat current state result: ${s}`,
           ),
         ),
       ),
@@ -310,7 +308,7 @@ export default class ThermostatAccessory extends BaseAccessory {
     return pipe(
       this.getState(determineCurrentState),
       TE.match((e) => {
-        this.logWithContext('errorT', 'Get thermostat heating state', e);
+        this.logWithContext('errorT', 'Get thermostat current state', e);
         throw this.serviceCommunicationError;
       }, identity),
     )();
