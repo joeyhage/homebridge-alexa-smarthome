@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, unreleased work in progress.
 
+## [2.1.1] - 2024-01-15
+
+### Fixed
+
+- Resolved an issue with Fan accessories preventing them from being turned on or off.
+
 ## [2.1.0] - 2024-01-03
 
 ### Added
@@ -174,7 +180,8 @@ See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, 
 
 - Support for outlets i.e. smart plugs.
 
-[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.0...HEAD
+[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.1...HEAD
+[2.1.1]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.0.8...v2.1.0
 [2.0.8]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.0.7...v2.0.8
 [2.0.7]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.0.6...v2.0.7
