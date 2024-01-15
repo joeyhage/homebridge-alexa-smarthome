@@ -13,13 +13,12 @@ export const mapAlexaModeToHomeKit = (
     .with('AUTO', constant(characteristic.TargetHeatingCoolingState.AUTO))
     .otherwise(constant(characteristic.TargetHeatingCoolingState.OFF));
 
-
 export const mapHomekitModeToAlexa = (
-    value: number,
-    characteristic: typeof Characteristic,
+  value: number,
+  characteristic: typeof Characteristic,
 ) =>
-    match(value)
-        .with(characteristic.TargetHeatingCoolingState.OFF, constant('OFF'))
-        .with(characteristic.TargetHeatingCoolingState.HEAT, constant('HEAT'))
-        .with(characteristic.TargetHeatingCoolingState.COOL, constant('COOL'))
-        .otherwise(constant('AUTO'));
+  match(value)
+    .with(characteristic.TargetHeatingCoolingState.OFF, constant('OFF'))
+    .with(characteristic.TargetHeatingCoolingState.HEAT, constant('HEAT'))
+    .with(characteristic.TargetHeatingCoolingState.COOL, constant('COOL'))
+    .otherwise(constant('AUTO'));
