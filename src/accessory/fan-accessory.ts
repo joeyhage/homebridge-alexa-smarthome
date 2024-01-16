@@ -48,7 +48,7 @@ export default class FanAccessory extends BaseAccessory {
 
   async handleActiveSet(value: CharacteristicValue): Promise<void> {
     this.logWithContext('debug', `Triggered set power: ${value}`);
-    if (typeof value !== 'boolean') {
+    if (typeof value !== 'number') {
       throw this.invalidValueError;
     }
     const action = mapper.mapHomeKitPowerToAlexaAction(value, this.Characteristic);

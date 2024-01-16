@@ -157,24 +157,28 @@ export default abstract class BaseAccessory {
   }
 
   get serviceCommunicationError() {
+    this.logWithContext('debug', 'Service communication error');
     return new this.platform.HAP.HapStatusError(
       this.platform.HAP.HAPStatus.SERVICE_COMMUNICATION_FAILURE,
     );
   }
 
   get readOnlyError() {
+    this.logWithContext('debug', 'Read only error');
     return new this.platform.HAP.HapStatusError(
       this.platform.HAP.HAPStatus.READ_ONLY_CHARACTERISTIC,
     );
   }
 
   get notAllowedError() {
+    this.logWithContext('debug', 'Not allowed error');
     return new this.platform.HAP.HapStatusError(
       this.platform.HAP.HAPStatus.NOT_ALLOWED_IN_CURRENT_STATE,
     );
   }
 
   get invalidValueError() {
+    this.logWithContext('debug', 'Invalid value error');
     return new this.platform.HAP.HapStatusError(
       this.platform.HAP.HAPStatus.INVALID_VALUE_IN_REQUEST,
     );
