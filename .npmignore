@@ -2,9 +2,11 @@
 src
 __tests__
 config.dev.json
-TEMPLATE_README.md
+*.md
 .homebridge-alexa-smarthome
 .tool-versions
+
+docs/
 
 # ------------- Defaults ------------- #
 

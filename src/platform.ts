@@ -256,9 +256,9 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
       ),
       TE.tap(
         flow(
-          A.filterMap(({ displayName, providerData }) =>
-            providerData.categoryType !== 'GROUP'
-              ? O.of({ displayName, deviceType: providerData.deviceType })
+          A.filterMap((device) =>
+            device.providerData.categoryType !== 'GROUP'
+              ? O.of(device)
               : O.none,
           ),
           util.stringifyJson,
