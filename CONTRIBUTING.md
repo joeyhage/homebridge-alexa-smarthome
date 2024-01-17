@@ -18,17 +18,37 @@ git clone https://github.com/<your-username>/homebridge-alexa-smarthome.git
 
 It's best practice to create a new branch for each new feature or bug fix you're working on. This keeps your changes organized and separated from the main branch.
 
+## Local Setup
+
+This project requires Node.js version 18.x or 20.x. If you don't have Node.js installed, you can download it from [the official Node.js website](https://nodejs.org/). After installing Node.js, you can verify the version by running `node -v` in your terminal. 
+
+Once you have the correct version of Node.js installed, navigate to the project directory and install the dependencies listed in the `package.json` file by running `npm install`. This will install all the necessary packages for you to be able to run the project locally.
+
 ## Make Your Changes
 
 Now you're ready to make your changes! Feel free to make your changes in the editor of your choice.
 
+## Add Tests
+
+Please consider adding tests where appropriate. Depending on the complexity or magnitude of your changes, the project maintainer may require new tests.
+
 ## Lint Your Code
 
-Before submitting your changes, make sure your code has been linted with Prettier and ESLint. This ensures that your code follows the style guidelines of the project.
+Make sure your code has been linted with Prettier and ESLint. This ensures that your code follows the style guidelines of the project.
 
 ```sh
 npm run lint && npm run format
 ```
+
+## Test Your Code
+
+Lastly, before submitting your changes, make sure the tests pass.
+
+```sh
+npm run test-ci
+```
+
+You can run both the integration and unit tests using `npm test` as well, but that is optional. The integration tests require creating a `.env` file in the root of the repository (see [.env.example](./.env.example)) and a valid `.homebridge-alexa-smarthome` file in the root of the repository. You can copy the `.homebridge-alexa-smarthome` file from your Homebridge server if you have this plugin installed and working already.
 
 ## Submit a Pull Request
 
@@ -38,6 +58,6 @@ Once you've made your changes and ensured they're properly linted, you're ready 
 git push origin <branch-name>
 ```
 
-Then, navigate to the main page of the repository, https://github.com/joeyhage/homebridge-alexa-smarthome, and click on the "Pull request" button. Fill out the form and then submit your pull request.
+Go to your forked repository on GitHub. Click the 'New pull request' button next to your branch. Review your changes and then click 'Create pull request'. Fill out the PR form, then click 'Create pull request' again to submit.
 
 Thank you for your contribution!
