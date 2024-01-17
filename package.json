@@ -24,7 +24,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "rimraf ./dist && tsc -p tsconfig.prod.json",
-    "format": "prettier --ignore-path .gitignore --write \"**/*.+(js|ts|json)\"",
+    "format": "prettier --ignore-path .gitignore --write \"src/**/*.ts\"",
     "lint": "eslint src/**.ts --max-warnings=0",
     "pre-commit": "lint-staged",
     "prepare": "husky install",
