@@ -25,7 +25,7 @@ test('should not initialize devices with invalid ids', async () => {
   // then
   expect(actual).toStrictEqual(
     E.left(
-      new ValidationError('id: \'123\' is not a valid Smart Home device id'),
+      new ValidationError("id: '123' is not a valid Smart Home device id"),
     ),
   );
 });

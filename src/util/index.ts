@@ -159,7 +159,7 @@ export const round = (value: number, decimals: number) => {
 export const isRecord = <T extends string | number | symbol>(
   obj: unknown,
 ): obj is Record<T, unknown> =>
-    !!obj && typeof obj === 'object' && !Array.isArray(obj);
+  !!obj && typeof obj === 'object' && !Array.isArray(obj);
 
 export const generateUuid = (
   platform: AlexaSmartHomePlatform,

@@ -48,7 +48,8 @@ export class PluginLogger {
             message: Pattern.select('message', Pattern.string),
             cause: Pattern.select('cause'),
           },
-          ({ cause, message }) => this.errorT(`${prefix} - ${message}. Caused by`, cause)(),
+          ({ cause, message }) =>
+            this.errorT(`${prefix} - ${message}. Caused by`, cause)(),
         )
         .with({ message: Pattern.select(Pattern.string) }, (m) =>
           this.logger.error(`${prefix} - ${m}`),

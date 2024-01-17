@@ -1,7 +1,5 @@
 import { CapabilityState } from '.';
-import {
-  RangeCapabilityAssets,
-} from './save-device-capabilities';
+import { RangeCapabilityAssets } from './save-device-capabilities';
 
 export const CarbonMonoxideSensorAssets = ['Alexa.AirQuality.CarbonMonoxide'];
 

@@ -1,8 +1,7 @@
 import { CapabilityState, SupportedNamespaces } from './index';
 
 export interface OutletState {
-  namespace: keyof typeof OutletNamespaces &
-    keyof typeof SupportedNamespaces;
+  namespace: keyof typeof OutletNamespaces & keyof typeof SupportedNamespaces;
   value: CapabilityState['value'];
 }
 

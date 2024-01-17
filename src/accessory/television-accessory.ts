@@ -13,7 +13,7 @@ import { PlayerInfo } from '../domain/alexa/get-player-info';
 import { AlexaSmartHomePlatform } from '../platform';
 import BaseAccessory from './base-accessory';
 import * as mapper from '../mapper/television-mapper';
-import {matchNullable} from '../util/fp-util';
+import { matchNullable } from '../util/fp-util';
 import { Nullable } from '../domain';
 
 interface PlayerInfoCache {

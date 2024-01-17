@@ -10,7 +10,9 @@ it('should initialize', async () => {
 
   // when
   const alexaRemote = new Promise<AlexaRemote>((resolve, reject) => {
-    platform.initAlexaRemote(O.match(() => resolve(platform.alexaRemote), reject));
+    platform.initAlexaRemote(
+      O.match(() => resolve(platform.alexaRemote), reject),
+    );
   });
 
   // then

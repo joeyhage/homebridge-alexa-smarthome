@@ -21,11 +21,11 @@ export const validateGetDevicesSuccessful: (
       Array.isArray(devices)
         ? E.of(devices)
         : E.left(
-          new InvalidResponse(
-            'Invalid list of Alexa devices found for the current Alexa account: ' +
+            new InvalidResponse(
+              'Invalid list of Alexa devices found for the current Alexa account: ' +
                 JSON.stringify(devices, undefined, 2),
+            ),
           ),
-        ),
   ),
 );
 

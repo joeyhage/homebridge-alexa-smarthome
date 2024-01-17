@@ -1,7 +1,5 @@
 import * as E from 'fp-ts/Either';
-import {
-  UnsupportedDeviceError,
-} from '../domain/alexa/errors';
+import { UnsupportedDeviceError } from '../domain/alexa/errors';
 import AccessoryFactory from './accessory-factory';
 
 describe('createAccessory', () => {

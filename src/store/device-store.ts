@@ -116,12 +116,12 @@ export default class DeviceStore {
         this.cache.states[id] =
           id in statesByDevice
             ? pipe(
-              statesByDevice,
-              RR.lookup(id),
-              O.flatten,
-              O.map(A.map(O.getRight)),
-              O.getOrElse(constant(new Array<Option<CapabilityState>>())),
-            )
+                statesByDevice,
+                RR.lookup(id),
+                O.flatten,
+                O.map(A.map(O.getRight)),
+                O.getOrElse(constant(new Array<Option<CapabilityState>>())),
+              )
             : [];
       }),
       RA.match(constVoid, () => {

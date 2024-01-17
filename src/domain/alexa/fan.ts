@@ -1,8 +1,7 @@
 import { CapabilityState, SupportedNamespaces } from './index';
 
 export interface FanState {
-  namespace: keyof typeof FanNamespaces &
-    keyof typeof SupportedNamespaces;
+  namespace: keyof typeof FanNamespaces & keyof typeof SupportedNamespaces;
   value: CapabilityState['value'];
 }
 

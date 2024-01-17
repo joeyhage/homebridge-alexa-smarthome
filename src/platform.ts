@@ -280,11 +280,12 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
       TE.tapIO((devices) =>
         devices.length === deviceFilter.length
           ? this.log.debug(
-            `Found all ${deviceFilter.length} devices in plugin settings.`,
-          )
+              `Found all ${deviceFilter.length} devices in plugin settings.`,
+            )
           : this.log.warn(
-            `${deviceFilter.length} devices provided in settings but ${devices.length} matching Alexa smart home devices were discovered.`,
-          ),
+              `${deviceFilter.length} devices provided in settings but ${devices.length} matching ` +
+                'Alexa smart home devices were discovered.',
+            ),
       ),
     );
   }
@@ -431,10 +432,10 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
         acc.isExternalAccessory
           ? this.api.publishExternalAccessories(settings.PLUGIN_NAME, [platAcc])
           : this.api.registerPlatformAccessories(
-            settings.PLUGIN_NAME,
-            settings.PLATFORM_NAME,
-            [platAcc],
-          );
+              settings.PLUGIN_NAME,
+              settings.PLATFORM_NAME,
+              [platAcc],
+            );
         this.activeDeviceIds.push(device.id);
         return E.of(constVoid());
       }),

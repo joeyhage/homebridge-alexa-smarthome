@@ -39,18 +39,14 @@ export default class HumidityAccessory extends BaseAccessory {
           ),
         (asset) => {
           this.service
-            .getCharacteristic(
-              this.Characteristic.CurrentRelativeHumidity,
-            )
+            .getCharacteristic(this.Characteristic.CurrentRelativeHumidity)
             .onGet(this.handleHumidityGet.bind(this, asset));
         },
       ),
     );
   }
 
-  async handleHumidityGet(
-    asset: RangeCapabilityAsset,
-  ): Promise<number> {
+  async handleHumidityGet(asset: RangeCapabilityAsset): Promise<number> {
     return pipe(
       this.getState(this.determineLevel(asset)),
       TE.match((e) => {

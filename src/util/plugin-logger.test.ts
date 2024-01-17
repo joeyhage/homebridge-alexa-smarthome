@@ -44,10 +44,15 @@ describe('errorT', () => {
     } as unknown as PlatformConfig);
 
     // when
-    logger.errorT('TEST', new JsonFormatError('bad json', new Error('an example cause')))();
+    logger.errorT(
+      'TEST',
+      new JsonFormatError('bad json', new Error('an example cause')),
+    )();
 
     // then
     expect(mockLogger.error).toHaveBeenCalledTimes(1);
-    expect(mockLogger.error).toHaveBeenCalledWith('TEST - JsonFormatError(bad json). Caused by - an example cause');
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      'TEST - JsonFormatError(bad json). Caused by - an example cause',
+    );
   });
 });

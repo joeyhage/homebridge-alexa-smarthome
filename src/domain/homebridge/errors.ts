@@ -1,5 +1,9 @@
 export abstract class PluginError extends Error {
-  constructor(message: string, public readonly name: string, public readonly cause?: unknown) {
+  constructor(
+    message: string,
+    public readonly name: string,
+    public readonly cause?: unknown,
+  ) {
     super(message);
     this.message = `${name}(${message})`;
   }

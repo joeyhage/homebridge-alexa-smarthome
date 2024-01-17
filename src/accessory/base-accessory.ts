@@ -119,9 +119,9 @@ export default abstract class BaseAccessory {
         fromCache
           ? IO.of(constVoid())
           : this._logWithContext(
-            'debug',
-            'Device state updated successfully using Alexa API',
-          ),
+              'debug',
+              'Device state updated successfully using Alexa API',
+            ),
       ),
       TE.flatMapOption(
         ({ capStates }) => toCharacteristicStateFn(capStates),

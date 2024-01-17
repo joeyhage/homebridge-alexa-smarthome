@@ -1,8 +1,7 @@
 import { CapabilityState, SupportedNamespaces } from './index';
 
 export interface SwitchState {
-  namespace: keyof typeof SwitchNamespaces &
-    keyof typeof SupportedNamespaces;
+  namespace: keyof typeof SwitchNamespaces & keyof typeof SupportedNamespaces;
   value: CapabilityState['value'];
 }
 

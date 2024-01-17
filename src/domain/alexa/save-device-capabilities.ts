@@ -62,11 +62,11 @@ export const extractRangeCapabilities = (
         return rc.interfaceName === 'Alexa.RangeController' &&
           O.isSome(maybeAssetId)
           ? O.of({
-            configuration: rc.configuration,
-            instance: rc.instance,
-            interfaceName: rc.interfaceName,
-            assetId: maybeAssetId.value,
-          } as RangeCapabilityAsset)
+              configuration: rc.configuration,
+              instance: rc.instance,
+              interfaceName: rc.interfaceName,
+              assetId: maybeAssetId.value,
+            } as RangeCapabilityAsset)
           : O.none;
       }),
       RA.reduce({} as RangeCapabilityAssets, (acc, cur) => {

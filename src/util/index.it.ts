@@ -13,6 +13,6 @@ describe('getAuthentication', () => {
 
     // then
     expect(E.isRight(actual)).toBe(true);
-    expect(E.getOrElse(constant({}))((actual))).toHaveProperty('localCookie');
+    expect(E.getOrElse(constant({}))(actual)).toHaveProperty('localCookie');
   });
 });

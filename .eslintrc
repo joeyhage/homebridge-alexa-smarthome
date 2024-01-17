@@ -13,8 +13,8 @@
   },
   "ignorePatterns": ["dist"],
   "rules": {
-    "quotes": ["warn", "single"],
-    "indent": ["warn", 2, { "SwitchCase": 1 }],
+    "quotes": ["warn", "single", { "avoidEscape": true }],
+    "indent": ["off"],
     "semi": ["off"],
     "comma-dangle": ["warn", "always-multiline"],
     "dot-notation": "off",

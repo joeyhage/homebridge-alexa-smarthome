@@ -52,8 +52,8 @@ export const mapAlexaPlaybackToHomeKit = (
       state: playing
         ? mediaState.PLAY
         : paused
-          ? mediaState.PAUSE
-          : mediaState.STOP,
+        ? mediaState.PAUSE
+        : mediaState.STOP,
       playerId,
     });
   } else {

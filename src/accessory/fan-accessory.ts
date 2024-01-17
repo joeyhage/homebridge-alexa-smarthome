@@ -51,7 +51,10 @@ export default class FanAccessory extends BaseAccessory {
     if (typeof value !== 'number') {
       throw this.invalidValueError;
     }
-    const action = mapper.mapHomeKitPowerToAlexaAction(value, this.Characteristic);
+    const action = mapper.mapHomeKitPowerToAlexaAction(
+      value,
+      this.Characteristic,
+    );
     return pipe(
       this.platform.alexaApi.setDeviceState(this.device.id, action),
       TE.match(
@@ -61,7 +64,10 @@ export default class FanAccessory extends BaseAccessory {
         },
         () => {
           this.updateCacheValue({
-            value: mapper.mapHomeKitPowerToAlexaValue(value, this.Characteristic),
+            value: mapper.mapHomeKitPowerToAlexaValue(
+              value,
+              this.Characteristic,
+            ),
             namespace: 'Alexa.PowerController',
           });
         },

@@ -4,7 +4,11 @@ import * as TE from 'fp-ts/TaskEither';
 import { flow, identity, pipe } from 'fp-ts/lib/function';
 import { Service } from 'homebridge';
 import { SupportedActionsType } from '../domain/alexa';
-import { TempSensorNamespaces, TempSensorNamespacesType, TempSensorState } from '../domain/alexa/temperature-sensor';
+import {
+  TempSensorNamespaces,
+  TempSensorNamespacesType,
+  TempSensorState,
+} from '../domain/alexa/temperature-sensor';
 import * as tempMapper from '../mapper/temperature-mapper';
 import BaseAccessory from './base-accessory';
 

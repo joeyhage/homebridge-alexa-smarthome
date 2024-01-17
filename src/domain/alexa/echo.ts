@@ -29,8 +29,7 @@ export const isMediaPlaybackValue = (
     .otherwise(constFalse);
 
 export interface EchoState {
-  namespace: keyof typeof EchoNamespaces &
-    keyof typeof SupportedNamespaces;
+  namespace: keyof typeof EchoNamespaces & keyof typeof SupportedNamespaces;
   value: CapabilityState['value'];
 }
 

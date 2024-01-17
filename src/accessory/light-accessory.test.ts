@@ -139,7 +139,6 @@ function getMockedAlexaApi(): jest.Mocked<AlexaApiWrapper> {
   return mock;
 }
 
-
 function mockDeviceStore(): jest.Mocked<DeviceStore> {
   const mock = deviceStoreMocks.mock.instances[0] as jest.Mocked<DeviceStore>;
   mock.getCacheValue.mockReturnValueOnce(O.none);
