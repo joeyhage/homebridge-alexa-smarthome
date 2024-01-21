@@ -15,21 +15,21 @@ import {
   SupportedActionsType,
   SupportedNamespacesType,
 } from '../domain/alexa';
-import {
-  ThermostatNamespaces,
-  ThermostatNamespacesType,
-  ThermostatState,
-} from '../domain/alexa/thermostat';
-import * as tempMapper from '../mapper/temperature-mapper';
-import * as tstatMapper from '../mapper/thermostat-mapper';
-import BaseAccessory from './base-accessory';
+import { SwitchState } from '../domain/alexa/switch';
 import {
   Temperature,
   TemperatureScale,
   isTemperatureValue,
 } from '../domain/alexa/temperature';
-import { SwitchState } from '../domain/alexa/switch';
+import {
+  ThermostatNamespaces,
+  ThermostatNamespacesType,
+  ThermostatState,
+} from '../domain/alexa/thermostat';
 import * as mapper from '../mapper/power-mapper';
+import * as tempMapper from '../mapper/temperature-mapper';
+import * as tstatMapper from '../mapper/thermostat-mapper';
+import BaseAccessory from './base-accessory';
 
 export default class ThermostatAccessory extends BaseAccessory {
   static requiredOperations: SupportedActionsType[] = ['setTargetTemperature'];
@@ -276,19 +276,26 @@ export default class ThermostatAccessory extends BaseAccessory {
       'Alexa.ThermostatController.HVAC.Components';
     const alexaValueNameHeat = 'primaryHeaterOperation';
     const alexaValueNameCool = 'coolerOperation';
+    const alexaValueValueOFF = 'OFF';
 
     const determineCurrentState = flow(
       O.map<ThermostatState[], number>((thermostatStateArr) =>
         pipe(
           thermostatStateArr,
-          A.findFirstMap(({ namespace, name }) => {
-            if (namespace === alexaNamespace && name === alexaValueNameHeat) {
-              return O.of(this.Characteristic.CurrentHeatingCoolingState.HEAT);
-            } else if (
-              namespace === alexaNamespace &&
-              name === alexaValueNameCool
-            ) {
-              return O.of(this.Characteristic.CurrentHeatingCoolingState.COOL);
+          A.findFirstMap(({ namespace, name, value }) => {
+            if (value !== alexaValueValueOFF) {
+              if (namespace === alexaNamespace && name === alexaValueNameHeat) {
+                return O.of(
+                  this.Characteristic.CurrentHeatingCoolingState.HEAT,
+                );
+              } else if (
+                namespace === alexaNamespace &&
+                name === alexaValueNameCool
+              ) {
+                return O.of(
+                  this.Characteristic.CurrentHeatingCoolingState.COOL,
+                );
+              }
             }
             return O.none;
           }),
