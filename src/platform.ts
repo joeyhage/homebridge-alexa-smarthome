@@ -60,14 +60,17 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     this.log = new PluginLogger(logger, config);
 
     if (util.validateConfig(config)) {
-      const clientHost = config.auth.proxy.clientHost.replace(
-        /^https?:\/\//,
-        '',
-      );
-      if (clientHost.includes('/') || clientHost.includes(':')) {
+      const formattedClientHost = config.auth.proxy.clientHost
+        .replace(/^https?:\/\//, '')
+        .toLowerCase();
+      config.auth.proxy.clientHost = formattedClientHost;
+      if (
+        formattedClientHost.includes('/') ||
+        formattedClientHost.includes(':')
+      ) {
         pipe(
           this.log.error(
-            `Invalid proxy client host provided: ${clientHost}. The host should not include a port number or a slash (/).`,
+            `Invalid proxy client host provided: ${formattedClientHost}. The host should not include a port number or a slash (/).`,
           ),
           IO.flatMap(() =>
             this.log.error(
@@ -211,10 +214,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
             cookie: auth?.localCookie,
             deviceAppName: 'Homebridge',
             macDms: auth?.macDms,
-            proxyOwnIp: this.config.auth.proxy.clientHost.replace(
-              /^https?:\/\//,
-              '',
-            ),
+            proxyOwnIp: this.config.auth.proxy.clientHost,
             proxyPort: this.config.auth.proxy.port,
             useWsMqtt: false,
             logger: this.alexaRemoteLogger.bind(this),

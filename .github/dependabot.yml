@@ -1,40 +1,18 @@
 version: 2
 updates:
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: 'github-actions'
+    directory: '/'
     schedule:
-      interval: "monthly"
+      interval: 'monthly'
 
-  - package-ecosystem: "npm"
-    directory: "/"
-    target-branch: "dependabot/production-dependencies"
+  - package-ecosystem: 'npm'
+    directory: '/'
     schedule:
-      interval: "weekly"
+      interval: 'weekly'
     allow:
-      - dependency-type: "production"
-    groups:
-      production-dependencies:
-        dependency-type: "production"
+      - dependency-type: 'production'
+    versioning-strategy: 'increase-if-necessary'
 
-  - package-ecosystem: "npm"
-    directory: "/"
-    target-branch: "dependabot/dev-dependencies"
-    schedule:
-      interval: "monthly"
-    allow:
-      - dependency-type: "development"
-    groups:
-      dev-dependencies:
-        dependency-type: "development"
-
-  - package-ecosystem: "npm"
-    directory: "/"
-    target-branch: "dependabot/indirect-dependencies"
-    schedule:
-      interval: "monthly"
-    allow:
-      - dependency-type: "indirect"
-    groups:
-      indirect-dependencies:
-        patterns:
-          - "*"
+groups:
+  production-dependencies:
+    dependency-type: 'production'

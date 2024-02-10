@@ -43,7 +43,7 @@
     "smarthome"
   ],
   "dependencies": {
-    "alexa-remote2": "^6.1.2",
+    "alexa-remote2": "7.0.3",
     "async-mutex": "^0.4.0",
     "fp-ts": "^2.16.1",
     "ts-pattern": "^4.3.0"

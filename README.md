@@ -39,6 +39,7 @@ This plugin **does not** allow Alexa to control devices in HomeKit. For that, pl
 - [Support](#support)
 - [Contributing](#contributing)
 - [Long-term support](#long-term-support)
+- [Thanks](#thanks)
 - [Disclaimer](#disclaimer)
 
 ## Compatibility
@@ -122,7 +123,7 @@ The first time this plugin starts, you will need to authenticate using your Amaz
 3. **This plugin may not work and support or help troubleshooting will not be provided** if you do not use multi-factor authentication / two-step verification or if you use SMS for the verification code. Again, SMS two step verification will **not** work. Please download an authenticator app such as AWS Virtual MFA, Google Authenticator, Microsoft Authenticator and follow the instructions to enable two step verification on Amazon's website.
 4. Check the homebridge logs for an error that you must manually open the url to authenticate.
    1. ![failed to initialize screenshot](./docs/img/2-failed-to-initialize.png)
-5. Visit the url in your browser to open a login screen. It is a real login screen proxied so the plugin can capture the session cookie. The username/password are not stored by the plugin.
+5. Visit the url in your browser to open a login screen. If you open the url from a mobile device the Alexa App is installed on, it may not work because Amazon might open the Alexa App. It is recommended to use a device, preferably a computer, the Alexa App is not installed on. When the page loads, it is a real login screen proxied so the plugin can capture the session cookie. The username/password are not stored by the plugin.
    1. ![login screenshot](./docs/img/3-alexa-login.png)
 6. Enter your MFA code if you have MFA enabled on your Amazon Alexa account. Again, the plugin does not store this value.
    1. ![mfa screenshot](./docs/img/4-alexa-mfa.png)
@@ -138,6 +139,8 @@ The first time this plugin starts, you will need to authenticate using your Amaz
   <ol>
     <li>Please ensure you have the Alexa app installed on your device (iPhone, iPad, etc).</li>
     <li>Please download an authenticator app such as AWS Virtual MFA, Google Authenticator, Microsoft Authenticator and follow the instructions to enable two step verification on Amazon's website. SMS two-step verification does not work with this plugin.</li>
+    <li>Try using a computer to access the proxy url</li>
+    <li>See <a href="https://github.com/Apollon77/alexa-remote#troubleshooting">Troubleshooting</a> for the Alexa Remote project, which this plugin relies on.</li>
     <li>Repeat <a href="#initial-configuration">initial configuration</a> steps again.</li>
     <li>Delete the <code>persist/.homebridge-alexa-smarthome</code> file in your homebridge installation directory and then restart Homebridge.</li>
     <li>Try an incognito window with Javascript disabled. <a href="https://github.com/Apollon77/ioBroker.alexa2#problems-with-cookie-determination-via-e-mailpassword">Detailed instructions</a></li>
@@ -173,6 +176,10 @@ Please see [CONTRIBUTING.md](./CONTRIBUTING.md) and [PULL_REQUEST_TEMPLATE.md](.
 ## Long-term support
 
 Please consider supporting the development of this plugin by sponsoring me. Sponsorship will encourage me to continue improving this plugin, support more devices, adapt to changes in the Alexa API, and fuel my late-night coding sessions. :coffee:
+
+## Thanks
+
+A huge thanks is due to Apollon77 for maintaining alexa-remote2, alexa-cookie2, and ioBroker.alexa2. This plugin is made possible due to those projects.
 
 ## Disclaimer
 

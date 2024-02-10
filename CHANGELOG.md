@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, unreleased work in progress.
 
+## [2.1.3] - 2024-02-09
+
+### Changed
+
+- Upgraded alexa-remote2 from v6.1.2 to v7.0.3
+
+### Fixed
+
+- Display proper HVAC operation for thermostats
+
 ## [2.1.2] - 2024-01-15
 
 ### Added
@@ -195,7 +205,8 @@ See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, 
 
 - Support for outlets i.e. smart plugs.
 
-[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.2...HEAD
+[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.3...HEAD
+[2.1.3]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.2...v2.1.3
 [2.1.2]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.0.8...v2.1.0
