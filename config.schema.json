@@ -6,8 +6,20 @@
     "type": "object",
     "properties": {
       "devices": {
-        "title": "Device names",
+        "title": "Include device names",
         "description": "List of smart home device names to add as HomeKit accessories. If no devices are specified, the plugin will attempt to add all supported accessories.",
+        "type": "array",
+        "uniqueItems": true,
+        "required": true,
+        "default": [],
+        "items": {
+          "title": "Device name",
+          "type": "string"
+        }
+      },
+      "excludeDevices": {
+        "title": "Exclude devices",
+        "description": "List of smart home device names to exclude from being added as HomeKit accessories. Exclude devices will only be excluded if 'Include device names' is empty.",
         "type": "array",
         "uniqueItems": true,
         "required": true,

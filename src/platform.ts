@@ -1,4 +1,3 @@
-import AlexaRemote, { InitOptions } from 'alexa-remote2';
 import * as A from 'fp-ts/Array';
 import * as E from 'fp-ts/Either';
 import * as IO from 'fp-ts/IO';
@@ -22,6 +21,7 @@ import {
 import { match } from 'ts-pattern';
 import AccessoryFactory from './accessory/accessory-factory';
 import BaseAccessory from './accessory/base-accessory';
+import AlexaRemote, { type InitOptions } from './alexa-remote.js';
 import { AlexaDeviceError, AlexaError } from './domain/alexa/errors';
 import { SmartHomeDevice } from './domain/alexa/get-devices';
 import { AlexaPlatformConfig } from './domain/homebridge';
@@ -247,6 +247,11 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
       O.map(A.map((d) => d.trim())),
       O.getOrElse(constant(new Array<string>())),
     );
+    const excludeDevices = pipe(
+      O.fromNullable(this.config.excludeDevices),
+      O.map(A.map((d) => d.trim())),
+      O.getOrElse(constant(new Array<string>())),
+    );
     return pipe(
       this.alexaApi.getDevices(),
       TE.tapIO((devices) =>
@@ -273,15 +278,13 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
       TE.map(
         A.filter((d: SmartHomeDevice) =>
           A.isEmpty(deviceFilter)
-            ? true
+            ? !excludeDevices.includes(d.displayName.trim())
             : deviceFilter.includes(d.displayName.trim()),
         ),
       ),
       TE.tapIO((devices) =>
-        devices.length === deviceFilter.length
-          ? this.log.debug(
-              `Found all ${deviceFilter.length} devices in plugin settings.`,
-            )
+        devices.length === deviceFilter.length || A.isEmpty(deviceFilter)
+          ? this.log.debug(`Discovered ${deviceFilter.length} devices.`)
           : this.log.warn(
               `${deviceFilter.length} devices provided in settings but ${devices.length} matching ` +
                 'Alexa smart home devices were discovered.',

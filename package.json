@@ -43,14 +43,17 @@
     "smarthome"
   ],
   "dependencies": {
-    "alexa-remote2": "7.0.3",
+    "alexa-cookie2": "^5.0.2",
     "async-mutex": "^0.4.0",
+    "extend": "^3.0.2",
     "fp-ts": "^2.16.1",
-    "ts-pattern": "^4.3.0"
+    "ts-pattern": "^4.3.0",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@types/jest": "^29.5.4",
     "@types/node": "^18.17.14",
+    "@types/uuid": "^9.0.8",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
     "dotenv": "^16.3.1",

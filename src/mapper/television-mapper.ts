@@ -4,14 +4,14 @@ import { Option } from 'fp-ts/Option';
 import { constVoid, constant, pipe } from 'fp-ts/lib/function';
 import { type Characteristic } from 'homebridge';
 import { Pattern, match } from 'ts-pattern';
+import { type MessageCommands } from '../alexa-remote.js';
+import { Nullable } from '../domain';
 import {
-  MediaPlayer,
   EchoState,
+  MediaPlayer,
   isMediaPlaybackValue,
 } from '../domain/alexa/echo';
-import { Nullable } from '../domain';
 import { PlayerInfo } from '../domain/alexa/get-player-info';
-import { type MessageCommands } from 'alexa-remote2';
 
 export const mapAlexaPlaybackToHomeKit = (
   state: EchoState['value'],

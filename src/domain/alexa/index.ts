@@ -1,4 +1,4 @@
-import { InitOptions } from 'alexa-remote2';
+import { InitOptions } from '../../alexa-remote.js';
 import { Nullable } from '../index';
 
 export const SupportedDeviceTypes = [

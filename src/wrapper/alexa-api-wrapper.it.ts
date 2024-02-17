@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import AlexaRemote, { InitOptions } from 'alexa-remote2';
 import * as E from 'fp-ts/Either';
 import {
   constFalse,
@@ -9,12 +8,13 @@ import {
   constant,
   pipe,
 } from 'fp-ts/lib/function';
+import AlexaRemote, { InitOptions } from '../alexa-remote.js';
 import { Authentication } from '../domain/alexa';
 import { PLUGIN_NAME } from '../settings';
+import DeviceStore from '../store/device-store';
 import { getAuthentication } from '../util';
 import { PluginLogger } from '../util/plugin-logger';
 import { AlexaApiWrapper } from './alexa-api-wrapper';
-import DeviceStore from '../store/device-store';
 
 let alexa: AlexaRemote;
 beforeAll(async () => {

@@ -1,13 +1,13 @@
-import AlexaRemote, {
-  type CallbackWithErrorAndBody,
-  type EntityType,
-  type MessageCommands,
-} from 'alexa-remote2';
 import { Mutex, MutexInterface, withTimeout } from 'async-mutex';
 import * as TE from 'fp-ts/TaskEither';
 import { TaskEither } from 'fp-ts/TaskEither';
 import { match as fpMatch } from 'fp-ts/boolean';
 import { constVoid, pipe } from 'fp-ts/lib/function';
+import AlexaRemote, {
+  type CallbackWithErrorAndBody,
+  type EntityType,
+  type MessageCommands,
+} from '../alexa-remote.js';
 import { SupportedActionsType } from '../domain/alexa';
 import { AlexaApiError, HttpError, TimeoutError } from '../domain/alexa/errors';
 import GetDeviceStatesResponse, {
@@ -33,10 +33,6 @@ import SetDeviceStateResponse, {
 import DeviceStore from '../store/device-store';
 import { PluginLogger } from '../util/plugin-logger';
 
-const ADDTNL_ALEXA_HEADERS = {
-  'Routines-Version': '3.0.128540',
-};
-
 export interface DeviceStatesCache {
   lastUpdated: Date;
   cachedStates: ValidStatesByDevice;
@@ -60,16 +56,8 @@ export class AlexaApiWrapper {
     return pipe(
       TE.tryCatch(
         () =>
-          AlexaApiWrapper.toPromise<GetDevicesResponse>((cb) =>
-            this.alexaRemote.httpsGet(
-              false,
-              '/api/behaviors/entities?skillId=amzn1.ask.1p.smarthome',
-              cb,
-              {
-                headers: ADDTNL_ALEXA_HEADERS,
-                timeout: 60_000,
-              },
-            ),
+          AlexaApiWrapper.toPromise<GetDevicesResponse>(
+            this.alexaRemote.getSmarthomeEntities.bind(this.alexaRemote),
           ),
         (reason) =>
           new HttpError(

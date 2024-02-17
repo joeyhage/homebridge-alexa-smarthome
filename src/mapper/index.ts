@@ -3,12 +3,14 @@ import { Either } from 'fp-ts/Either';
 import * as O from 'fp-ts/Option';
 import { pipe } from 'fp-ts/lib/function';
 import { Pattern, match } from 'ts-pattern';
+import FanAccessory from '../accessory/fan-accessory';
 import LightAccessory from '../accessory/light-accessory';
 import LockAccessory from '../accessory/lock-accessory';
 import OutletAccessory from '../accessory/outlet-accessory';
 import SwitchAccessory from '../accessory/switch-accessory';
 import TelevisionAccessory from '../accessory/television-accessory';
 import ThermostatAccessory from '../accessory/thermostat-accessory';
+import { SupportedActions } from '../domain/alexa';
 import * as airQuality from '../domain/alexa/air-quality-monitor';
 import * as echo from '../domain/alexa/echo';
 import {
@@ -21,8 +23,6 @@ import { RangeCapabilityAssets } from '../domain/alexa/save-device-capabilities'
 import { HomebridgeAccessoryInfo } from '../domain/homebridge';
 import type { AlexaSmartHomePlatform } from '../platform';
 import { generateUuid } from '../util';
-import { SupportedActions } from '../domain/alexa';
-import FanAccessory from '../accessory/fan-accessory';
 
 const ALEXA_DEVICES_AS_SWITCHES = [
   'SWITCH',
@@ -39,7 +39,9 @@ export const mapAlexaDeviceToHomeKitAccessoryInfos = (
   return pipe(
     validateDevice(device),
     E.bind('rangeCapabilities', () =>
-      E.of(platform.deviceStore.getRangeCapabilitiesForDevice(entityId)),
+      E.of<AlexaDeviceError, RangeCapabilityAssets>(
+        platform.deviceStore.getRangeCapabilitiesForDevice(entityId),
+      ),
     ),
     E.flatMap(({ rangeCapabilities }) =>
       determineSupportedHomeKitAccessories(
@@ -108,23 +110,6 @@ const determineSupportedHomeKitAccessories = (
           {
             altDeviceName: O.none,
             deviceType: platform.Service.Lightbulb.UUID,
-            uuid: generateUuid(
-              platform,
-              entityId,
-              device.providerData.deviceType,
-            ),
-          },
-        ]),
-    )
-    .when(
-      ([type, ops]) =>
-        ALEXA_DEVICES_AS_SWITCHES.includes(type) &&
-        supportsRequiredActions(SwitchAccessory.requiredOperations, ops),
-      () =>
-        E.of([
-          {
-            altDeviceName: O.none,
-            deviceType: platform.Service.Switch.UUID,
             uuid: generateUuid(
               platform,
               entityId,
@@ -234,5 +219,21 @@ const determineSupportedHomeKitAccessories = (
           rangeCapabilities,
         ),
       ),
+    )
+    .when(
+      ([_, ops]) =>
+        supportsRequiredActions(SwitchAccessory.requiredOperations, ops),
+      () =>
+        E.of([
+          {
+            altDeviceName: O.none,
+            deviceType: platform.Service.Switch.UUID,
+            uuid: generateUuid(
+              platform,
+              entityId,
+              device.providerData.deviceType,
+            ),
+          },
+        ]),
     )
     .otherwise(() => E.left(new UnsupportedDeviceError(device)));
