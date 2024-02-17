@@ -1,16 +1,16 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import AlexaRemote, { InitOptions } from 'alexa-remote2';
 import * as E from 'fp-ts/Either';
 import { constant } from 'fp-ts/lib/function';
 import { HomebridgeAPI } from 'homebridge/lib/api';
+import AlexaRemote, { InitOptions } from '../alexa-remote.js';
 import { Authentication } from '../domain/alexa';
 import { AlexaSmartHomePlatform } from '../platform';
 import { PLUGIN_NAME } from '../settings';
+import DeviceStore from '../store/device-store';
 import { getAuthentication } from '../util';
 import { AlexaApiWrapper } from '../wrapper/alexa-api-wrapper';
 import LightAccessory from './light-accessory';
-import DeviceStore from '../store/device-store';
 
 let alexa: AlexaRemote;
 let spyGetDevices: jest.SpyInstance<any>;

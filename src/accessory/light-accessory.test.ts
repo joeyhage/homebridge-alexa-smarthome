@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import AlexaRemote from 'alexa-remote2';
 import * as O from 'fp-ts/Option';
 import * as TE from 'fp-ts/TaskEither';
 import { HomebridgeAPI } from 'homebridge/lib/api';
+import AlexaRemote from '../alexa-remote.js';
 import { HttpError } from '../domain/alexa/errors';
 import { AlexaSmartHomePlatform } from '../platform';
+import DeviceStore from '../store/device-store';
 import { AlexaApiWrapper } from '../wrapper/alexa-api-wrapper';
 import LightAccessory from './light-accessory';
-import DeviceStore from '../store/device-store';
 
 jest.mock('../wrapper/alexa-api-wrapper.ts');
 const alexaApiMocks = AlexaApiWrapper as jest.MockedClass<

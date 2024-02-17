@@ -12,6 +12,7 @@ export interface HomebridgeAccessoryInfo {
 export interface AlexaPlatformConfig extends PlatformConfig {
   platform: 'HomebridgeAlexaSmartHome';
   devices: Nullable<string[]>;
+  excludeDevices: Nullable<string[]>;
   amazonDomain: Nullable<AmazonDomain>;
   language: Nullable<string>;
   auth: {

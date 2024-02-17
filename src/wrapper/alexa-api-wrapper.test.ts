@@ -1,8 +1,8 @@
-import AlexaRemote, { CallbackWithErrorAndBody } from 'alexa-remote2';
 import { randomUUID } from 'crypto';
 import * as E from 'fp-ts/Either';
 import * as O from 'fp-ts/Option';
 import { constVoid } from 'fp-ts/lib/function';
+import AlexaRemote, { CallbackWithErrorAndBody } from '../alexa-remote.js';
 import { DeviceResponse } from '../domain/alexa';
 import {
   HttpError,
@@ -12,13 +12,14 @@ import {
 import GetDeviceStatesResponse, {
   DeviceStateResponse,
 } from '../domain/alexa/get-device-states';
+import GetDevicesResponse from '../domain/alexa/get-devices';
 import SetDeviceStateResponse from '../domain/alexa/set-device-state';
+import DeviceStore from '../store/device-store';
 import { PluginLogger } from '../util/plugin-logger';
 import { AlexaApiWrapper } from './alexa-api-wrapper';
-import GetDevicesResponse from '../domain/alexa/get-devices';
-import DeviceStore from '../store/device-store';
 
-jest.mock('alexa-remote2');
+jest.mock('../alexa-remote.js');
+
 const alexaRemoteMocks = AlexaRemote as jest.MockedClass<typeof AlexaRemote>;
 
 describe('setDeviceState', () => {
@@ -308,8 +309,8 @@ describe('getDevices', () => {
     // given
     const wrapper = getAlexaApiWrapper();
     const mockAlexa = getMockedAlexaRemote();
-    mockAlexa.httpsGet.mockImplementationOnce(
-      (_1, _2, cb: CallbackWithErrorAndBody) =>
+    mockAlexa.getSmarthomeEntities.mockImplementationOnce(
+      (cb: CallbackWithErrorAndBody) =>
         cb(undefined, undefined as GetDevicesResponse),
     );
 
@@ -330,8 +331,8 @@ describe('getDevices', () => {
     // given
     const wrapper = getAlexaApiWrapper();
     const mockAlexa = getMockedAlexaRemote();
-    mockAlexa.httpsGet.mockImplementationOnce(
-      (_1, _2, cb: CallbackWithErrorAndBody) =>
+    mockAlexa.getSmarthomeEntities.mockImplementationOnce(
+      (cb: CallbackWithErrorAndBody) =>
         cb(undefined, 'some error' as unknown as GetDevicesResponse),
     );
 

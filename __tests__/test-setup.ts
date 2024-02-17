@@ -1,9 +1,9 @@
 /* eslint-disable no-var */
+import { constant } from 'fp-ts/lib/function';
 import { HomebridgeAPI } from 'homebridge/lib/api';
 import { Logger } from 'homebridge/lib/logger';
 import { AlexaPlatformConfig } from '../src/domain/homebridge';
 import { AlexaSmartHomePlatform } from '../src/platform';
-import { constant } from 'fp-ts/lib/function';
 
 jest.mock('homebridge/lib/logger', () => ({
   Logger: jest.fn().mockImplementation(() => ({
@@ -37,6 +37,7 @@ global.createPlatform = (): AlexaSmartHomePlatform => {
 global.createPlatformConfig = (): AlexaPlatformConfig => ({
   platform: 'HomebridgeAlexaSmartHome',
   devices: [],
+  excludeDevices: [],
   amazonDomain: 'amazon.com',
   language: 'en-US',
   auth: {

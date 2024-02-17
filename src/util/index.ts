@@ -40,6 +40,7 @@ export const validateConfig = (
           {
             platform: 'HomebridgeAlexaSmartHome',
             devices: Pattern.optional(Pattern.array(Pattern.string)),
+            excludeDevices: Pattern.optional(Pattern.array(Pattern.string)),
             amazonDomain: Pattern.optional(Pattern.string),
             language: Pattern.optional(Pattern.string),
             auth: {

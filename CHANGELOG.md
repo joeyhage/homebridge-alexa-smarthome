@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, unreleased work in progress.
 
+## [2.1.4] - 2024-02-16
+
+### Added
+
+- Unsupported device types that can be turned on and turned off are now supported as switches.
+- Added a setting to exclude devices. This only applies when the include devices setting, also called `devices`, is empty.
+
+### Changed
+
+- Removed unnecessary alexa-remote2 HTTP calls during plugin startup.
+
 ## [2.1.3] - 2024-02-09
 
 ### Changed
@@ -205,7 +216,8 @@ See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, 
 
 - Support for outlets i.e. smart plugs.
 
-[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.3...HEAD
+[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.4...HEAD
+[2.1.4]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.3...v2.1.4
 [2.1.3]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.2...v2.1.3
 [2.1.2]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.0...v2.1.1

@@ -11,7 +11,7 @@
     "ecmaVersion": 2018,
     "sourceType": "module"
   },
-  "ignorePatterns": ["dist"],
+  "ignorePatterns": ["dist", "*.js"],
   "rules": {
     "quotes": ["warn", "single", { "avoidEscape": true }],
     "indent": ["off"],
