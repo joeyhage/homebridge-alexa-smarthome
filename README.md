@@ -53,10 +53,6 @@ Node.js versions supported: 16.x, 18.x, 20.x
 - Lightbulbs
 - Switches
   - HomeKit switches do not support brightness so any switches you have that support brightness will appear in HomeKit as Lightbulbs.
-  - The following Alexa devices appear as Switches in HomeKit and only support On and Off currently:
-    - Air fresheners
-    - Vacuum cleaners
-    - Game consoles
 - Fans
 - Outlets + smart plugs
 - Thermostats
@@ -67,6 +63,10 @@ Node.js versions supported: 16.x, 18.x, 20.x
   - Play + pause
   - Next track / previous track
   - Change volume
+- Device types not listed above that support on/off will be added as switches. For example:
+  - Air fresheners
+  - Vacuum cleaners
+  - Game consoles
 - [Request / vote](https://homebridge-alexa-smarthome.canny.io/feedback?selectedCategory=supported-device-types) on device types you would like to see supported.
 
 ## Features
