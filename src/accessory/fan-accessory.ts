@@ -4,9 +4,9 @@ import * as TE from 'fp-ts/TaskEither';
 import { flow, identity, pipe } from 'fp-ts/lib/function';
 import { CharacteristicValue, Service } from 'homebridge';
 import { SupportedActionsType, SupportedNamespacesType } from '../domain/alexa';
+import { FanNamespaces, FanState } from '../domain/alexa/fan';
 import * as mapper from '../mapper/fan-mapper';
 import BaseAccessory from './base-accessory';
-import { FanNamespaces, FanState } from '../domain/alexa/fan';
 
 export default class FanAccessory extends BaseAccessory {
   static requiredOperations: SupportedActionsType[] = ['turnOn', 'turnOff'];
