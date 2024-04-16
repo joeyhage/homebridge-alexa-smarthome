@@ -12,6 +12,7 @@ export const SupportedDeviceTypes = [
   'VACUUM_CLEANER',
   'GAME_CONSOLE',
   'AIR_FRESHENER',
+  'DOOR',
 ];
 
 export type AmazonDomain =
@@ -49,6 +50,7 @@ export interface DeviceResponse {
 export const SupportedNamespaces = {
   'Alexa.LockController': 'Alexa.LockController',
   'Alexa.PowerController': 'Alexa.PowerController',
+  'Alexa.ToggleController': 'Alexa.ToggleController',
   'Alexa.BrightnessController': 'Alexa.BrightnessController',
   'Alexa.TemperatureSensor': 'Alexa.TemperatureSensor',
   'Alexa.ThermostatController': 'Alexa.ThermostatController',
@@ -64,9 +66,16 @@ export const SupportedActions = {
   lockAction: 'lockAction',
   turnOn: 'turnOn',
   turnOff: 'turnOff',
+  setRangeValue: 'setRangeValue',
   setBrightness: 'setBrightness',
   setTargetTemperature: 'setTargetTemperature',
   setThermostatMode: 'setThermostatMode',
+  'turnOff@7b2fd532-f8b6-401c-b76c-05223bae9c6b_Door.TagControl':
+    'turnOff@7b2fd532-f8b6-401c-b76c-05223bae9c6b_Door.TagControl',
+  'turnOn@7b2fd532-f8b6-401c-b76c-05223bae9c6b_Door.TagControl':
+    'turnOn@7b2fd532-f8b6-401c-b76c-05223bae9c6b_Door.TagControl',
+  'setRangeValue@7b2fd532-f8b6-401c-b76c-05223bae9c6b_Door.Percent':
+    'setRangeValue@7b2fd532-f8b6-401c-b76c-05223bae9c6b_Door.Percent',
 } as const;
 
 export type SupportedActionsType = keyof typeof SupportedActions;

@@ -73,16 +73,36 @@ const validateDevice = (
     )
     .otherwise((d) => E.left(new InvalidDeviceError(d)));
 
-const supportsRequiredActions = (required: string[], supported: string[]) =>
-  required.every((req) => supported.includes(req));
+const supportsRequiredActions = (required: string[], supported: string[]) => {
+  console.log(required);
+  console.log(supported);
+  return required.every((req) => supported.includes(req));
+};
 
 const determineSupportedHomeKitAccessories = (
   platform: AlexaSmartHomePlatform,
   entityId: string,
   device: SmartHomeDevice,
   rangeCapabilities: RangeCapabilityAssets,
-): Either<AlexaDeviceError, HomebridgeAccessoryInfo[]> =>
-  match([device.providerData.deviceType, device.supportedOperations])
+): Either<AlexaDeviceError, HomebridgeAccessoryInfo[]> => {
+  console.log(device.providerData.deviceType);
+
+  return match([device.providerData.deviceType, device.supportedOperations])
+    .when(
+      ([type]) => type === 'DOOR',
+      () =>
+        E.of([
+          {
+            altDeviceName: O.none,
+            deviceType: platform.Service.Door.UUID,
+            uuid: generateUuid(
+              platform,
+              entityId,
+              device.providerData.deviceType,
+            ),
+          },
+        ]),
+    )
     .when(
       ([type, ops]) =>
         type === 'LIGHT' &&
@@ -236,4 +256,5 @@ const determineSupportedHomeKitAccessories = (
           },
         ]),
     )
-    .otherwise(() => E.left(new UnsupportedDeviceError(device)));
+    .otherwise(() => E.left(new UnsupportedDeviceError(device, 'mapper')));
+};

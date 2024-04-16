@@ -261,6 +261,7 @@ export class AlexaApiWrapper {
     parameters: Record<string, string>,
     entityType: EntityType = 'APPLIANCE',
   ): Promise<SetDeviceStateResponse> {
+    console.log(parameters);
     return AlexaApiWrapper.toPromise<SetDeviceStateResponse>(
       this.alexaRemote.executeSmarthomeDeviceAction.bind(
         this.alexaRemote,
