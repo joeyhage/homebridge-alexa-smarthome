@@ -31,6 +31,7 @@
     "prepublishOnly": "npm run lint && npm run build",
     "watch": "npm run build && npm link && nodemon",
     "test": "jest --verbose --silent=false --runInBand",
+    "test-watch": "nodemon --config ./nodemon-test.json",
     "test-ci": "jest --verbose --silent=true --runInBand --testPathPattern='test.ts'",
     "upgrade": "npm-check-updates --target minor --upgrade"
   },

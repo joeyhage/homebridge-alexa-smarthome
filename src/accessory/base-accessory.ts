@@ -76,7 +76,10 @@ export default abstract class BaseAccessory {
       this.platformAcc.addService(this.Service.AccessoryInformation);
 
     service
-      .setCharacteristic(this.Characteristic.Manufacturer, 'Unknown')
+      .setCharacteristic(
+        this.Characteristic.Manufacturer,
+        'homebridge-alexa-smarthome',
+      )
       .setCharacteristic(this.Characteristic.SerialNumber, 'Unknown')
       .setCharacteristic(this.Characteristic.Name, this.device.displayName)
       .setCharacteristic(

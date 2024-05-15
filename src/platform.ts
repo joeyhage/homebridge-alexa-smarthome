@@ -114,6 +114,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
       this.initAlexaRemote((maybeError) => {
         pipe(
           TE.rightIO(handleAuthResult(maybeError)),
+          TE.tap(() => this.alexaApi.retrieveEntityIdsBySkill()),
           TE.flatMap(this.findDevices.bind(this)),
           TE.tap((devices) =>
             pipe(
@@ -252,6 +253,11 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
       O.map(A.map((d) => d.trim())),
       O.getOrElse(constant(new Array<string>())),
     );
+    const skillFilterDeviceIds = pipe(
+      O.fromNullable(this.alexaApi.skillFilterDeviceIds),
+      O.map(A.map((d) => d.trim())),
+      O.getOrElse(constant(new Array<string>())),
+    );
     return pipe(
       this.alexaApi.getDevices(),
       TE.tapIO((devices) =>
@@ -273,6 +279,16 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
               `BEGIN devices connected to Alexa account\n\n ${json}\n\nEND devices connected to Alexa account`,
             ),
           ),
+        ),
+      ),
+      TE.map(
+        A.filter(
+          (d: SmartHomeDevice) => !skillFilterDeviceIds.includes(d.id.trim()),
+        ),
+      ),
+      TE.tapIO((devices) =>
+        this.log.debug(
+          `After skill filtering ${devices.length} devices connected to the current Alexa account.`,
         ),
       ),
       TE.map(
@@ -430,17 +446,26 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
       IOE.flatMapEither(() =>
         AccessoryFactory.createAccessory(this, platAcc, device, hbDeviceType),
       ),
-      IOE.tapIO(() => this.log.info('Added accessory:', device.displayName)),
       IOE.tapEither((acc) => {
-        acc.isExternalAccessory
-          ? this.api.publishExternalAccessories(settings.PLUGIN_NAME, [platAcc])
-          : this.api.registerPlatformAccessories(
-              settings.PLUGIN_NAME,
-              settings.PLATFORM_NAME,
-              [platAcc],
-            );
-        this.activeDeviceIds.push(device.id);
-        return E.of(constVoid());
+        try {
+          acc.isExternalAccessory
+            ? this.api.publishExternalAccessories(settings.PLUGIN_NAME, [
+                platAcc,
+              ])
+            : this.api.registerPlatformAccessories(
+                settings.PLUGIN_NAME,
+                settings.PLATFORM_NAME,
+                [platAcc],
+              );
+          IOE.tapIO(() =>
+            this.log.info('Added accessory:', device.displayName),
+          ),
+            this.activeDeviceIds.push(device.id);
+          return E.of(constVoid());
+        } catch (err) {
+          this.log.error('Failed to add accessory:', device.displayName);
+          return E.of(err);
+        }
       }),
     );
   }

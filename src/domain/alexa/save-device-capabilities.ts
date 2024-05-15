@@ -1,8 +1,8 @@
 import * as O from 'fp-ts/Option';
 import * as RA from 'fp-ts/ReadonlyArray';
 import * as RR from 'fp-ts/ReadonlyRecord';
-import * as S from 'fp-ts/string';
 import { constant, identity, pipe } from 'fp-ts/lib/function';
+import * as S from 'fp-ts/string';
 import { Pattern, match } from 'ts-pattern';
 import * as util from '../../util/index';
 import { Nullable } from '../index';
@@ -112,6 +112,141 @@ export const extractRangeCapabilities = (
   );
 };
 
+export const extractEntityIdBySkill = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  response: GetDetailsForDevicesResponse,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): any => {
+  const getOnlyEntryOrDefault = (defaultKey: string) => (obj: unknown) => {
+    const record = util.isRecord<string>(obj)
+      ? obj
+      : ({} as Record<string, unknown>);
+    const entries = Object.entries(record);
+    return entries.length === 1
+      ? O.of(entries[0][1])
+      : pipe(record, RR.lookup(defaultKey));
+  };
+
+  const whereValidSkillInfo = (
+    info: Record<string | number | symbol, unknown>,
+  ): O.Option<SkillAsset> =>
+    match(info)
+      .with(
+        {
+          entityId: Pattern.string,
+          friendlyName: Pattern.string,
+          driverIdentity: {
+            namespace: 'SKILL',
+            identifier: Pattern.string,
+          },
+        },
+        (i) =>
+          O.of({
+            entityId: i.entityId,
+            identifier: i.driverIdentity.identifier,
+            friendlyName: i.friendlyName,
+          }),
+      )
+      .otherwise(constant(O.none));
+
+  const whereDeviceHasASkill = (rcfd: SkillAsset) => {
+    return Object.keys(rcfd.identifier).length > 0 ? O.of(rcfd) : O.none;
+  };
+
+  return pipe(
+    O.of(response),
+    O.flatMap(getOnlyEntryOrDefault('locationDetails')),
+    O.flatMap(getOnlyEntryOrDefault('Default_Location')),
+    O.flatMap(getOnlyEntryOrDefault('amazonBridgeDetails')),
+    O.flatMap(getOnlyEntryOrDefault('amazonBridgeDetails')),
+    O.flatMap((maybeAppliances) =>
+      util.isRecord<string>(maybeAppliances) ? O.of(maybeAppliances) : O.none,
+    ),
+    O.map((data) => {
+      // eslint-disable-next-line no-console
+      //  console.log('log1', data);
+      return data;
+    }),
+    O.map(
+      (appliances) =>
+        pipe(
+          appliances,
+          RR.map((data) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return (data as { applianceDetails: any })?.applianceDetails
+              ?.applianceDetails;
+          }),
+          RR.filterMap((a) => (util.isRecord(a) ? O.of(a) : O.none)),
+          RR.map(
+            (data) =>
+              pipe(
+                data,
+                RR.filterMap((a) => (util.isRecord(a) ? O.of(a) : O.none)),
+                RR.map((data) => {
+                  // eslint-disable-next-line no-console
+                  //     console.log('log3', data);
+                  return data;
+                }),
+                RR.filterMap(whereValidSkillInfo),
+                RR.map((data) => {
+                  // eslint-disable-next-line no-console
+                  //  console.log('log4', data);
+                  return data;
+                }),
+                RR.filterMap(whereDeviceHasASkill),
+              ) as Readonly<Record<string, SkillAsset>>,
+          ),
+          RR.filterMap((a) => (Object.keys(a).length ? O.of(a) : O.none)),
+          RR.map((data): DeviceAssetsBySkill => {
+            // eslint-disable-next-line no-console
+            // console.log('log5', data);
+            const restructuredObject: DeviceAssetsBySkill = {};
+            for (const key in data) {
+              const { identifier, entityId, friendlyName } = data[key];
+              if (!restructuredObject[identifier]) {
+                restructuredObject[identifier] = [];
+              }
+              restructuredObject[identifier].push({
+                entityId,
+                friendlyName,
+                identifier,
+              });
+            }
+            return restructuredObject;
+          }),
+          //  RR.map((data) => {
+          // eslint-disable-next-line no-console
+          //  console.log('log5.1', data);
+          //  return data;
+          // }),
+          //Object.values, // Convert to array
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ) as Readonly<Record<string, DeviceAssetsBySkill>>,
+    ),
+    //  O.map((data) => {
+    // eslint-disable-next-line no-console
+    // console.log('log5.5', data);
+    //  return data;
+    //}),
+    O.map((data): DeviceAssetsBySkill => {
+      // eslint-disable-next-line no-console
+      // console.log('log5', data);
+      let restructuredObject = {};
+      for (const key in data) {
+        //  console.log('log5.6', key, '-->', data[key]);
+        restructuredObject = { ...restructuredObject, ...data[key] };
+      }
+      return restructuredObject;
+    }),
+    //O.map((data) => {
+    // eslint-disable-next-line no-console
+    //  console.log('log6', data);
+    //  return data;
+    //}),
+    O.match(constant({}), identity),
+  ) as DeviceAssetsBySkill;
+};
+
 /* UNVALIDATED */
 export interface RangeCapability {
   configuration: Nullable<{
@@ -133,6 +268,16 @@ export interface RangeCapability {
   }>;
   instance: Nullable<string>;
   interfaceName: Nullable<string>;
+}
+
+export interface SkillAsset {
+  entityId: string;
+  identifier: string;
+  friendlyName: string;
+}
+
+export interface DeviceAssetsBySkill {
+  [key: string]: SkillAsset[];
 }
 
 /* END UNVALIDATED */
