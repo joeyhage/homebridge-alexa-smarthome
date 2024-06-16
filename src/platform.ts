@@ -50,7 +50,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
   public accessoryHandlers: BaseAccessory[] = [];
   public activeDeviceIds: string[] = [];
 
-  private readonly persistPath: string;
+  private readonly cookiePersistPath: string;
 
   constructor(
     readonly logger: Logger,
@@ -88,7 +88,9 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
       return;
     }
 
-    this.persistPath = `${api.user.persistPath()}/.${settings.PLUGIN_NAME}`;
+    this.cookiePersistPath = `${api.user.persistPath()}/.${
+      settings.PLUGIN_NAME
+    }`;
     this.alexaRemote = new AlexaRemote();
     this.deviceStore = new DeviceStore(this.log, this.config.performance);
     this.alexaApi = new AlexaApiWrapper(
@@ -172,9 +174,12 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
       if (util.isValidAuthentication(cookieData as unknown as J.Json)) {
         this.log.info(
           'Alexa login cookie updated. Storing cookie in file:',
-          this.persistPath,
+          this.cookiePersistPath,
         )();
-        fs.writeFileSync(this.persistPath, JSON.stringify({ cookieData }));
+        fs.writeFileSync(
+          this.cookiePersistPath,
+          JSON.stringify({ cookieData }),
+        );
       }
     });
 
@@ -194,7 +199,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     const amazonDomain =
       this.config.amazonDomain ?? settings.DEFAULT_AMAZON_DOMAIN;
     pipe(
-      util.getAuthentication(this.persistPath),
+      util.getAuthentication(this.cookiePersistPath),
       IOE.match(logStoredAuthErrors, identity),
       IO.map((auth) =>
         this.alexaRemote.init(
@@ -227,7 +232,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
                 () => callback(O.none),
                 (e) => {
                   if (firstAttempt && e.message.includes('401 Unauthorized')) {
-                    fs.rmSync(this.persistPath);
+                    fs.rmSync(this.cookiePersistPath);
                     this.initAlexaRemote(callback, false);
                   } else {
                     callback(O.of(e));

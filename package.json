@@ -1,7 +1,7 @@
 {
   "displayName": "Homebridge Alexa Smart Home",
   "name": "homebridge-alexa-smarthome",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "description": "Homebridge plugin that can control smart home devices connected to Alexa.",
   "license": "MIT",
   "author": "Joey Hage <contact@jmhage.com>",
@@ -31,6 +31,7 @@
     "prepublishOnly": "npm run lint && npm run build",
     "watch": "npm run build && npm link && nodemon",
     "test": "jest --verbose --silent=false --runInBand",
+    "test-watch": "nodemon --config ./nodemon-test.json",
     "test-ci": "jest --verbose --silent=true --runInBand --testPathPattern='test.ts'",
     "upgrade": "npm-check-updates --target minor --upgrade"
   },
