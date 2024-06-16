@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, unreleased work in progress.
 
+## [2.1.5] - 2024-06-16
+
+### Changed
+
+- Modified user agent to match Alexa app on iPhone. This seems to resolve the too many requests errors reported in GitHub #129.
+
 ## [2.1.4] - 2024-02-16
 
 ### Added
@@ -216,7 +222,8 @@ See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, 
 
 - Support for outlets i.e. smart plugs.
 
-[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.4...HEAD
+[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.5...HEAD
+[2.1.5]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.4...v2.1.5
 [2.1.4]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.3...v2.1.4
 [2.1.3]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.2...v2.1.3
 [2.1.2]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.1...v2.1.2

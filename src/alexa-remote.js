@@ -4,12 +4,11 @@ const os = require('os');
 const extend = require('extend');
 const { v1: uuidv1 } = require('uuid');
 const zlib = require('zlib');
-const fsPath = require('path');
 
 const EventEmitter = require('events');
 
 const officialUserAgent =
-  'AppleWebKit PitanguiBridge/2.2.556530.0-[HARDWARE=iPhone14_7][SOFTWARE=16.6][DEVICE=iPhone]';
+  'AppleWebKit PitanguiBridge/2.2.606948.0-[HARDWARE=iPhone14_7][SOFTWARE=17.5.1][DEVICE=iPhone]';
 
 function _00(val) {
   let s = val.toString();
@@ -114,9 +113,7 @@ class AlexaRemote extends EventEmitter {
             'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36';
         }
       }
-      if (this._options.apiUserAgentPostfix === undefined) {
-        this._options.apiUserAgentPostfix = 'AlexaRemote/7.0.3';
-      }
+      this._options.apiUserAgentPostfix = '';
       this._options.amazonPage = this._options.amazonPage || 'amazon.de';
       this.baseUrl = `alexa.${this._options.amazonPage}`;
 
