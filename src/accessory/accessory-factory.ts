@@ -12,6 +12,8 @@ import { AlexaSmartHomePlatform } from '../platform';
 import AirQualityAccessory from './air-quality-accessory';
 import BaseAccessory from './base-accessory';
 import CarbonMonoxideAccessory from './co-accessory';
+import DoorAccessory from './door-accessory';
+import FanAccessory from './fan-accessory';
 import HumidityAccessory from './humidity-accessory';
 import LightAccessory from './light-accessory';
 import LockAccessory from './lock-accessory';
@@ -20,7 +22,6 @@ import SwitchAccessory from './switch-accessory';
 import TelevisionAccessory from './television-accessory';
 import TemperatureAccessory from './temperature-accessory';
 import ThermostatAccessory from './thermostat-accessory';
-import FanAccessory from './fan-accessory';
 
 export default class AccessoryFactory {
   static createAccessory(
@@ -29,6 +30,7 @@ export default class AccessoryFactory {
     device: SmartHomeDevice,
     homeKitDeviceType: string,
   ): Either<AlexaDeviceError, BaseAccessory> {
+    console.log(device);
     const toAccessory = (): Either<AlexaDeviceError, BaseAccessory> =>
       match(homeKitDeviceType)
         .with(platform.Service.Lightbulb.UUID, () =>
@@ -36,6 +38,9 @@ export default class AccessoryFactory {
         )
         .with(platform.Service.Switch.UUID, () =>
           E.of(new SwitchAccessory(platform, device, platAcc)),
+        )
+        .with(platform.Service.Door.UUID, () =>
+          E.of(new DoorAccessory(platform, device, platAcc)),
         )
         .with(platform.Service.Fanv2.UUID, () =>
           E.of(new FanAccessory(platform, device, platAcc)),
@@ -64,7 +69,9 @@ export default class AccessoryFactory {
         .with(platform.Service.TemperatureSensor.UUID, () =>
           E.of(new TemperatureAccessory(platform, device, platAcc)),
         )
-        .otherwise(() => E.left(new UnsupportedDeviceError(device)));
+        .otherwise(() =>
+          E.left(new UnsupportedDeviceError(device, 'accessory-factory')),
+        );
 
     return pipe(
       E.bindTo('acc')(toAccessory()),

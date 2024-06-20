@@ -32,7 +32,9 @@ describe('mapAlexaDeviceToHomeKitAccessoryInfos', () => {
     );
 
     // then
-    expect(lightAcc).toStrictEqual(E.left(new UnsupportedDeviceError(device)));
+    expect(lightAcc).toStrictEqual(
+      E.left(new UnsupportedDeviceError(device, 'index-tests')),
+    );
   });
 
   test('should not create an invalid device', async () => {

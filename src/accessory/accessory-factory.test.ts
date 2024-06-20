@@ -96,6 +96,8 @@ describe('createAccessory', () => {
     );
 
     // then
-    expect(lightAcc).toStrictEqual(E.left(new UnsupportedDeviceError(device)));
+    expect(lightAcc).toStrictEqual(
+      E.left(new UnsupportedDeviceError(device, 'acc-test')),
+    );
   });
 });

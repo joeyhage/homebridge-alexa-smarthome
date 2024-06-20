@@ -1,7 +1,7 @@
+import { constant } from 'fp-ts/lib/function';
 import type { Characteristic } from 'homebridge';
 import { match } from 'ts-pattern';
 import { CapabilityState, SupportedActionsType } from '../domain/alexa';
-import { constant } from 'fp-ts/lib/function';
 
 export const mapHomeKitPowerToAlexaAction = (
   value: CapabilityState['value'],
