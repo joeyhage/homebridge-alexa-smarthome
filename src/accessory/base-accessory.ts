@@ -17,6 +17,7 @@ import {
 import { SmartHomeDevice } from '../domain/alexa/get-devices';
 import { RangeCapabilityAssets } from '../domain/alexa/save-device-capabilities';
 import { AlexaSmartHomePlatform } from '../platform';
+import { PLUGIN_NAME } from '../settings';
 import { PluginLogLevel, PluginLogger } from '../util/plugin-logger';
 
 export default abstract class BaseAccessory {
@@ -76,7 +77,7 @@ export default abstract class BaseAccessory {
       this.platformAcc.addService(this.Service.AccessoryInformation);
 
     service
-      .setCharacteristic(this.Characteristic.Manufacturer, 'Unknown')
+      .setCharacteristic(this.Characteristic.Manufacturer, PLUGIN_NAME)
       .setCharacteristic(this.Characteristic.SerialNumber, 'Unknown')
       .setCharacteristic(this.Characteristic.Name, this.device.displayName)
       .setCharacteristic(

@@ -1,12 +1,12 @@
 {
-    "watch": [
-      "src"
-    ],
-    "ext": "ts,js",
-    "ignore": [],
-    "exec": "jest --verbose --silent=false --runInBand",
-    "signal": "SIGTERM",
-    "env": {
-      "NODE_OPTIONS": "--trace-warnings"
-    }
+  "watch": [
+    "src"
+  ],
+  "ext": "ts,js",
+  "ignore": [],
+  "exec": "jest --verbose --silent=false --runInBand",
+  "signal": "SIGTERM",
+  "env": {
+    "NODE_OPTIONS": "--trace-warnings"
   }
+}

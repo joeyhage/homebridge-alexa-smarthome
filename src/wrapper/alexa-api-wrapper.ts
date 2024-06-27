@@ -25,6 +25,7 @@ import GetPlayerInfoResponse, {
   validateGetPlayerInfoSuccessful,
 } from '../domain/alexa/get-player-info';
 import GetDetailsForDevicesResponse, {
+  extractEntityIdBySkill,
   extractRangeCapabilities,
 } from '../domain/alexa/save-device-capabilities';
 import SetDeviceStateResponse, {
@@ -38,8 +39,16 @@ export interface DeviceStatesCache {
   cachedStates: ValidStatesByDevice;
 }
 
+class HomebridgeAlexaSkill {
+  public static readonly TEST_SKILL_ID =
+    'eyJza2lsbElkIjoiYW16bjEuYXNrLnNraWxsLmEyOGM0M2UxLWNiYTYtNGFhYy05M2NhLTUwOWU4YzdjZTM5YiIsInN0YWdlIjoiZGV2ZWxvcG1lbnQifQ==';
+  public static readonly PROD_SKILL_ID =
+    'eyJza2lsbElkIjoiYW16bjEuYXNrLnNraWxsLjJhZjAwOGJiLTJiYjAtNGJlZi1iMTMxLWUxOTFmOTQ0YTg3ZSIsInN0YWdlIjoibGl2ZSJ9';
+}
+
 export class AlexaApiWrapper {
   private readonly mutex: MutexInterface;
+  public skillFilterDeviceIds: string[] = [];
 
   constructor(
     private readonly alexaRemote: AlexaRemote,
@@ -70,7 +79,51 @@ export class AlexaApiWrapper {
     );
   }
 
-  saveDeviceCapabilities(): TaskEither<AlexaApiError, void> {
+  retrieveEntityIdsBySkill(): TaskEither<AlexaApiError, string[]> {
+    // eslint-disable-next-line no-console
+    return pipe(
+      TE.tryCatch(
+        () =>
+          AlexaApiWrapper.toPromise<GetDetailsForDevicesResponse>(
+            this.alexaRemote.getSmarthomeDevices.bind(this.alexaRemote),
+          ),
+        (reason) =>
+          new HttpError(
+            `Error getting details for devices. Reason: ${
+              (reason as Error).message
+            }`,
+          ),
+      ),
+      TE.map(extractEntityIdBySkill),
+      TE.tapIO((response) =>
+        this.log.debug(
+          'BEGIN EntityIdBySkill:',
+          JSON.stringify(response, undefined, 2),
+          '\nEND EntityIdBySkill',
+        ),
+      ),
+      TE.map((data) => {
+        const targetKey =
+          // eslint-disable-next-line max-len
+          /|/;
+        // Test Skill | Production skill
+        const entityIds: string[] = [];
+
+        for (const key in data) {
+          if (targetKey.test(key)) {
+            const entities = data[key];
+            for (const entity of entities) {
+              entityIds.push(entity.entityId);
+            }
+          }
+        }
+        this.skillFilterDeviceIds = entityIds;
+        return entityIds;
+      }),
+    );
+  }
+
+  getSmarthomeDevices(): TaskEither<AlexaApiError, void> {
     return pipe(
       TE.tryCatch(
         () =>
