@@ -38,8 +38,8 @@ export default class LightAccessory extends BaseAccessory {
   async handlePowerGet(): Promise<boolean> {
     const alexaNamespace: SupportedNamespacesType = 'Alexa.PowerController';
     const determinePowerState = flow(
-      O.filterMap<LightbulbState[], LightbulbState>(
-        A.findFirst(({ namespace }) => namespace === alexaNamespace),
+      A.findFirst<LightbulbState>(
+        ({ namespace }) => namespace === alexaNamespace,
       ),
       O.map(({ value }) => value === 'ON'),
       O.tap((s) =>
@@ -48,7 +48,7 @@ export default class LightAccessory extends BaseAccessory {
     );
 
     return pipe(
-      this.getState(determinePowerState),
+      this.getStateGraphQl(determinePowerState),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get power', e);
         throw this.serviceCommunicationError;
@@ -63,7 +63,11 @@ export default class LightAccessory extends BaseAccessory {
     }
     const action = mapper.mapHomeKitPowerToAlexaAction(value);
     return pipe(
-      this.platform.alexaApi.setDeviceState(this.device.id, action),
+      this.platform.alexaApi.setDeviceStateGraphQl(
+        this.device.endpointId,
+        'power',
+        action,
+      ),
       TE.match(
         (e) => {
           this.logWithContext('errorT', 'Set power', e);
@@ -83,8 +87,8 @@ export default class LightAccessory extends BaseAccessory {
     const alexaNamespace: SupportedNamespacesType =
       'Alexa.BrightnessController';
     const determineBrightnessState = flow(
-      O.filterMap<LightbulbState[], LightbulbState>(
-        A.findFirst(({ namespace }) => namespace === alexaNamespace),
+      A.findFirst<LightbulbState>(
+        ({ namespace }) => namespace === alexaNamespace,
       ),
       O.flatMap(({ value }) =>
         typeof value === 'number' ? O.of(value) : O.none,
@@ -95,7 +99,7 @@ export default class LightAccessory extends BaseAccessory {
     );
 
     return pipe(
-      this.getState(determineBrightnessState),
+      this.getStateGraphQl(determineBrightnessState),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get brightness', e);
         throw this.serviceCommunicationError;
@@ -110,9 +114,14 @@ export default class LightAccessory extends BaseAccessory {
     }
     const newBrightness = value.toString(10);
     return pipe(
-      this.platform.alexaApi.setDeviceState(this.device.id, 'setBrightness', {
-        brightness: newBrightness,
-      }),
+      this.platform.alexaApi.setDeviceStateGraphQl(
+        this.device.endpointId,
+        'brightness',
+        'setBrightness',
+        {
+          brightness: newBrightness,
+        },
+      ),
       TE.match(
         (e) => {
           this.logWithContext('errorT', 'Set brightness', e);

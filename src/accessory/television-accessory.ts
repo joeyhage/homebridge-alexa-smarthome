@@ -5,16 +5,16 @@ import { match as fpMatch } from 'fp-ts/boolean';
 import { constVoid, constant, identity, pipe } from 'fp-ts/lib/function';
 import { CharacteristicValue, PlatformAccessory, Service } from 'homebridge';
 import { match } from 'ts-pattern';
+import { Nullable } from '../domain';
 import { SupportedActionsType } from '../domain/alexa';
 import { EchoNamespaces } from '../domain/alexa/echo';
 import { InvalidRequest, TimeoutError } from '../domain/alexa/errors';
 import { SmartHomeDevice } from '../domain/alexa/get-devices';
 import { PlayerInfo } from '../domain/alexa/get-player-info';
-import { AlexaSmartHomePlatform } from '../platform';
-import BaseAccessory from './base-accessory';
 import * as mapper from '../mapper/television-mapper';
+import { AlexaSmartHomePlatform } from '../platform';
 import { matchNullable } from '../util/fp-util';
-import { Nullable } from '../domain';
+import BaseAccessory from './base-accessory';
 
 interface PlayerInfoCache {
   lastUpdated: Date;

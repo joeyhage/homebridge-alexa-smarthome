@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, unreleased work in progress.
 
+## [2.2.0-alpha.0] - 2024-06-28
+
+### Changed
+
+- Light, switch, and smart plug accessories pull information from a different API now (GraphQL) to address rate limiting and timeouts.
+  - If you have other types of Homebridge accessories connected via this plugin, you may still experience rate limiting and timeouts. Those accessories will be ported over in a future release in the coming days or weeks.
+
 ## [2.1.5] - 2024-06-16
 
 ### Changed

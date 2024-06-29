@@ -1,11 +1,11 @@
 import * as O from 'fp-ts/Option';
 import * as RA from 'fp-ts/ReadonlyArray';
 import * as RR from 'fp-ts/ReadonlyRecord';
-import * as S from 'fp-ts/string';
 import { constant, identity, pipe } from 'fp-ts/lib/function';
+import * as S from 'fp-ts/string';
 import { Pattern, match } from 'ts-pattern';
-import * as util from '../../util/index';
 import { Nullable } from '../index';
+import { RangeCapability, SmartHomeDevice } from './get-devices';
 
 export interface RangeCapabilityAssetsByDevice {
   [entityId: string]: { [assetId: string]: RangeCapabilityAsset };
@@ -15,38 +15,29 @@ export interface RangeCapabilityAssets {
 }
 
 export const extractRangeCapabilities = (
-  response: GetDetailsForDevicesResponse,
+  devices: SmartHomeDevice[],
 ): RangeCapabilityAssetsByDevice => {
   type RangeCapabilities = [string, RangeCapability[]];
-  const getOnlyEntryOrDefault = (defaultKey: string) => (obj: unknown) => {
-    const record = util.isRecord<string>(obj)
-      ? obj
-      : ({} as Record<string, unknown>);
-    const entries = Object.entries(record);
-    return entries.length === 1
-      ? O.of(entries[0][1])
-      : pipe(record, RR.lookup(defaultKey));
-  };
-  const findMatchingEntry = (keyRegex: RegExp) => (obj: unknown) => {
-    return pipe(
-      util.isRecord<string>(obj) ? obj : ({} as Record<string, unknown>),
-      RR.toEntries,
-      RA.findFirstMap(([k, v]) => (keyRegex.test(k) ? O.of(v) : O.none)),
-    );
-  };
 
   const whereValidApplianceInfo = (
-    info: Record<string | number | symbol, unknown>,
+    info: SmartHomeDevice,
   ): O.Option<RangeCapabilities> =>
     match(info)
       .with(
         {
-          entityId: Pattern.string,
-          capabilities: Pattern.array({
-            interfaceName: Pattern.string,
-          }),
+          id: Pattern.string,
+          legacyAppliance: {
+            capabilities: Pattern.array({
+              instance: Pattern.string,
+              interfaceName: Pattern.string,
+            }),
+          },
         },
-        (i) => O.of([i.entityId, i.capabilities] as RangeCapabilities),
+        (i) =>
+          O.of([
+            i.id.replace('amzn1.alexa.endpoint.', ''),
+            i.legacyAppliance.capabilities,
+          ] as RangeCapabilities),
       )
       .otherwise(constant(O.none));
 
@@ -83,22 +74,20 @@ export const extractRangeCapabilities = (
     Object.keys(rcfd.rangeCapabilityAssets).length > 0 ? O.of(rcfd) : O.none;
 
   return pipe(
-    O.of(response),
-    O.flatMap(getOnlyEntryOrDefault('locationDetails')),
-    O.flatMap(getOnlyEntryOrDefault('Default_Location')),
-    O.flatMap(getOnlyEntryOrDefault('amazonBridgeDetails')),
-    O.flatMap(getOnlyEntryOrDefault('amazonBridgeDetails')),
-    O.flatMap(findMatchingEntry(/SonarCloudService$/)),
-    O.flatMap(getOnlyEntryOrDefault('applianceDetails')),
-    O.flatMap(getOnlyEntryOrDefault('applianceDetails')),
-    O.flatMap((maybeAppliances) =>
-      util.isRecord<string>(maybeAppliances) ? O.of(maybeAppliances) : O.none,
+    O.of(devices),
+    O.map(
+      RA.reduce<SmartHomeDevice, RR.ReadonlyRecord<string, SmartHomeDevice>>(
+        {},
+        (acc, cur) => ({
+          ...acc,
+          [cur.id.replace('amzn1.alexa.endpoint.', '')]: cur,
+        }),
+      ),
     ),
     O.map(
-      (appliances) =>
+      (endpoints) =>
         pipe(
-          appliances,
-          RR.filterMap((a) => (util.isRecord(a) ? O.of(a) : O.none)),
+          endpoints,
           RR.filterMap(whereValidApplianceInfo),
           RR.map(filterRangeControllers),
           RR.filterMap(whereDeviceHasRangeControllers),
@@ -112,32 +101,6 @@ export const extractRangeCapabilities = (
   );
 };
 
-/* UNVALIDATED */
-export interface RangeCapability {
-  configuration: Nullable<{
-    supportedRange: Nullable<{
-      minimumValue: Nullable<number>;
-      maximumValue: Nullable<number>;
-      precision: Nullable<number>;
-    }>;
-    unitOfMeasure: Nullable<string>;
-  }>;
-  resources: Nullable<{
-    friendlyNames: Nullable<
-      {
-        value: Nullable<{
-          assetId: Nullable<string>;
-        }>;
-      }[]
-    >;
-  }>;
-  instance: Nullable<string>;
-  interfaceName: Nullable<string>;
-}
-
-/* END UNVALIDATED */
-
-/* VALIDATED */
 export interface RangeCapabilityAsset {
   configuration: Nullable<{
     supportedRange: Nullable<{
@@ -147,15 +110,7 @@ export interface RangeCapabilityAsset {
     }>;
     unitOfMeasure: Nullable<string>;
   }>;
-  assetId: string;
-  instance: string;
-  interfaceName: string;
+  assetId: string; // required
+  instance: string; // required
+  interfaceName: string; // required
 }
-
-/* END VALIDATED */
-
-interface GetDetailsForDevicesResponse {
-  locationDetails: Nullable<Record<string, unknown>>;
-}
-
-export default GetDetailsForDevicesResponse;

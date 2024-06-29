@@ -123,7 +123,7 @@ describe('getDeviceStates', () => {
     );
 
     // when
-    const actual = await wrapper.getDeviceStates([deviceId])();
+    const actual = await wrapper.getDeviceStateGraphQl([deviceId])();
 
     // then
     expect(actual).toStrictEqual(
@@ -171,7 +171,7 @@ describe('getDeviceStates', () => {
     );
 
     // when
-    const actual = await wrapper.getDeviceStates([deviceId])();
+    const actual = await wrapper.getDeviceStateGraphQl([deviceId])();
 
     // then
     expect(actual).toStrictEqual(
@@ -230,8 +230,14 @@ describe('getDeviceStates', () => {
     );
 
     // when
-    const actual1 = await wrapper.getDeviceStates([deviceId1, deviceId2])();
-    const actual2 = await wrapper.getDeviceStates([deviceId1, deviceId2])();
+    const actual1 = await wrapper.getDeviceStateGraphQl([
+      deviceId1,
+      deviceId2,
+    ])();
+    const actual2 = await wrapper.getDeviceStateGraphQl([
+      deviceId1,
+      deviceId2,
+    ])();
 
     // then
     const expectedStates = {
@@ -257,7 +263,7 @@ describe('getDeviceStates', () => {
         cb(new Error('error for getDeviceStates test')),
     );
     // when
-    const actual = wrapper.getDeviceStates([randomUUID()])();
+    const actual = wrapper.getDeviceStateGraphQl([randomUUID()])();
 
     // then
     await expect(actual).resolves.toStrictEqual(
@@ -283,7 +289,7 @@ describe('getDeviceStates', () => {
     );
 
     // when
-    const actual = wrapper.getDeviceStates([randomUUID()])();
+    const actual = wrapper.getDeviceStateGraphQl([randomUUID()])();
 
     // then
     await expect(actual).resolves.toStrictEqual(

@@ -21,7 +21,7 @@ describe('handlePowerGet', () => {
     // given
     const acc = createLightAccessory();
     const mockAlexaApi = getMockedAlexaApi();
-    mockAlexaApi.getDeviceStates.mockReturnValueOnce(
+    mockAlexaApi.getDeviceStateGraphQl.mockReturnValueOnce(
       TE.of({
         fromCache: false,
         statesByDevice: {
@@ -47,7 +47,7 @@ describe('handlePowerGet', () => {
     // given
     const acc = createLightAccessory();
     const mockAlexaApi = getMockedAlexaApi();
-    mockAlexaApi.getDeviceStates.mockReturnValueOnce(
+    mockAlexaApi.getDeviceStateGraphQl.mockReturnValueOnce(
       TE.of({
         fromCache: false,
         statesByDevice: {
@@ -78,7 +78,7 @@ describe('handlePowerGet', () => {
     // given
     const acc = createLightAccessory();
     const mockAlexaApi = getMockedAlexaApi();
-    mockAlexaApi.getDeviceStates.mockReturnValueOnce(
+    mockAlexaApi.getDeviceStateGraphQl.mockReturnValueOnce(
       TE.left(new HttpError('bad day')),
     );
 

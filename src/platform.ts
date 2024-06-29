@@ -117,17 +117,11 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
         pipe(
           TE.rightIO(handleAuthResult(maybeError)),
           TE.flatMap(this.findDevices.bind(this)),
-          TE.tap((devices) =>
-            pipe(
-              [
-                TE.asUnit(
-                  this.alexaApi.getDeviceStates(devices.map(({ id }) => id)),
-                ),
-                this.alexaApi.saveDeviceCapabilities(),
-              ],
-              A.traverse(TE.ApplicativePar)(identity),
-            ),
-          ),
+          // TE.tap((devices) =>
+          //   TE.asUnit(
+          //     this.alexaApi.getDeviceStates(devices.map(({ id }) => id)),
+          //   ),
+          // ),
           TE.flatMap(this.initDevices.bind(this)),
           TE.flatMapIO(this.findStaleAccessories.bind(this)),
         )()
@@ -264,13 +258,9 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
           `Found ${devices.length} devices connected to the current Alexa account.`,
         ),
       ),
-      TE.tap(
-        flow(
-          A.filterMap((device) =>
-            device.providerData.categoryType !== 'GROUP'
-              ? O.of(device)
-              : O.none,
-          ),
+      TE.tap((devices) =>
+        pipe(
+          devices,
           util.stringifyJson,
           TE.fromEither,
           TE.tapIO((json) =>
@@ -340,7 +330,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
               A.findFirst(
                 ({ UUID: cachedUuid, context }) =>
                   cachedUuid === hbAcc.uuid &&
-                  context.deviceType === device.providerData.deviceType &&
+                  context.deviceType === device.deviceType &&
                   (context.homebridgeDeviceType ?? hbAcc.deviceType) ===
                     hbAcc.deviceType,
               ),
@@ -394,7 +384,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
       acc.context = {
         ...acc.context,
         deviceId: device.id,
-        deviceType: device.providerData.deviceType,
+        deviceType: device.deviceType,
         homebridgeDeviceType: hbDeviceType,
       };
       this.api.updatePlatformAccessories([acc]);
@@ -426,7 +416,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     platAcc.context = {
       ...platAcc.context,
       deviceId: device.id,
-      deviceType: device.providerData.deviceType,
+      deviceType: device.deviceType,
       homebridgeDeviceType: hbDeviceType,
     };
 

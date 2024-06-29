@@ -4,6 +4,7 @@ import { Option } from 'fp-ts/Option';
 import * as RA from 'fp-ts/ReadonlyArray';
 import * as RR from 'fp-ts/ReadonlyRecord';
 import { constVoid, constant, identity, pipe } from 'fp-ts/lib/function';
+import { match } from 'ts-pattern';
 import { CapabilityState } from '../domain/alexa';
 import {
   CapabilityStatesByDevice,
@@ -16,7 +17,6 @@ import {
 import { AlexaPlatformConfig } from '../domain/homebridge';
 import { getOrElseNullable } from '../util/fp-util';
 import { PluginLogger } from '../util/plugin-logger';
-import { match } from 'ts-pattern';
 
 export interface DeviceStatesCache {
   lastUpdated: Date;
@@ -40,7 +40,7 @@ export default class DeviceStore {
   ) {
     const cacheTTL = getOrElseNullable(
       performanceSettings?.cacheTTL,
-      constant(30),
+      constant(60),
     );
     const refreshEnabled = getOrElseNullable(
       performanceSettings?.backgroundRefresh,
