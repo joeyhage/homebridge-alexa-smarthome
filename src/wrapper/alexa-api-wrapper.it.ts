@@ -56,7 +56,9 @@ it('should get device state', async () => {
   const wrapper = getAlexaApiWrapper(alexa);
 
   // when
-  const result = await wrapper.getDeviceStates([process.env.DEVICE_ID!])();
+  const result = await wrapper.getDeviceStateGraphQl([
+    process.env.DEVICE_ID!,
+  ])();
 
   // then
   expect(E.match(constFalse, constTrue)(result)).toStrictEqual(true);

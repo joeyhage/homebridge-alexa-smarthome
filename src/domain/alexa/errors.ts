@@ -1,6 +1,6 @@
-import { SupportedDeviceTypes } from './index';
 import { Nullable } from '../index';
 import { SmartHomeDevice } from './get-devices';
+import { SupportedDeviceTypes } from './index';
 
 export abstract class AlexaError extends Error {
   constructor(message: string, public readonly name: string) {
@@ -56,7 +56,7 @@ export abstract class AlexaDeviceError extends AlexaError {}
 export class UnsupportedDeviceError extends AlexaDeviceError {
   constructor(device: SmartHomeDevice) {
     super(
-      `Unsupported device: ${device.displayName} with type: ${device.providerData.deviceType}. ` +
+      `Unsupported device: ${device.displayName} with type: ${device.deviceType}. ` +
         `Currently supported device types are: ${SupportedDeviceTypes}.`,
       UnsupportedDeviceError.name,
     );

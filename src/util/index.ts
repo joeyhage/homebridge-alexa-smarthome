@@ -56,7 +56,7 @@ export const validateConfig = (
           c,
         ) &&
         isBetweenIncl(c.auth.proxy.port, 1024, 9999) &&
-        isBetweenIncl(c.performance?.cacheTTL ?? 30, 15, 600),
+        isBetweenIncl(c.performance?.cacheTTL ?? 60, 30, 3600),
       constTrue,
     )
     .otherwise(constFalse);

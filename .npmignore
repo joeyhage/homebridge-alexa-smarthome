@@ -5,6 +5,12 @@ config.dev.json
 *.md
 .homebridge-alexa-smarthome
 .tool-versions
+.git-blame-ignore-revs
+
+dist/**/*.d.*
+dist/**/*.it.*
+dist/**/*.js.*
+dist/**/*.test.*
 
 docs/
 
@@ -31,7 +37,7 @@ jest.config.js
 .vscode
 
 # nodemon
-nodemon.json
+nodemon*
 
 # Logs
 logs

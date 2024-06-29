@@ -61,12 +61,9 @@ const validateDevice = (
     .with(
       {
         id: Pattern.string,
-        providerData: {
-          deviceType: Pattern.string,
-          categoryType: 'APPLIANCE',
-        },
+        enabled: Pattern.boolean,
+        deviceType: Pattern.string,
         displayName: Pattern.string,
-        description: Pattern.string,
         supportedOperations: Pattern.array(Pattern.string),
       },
       () => E.of(device),
@@ -82,7 +79,7 @@ const determineSupportedHomeKitAccessories = (
   device: SmartHomeDevice,
   rangeCapabilities: RangeCapabilityAssets,
 ): Either<AlexaDeviceError, HomebridgeAccessoryInfo[]> =>
-  match([device.providerData.deviceType, device.supportedOperations])
+  match([device.deviceType, device.supportedOperations])
     .when(
       ([type, ops]) =>
         type === 'LIGHT' &&
@@ -92,11 +89,7 @@ const determineSupportedHomeKitAccessories = (
           {
             altDeviceName: O.none,
             deviceType: platform.Service.Lightbulb.UUID,
-            uuid: generateUuid(
-              platform,
-              entityId,
-              device.providerData.deviceType,
-            ),
+            uuid: generateUuid(platform, entityId, device.deviceType),
           },
         ]),
     )
@@ -110,11 +103,7 @@ const determineSupportedHomeKitAccessories = (
           {
             altDeviceName: O.none,
             deviceType: platform.Service.Lightbulb.UUID,
-            uuid: generateUuid(
-              platform,
-              entityId,
-              device.providerData.deviceType,
-            ),
+            uuid: generateUuid(platform, entityId, device.deviceType),
           },
         ]),
     )
@@ -127,11 +116,7 @@ const determineSupportedHomeKitAccessories = (
           {
             altDeviceName: O.none,
             deviceType: platform.Service.LockMechanism.UUID,
-            uuid: generateUuid(
-              platform,
-              entityId,
-              device.providerData.deviceType,
-            ),
+            uuid: generateUuid(platform, entityId, device.deviceType),
           },
         ]),
     )
@@ -144,11 +129,7 @@ const determineSupportedHomeKitAccessories = (
           {
             altDeviceName: O.none,
             deviceType: platform.Service.Fanv2.UUID,
-            uuid: generateUuid(
-              platform,
-              entityId,
-              device.providerData.deviceType,
-            ),
+            uuid: generateUuid(platform, entityId, device.deviceType),
           },
         ]),
     )
@@ -161,11 +142,7 @@ const determineSupportedHomeKitAccessories = (
           {
             altDeviceName: O.none,
             deviceType: platform.Service.Outlet.UUID,
-            uuid: generateUuid(
-              platform,
-              entityId,
-              device.providerData.deviceType,
-            ),
+            uuid: generateUuid(platform, entityId, device.deviceType),
           },
         ]),
     )
@@ -178,11 +155,7 @@ const determineSupportedHomeKitAccessories = (
           {
             altDeviceName: O.none,
             deviceType: platform.Service.Thermostat.UUID,
-            uuid: generateUuid(
-              platform,
-              entityId,
-              device.providerData.deviceType,
-            ),
+            uuid: generateUuid(platform, entityId, device.deviceType),
           },
         ]),
     )
@@ -195,11 +168,7 @@ const determineSupportedHomeKitAccessories = (
           {
             altDeviceName: O.none,
             deviceType: platform.Service.Television.UUID,
-            uuid: generateUuid(
-              platform,
-              entityId,
-              device.providerData.deviceType,
-            ),
+            uuid: generateUuid(platform, entityId, device.deviceType),
           },
           ...echo.toSupportedHomeKitAccessories(
             platform,
@@ -228,11 +197,7 @@ const determineSupportedHomeKitAccessories = (
           {
             altDeviceName: O.none,
             deviceType: platform.Service.Switch.UUID,
-            uuid: generateUuid(
-              platform,
-              entityId,
-              device.providerData.deviceType,
-            ),
+            uuid: generateUuid(platform, entityId, device.deviceType),
           },
         ]),
     )

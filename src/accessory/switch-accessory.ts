@@ -28,9 +28,7 @@ export default class SwitchAccessory extends BaseAccessory {
   async handlePowerGet(): Promise<boolean> {
     const alexaNamespace: SupportedNamespacesType = 'Alexa.PowerController';
     const determinePowerState = flow(
-      O.filterMap<SwitchState[], SwitchState>(
-        A.findFirst(({ namespace }) => namespace === alexaNamespace),
-      ),
+      A.findFirst<SwitchState>(({ namespace }) => namespace === alexaNamespace),
       O.map(({ value }) => value === 'ON'),
       O.tap((s) =>
         O.of(this.logWithContext('debug', `Get power result: ${s}`)),
@@ -38,7 +36,7 @@ export default class SwitchAccessory extends BaseAccessory {
     );
 
     return pipe(
-      this.getState(determinePowerState),
+      this.getStateGraphQl(determinePowerState),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get power', e);
         throw this.serviceCommunicationError;
@@ -53,7 +51,11 @@ export default class SwitchAccessory extends BaseAccessory {
     }
     const action = mapper.mapHomeKitPowerToAlexaAction(value);
     return pipe(
-      this.platform.alexaApi.setDeviceState(this.device.id, action),
+      this.platform.alexaApi.setDeviceStateGraphQl(
+        this.device.endpointId,
+        'power',
+        action,
+      ),
       TE.match(
         (e) => {
           this.logWithContext('errorT', 'Set power', e);

@@ -106,9 +106,9 @@
             "description": "Refresh Alexa device states every __ seconds. Higher values will allow this plugin to work faster if you are noticing 'This plugin slows down Homebridge' messages in the Homebridge logs. However, higher values also means device states may be less accurate.",
             "type": "integer",
             "required": false,
-            "minimum": 15,
-            "maximum": 600,
-            "default": 30
+            "minimum": 30,
+            "maximum": 3600,
+            "default": 60
           },
           "backgroundRefresh": {
             "title": "Refresh device states automatically in the background.",

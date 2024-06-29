@@ -30,6 +30,8 @@ export default abstract class BaseAccessory {
   _initialized = false;
   readonly rangeCapabilities: RangeCapabilityAssets;
 
+  private lastUpdated: Date;
+
   constructor(
     readonly platform: AlexaSmartHomePlatform,
     public readonly device: SmartHomeDevice,
@@ -39,6 +41,7 @@ export default abstract class BaseAccessory {
     this.addAccessoryInfoService();
     this.rangeCapabilities =
       this.platform.deviceStore.getRangeCapabilitiesForDevice(this.device.id);
+    this.lastUpdated = new Date(0);
   }
 
   logWithContext(
@@ -77,13 +80,19 @@ export default abstract class BaseAccessory {
 
     service
       .setCharacteristic(this.Characteristic.Manufacturer, 'Unknown')
-      .setCharacteristic(this.Characteristic.SerialNumber, 'Unknown')
+      .setCharacteristic(
+        this.Characteristic.SerialNumber,
+        this.device.serialNumber,
+      )
       .setCharacteristic(this.Characteristic.Name, this.device.displayName)
       .setCharacteristic(
         this.Characteristic.ConfiguredName,
         this.device.displayName,
       )
-      .setCharacteristic(this.Characteristic.Model, this.device.description);
+      .setCharacteristic(
+        this.Characteristic.Model,
+        this.device.model.length > 1 ? this.device.model : 'Unknown',
+      );
   }
 
   configureStatusActive() {
@@ -93,7 +102,7 @@ export default abstract class BaseAccessory {
         !s.testCharacteristic(this.Characteristic.StatusActive) &&
           s.addOptionalCharacteristic(this.Characteristic.StatusActive);
         s.getCharacteristic(this.Characteristic.StatusActive).onGet(
-          () => this.device.providerData.enabled,
+          () => this.device.enabled,
         );
       }),
     );
@@ -129,6 +138,29 @@ export default abstract class BaseAccessory {
           fromCache
             ? new DeviceOffline()
             : new InvalidResponse('State not available'),
+      ),
+    );
+  }
+
+  getStateGraphQl<S, C>(
+    toCharacteristicStateFn: (fa: S[]) => Option<C>,
+  ): TaskEither<AlexaApiError, C> {
+    const useCache =
+      new Date().getTime() - this.lastUpdated.getTime() <
+      this.platform.deviceStore.cacheTTL;
+    return pipe(
+      <TE.TaskEither<AlexaApiError, [boolean, S[]]>>(
+        this.platform.alexaApi.getDeviceStateGraphQl(this.device, useCache)
+      ),
+      TE.map(([fromCache, states]) => {
+        if (!fromCache) {
+          this.lastUpdated = new Date();
+        }
+        return states;
+      }),
+      TE.flatMapOption(
+        toCharacteristicStateFn,
+        () => new InvalidResponse('State not available'),
       ),
     );
   }
