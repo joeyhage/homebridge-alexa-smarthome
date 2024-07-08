@@ -16,7 +16,7 @@ export const extractStates = (
   });
   return deviceFeatures
     .flatMap((f) =>
-      f.properties.length === 1
+      !Array.isArray(f.properties) || f.properties.length <= 1
         ? [f]
         : f.properties.map((p) => ({ ...f, properties: [p] })),
     )
