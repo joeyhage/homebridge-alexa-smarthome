@@ -4,18 +4,13 @@ import * as TE from 'fp-ts/TaskEither';
 import { flow, identity, pipe } from 'fp-ts/lib/function';
 import { Service } from 'homebridge';
 import { SupportedActionsType } from '../domain/alexa';
-import {
-  TempSensorNamespaces,
-  TempSensorNamespacesType,
-  TempSensorState,
-} from '../domain/alexa/temperature-sensor';
+import { TempSensorState } from '../domain/alexa/temperature-sensor';
 import * as tempMapper from '../mapper/temperature-mapper';
 import BaseAccessory from './base-accessory';
 
 export default class TemperatureAccessory extends BaseAccessory {
   static requiredOperations: SupportedActionsType[] = [];
   service: Service;
-  namespaces = TempSensorNamespaces;
   isExternalAccessory = false;
 
   configureServices() {
@@ -32,10 +27,9 @@ export default class TemperatureAccessory extends BaseAccessory {
   }
 
   async handleCurrentTempGet(): Promise<number> {
-    const alexaNamespace: TempSensorNamespacesType = 'Alexa.TemperatureSensor';
     const determineCurrentTemp = flow(
-      O.filterMap<TempSensorState[], TempSensorState>(
-        A.findFirst(({ namespace }) => namespace === alexaNamespace),
+      A.findFirst<TempSensorState>(
+        ({ featureName }) => featureName === 'temperatureSensor',
       ),
       O.flatMap(({ value }) => tempMapper.mapAlexaTempToHomeKit(value)),
       O.tap((s) =>
@@ -46,7 +40,7 @@ export default class TemperatureAccessory extends BaseAccessory {
     );
 
     return pipe(
-      this.getState(determineCurrentTemp),
+      this.getStateGraphQl(determineCurrentTemp),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get current temperature', e);
         throw this.serviceCommunicationError;

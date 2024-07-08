@@ -1,18 +1,16 @@
-import { CapabilityState, SupportedNamespaces } from './index';
+import { CapabilityState, SupportedFeatures } from './index';
 
 export interface ThermostatState {
-  namespace: keyof typeof ThermostatNamespaces &
-    keyof typeof SupportedNamespaces;
+  featureName: keyof typeof ThermostatFeatures & keyof typeof SupportedFeatures;
   value: CapabilityState['value'];
+  instance?: CapabilityState['instance'];
   name?: CapabilityState['name'];
 }
 
-export const ThermostatNamespaces = {
-  'Alexa.TemperatureSensor': 'Alexa.TemperatureSensor',
-  'Alexa.ThermostatController': 'Alexa.ThermostatController',
-  'Alexa.HumiditySensor': 'Alexa.HumiditySensor',
-  'Alexa.ThermostatController.HVAC.Components':
-    'Alexa.ThermostatController.HVAC.Components',
+export const ThermostatFeatures = {
+  range: 'range',
+  temperatureSensor: 'temperatureSensor',
+  thermostat: 'thermostat',
 } as const;
 
-export type ThermostatNamespacesType = keyof typeof ThermostatNamespaces;
+export type ThermostatFeaturesType = keyof typeof ThermostatFeatures;

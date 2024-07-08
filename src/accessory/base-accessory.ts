@@ -2,18 +2,13 @@ import * as A from 'fp-ts/Array';
 import * as IO from 'fp-ts/IO';
 import * as O from 'fp-ts/Option';
 import { Option } from 'fp-ts/Option';
-import * as RR from 'fp-ts/ReadonlyRecord';
 import * as TE from 'fp-ts/TaskEither';
 import { TaskEither } from 'fp-ts/TaskEither';
-import { constVoid, identity, pipe } from 'fp-ts/lib/function';
+import { identity, pipe } from 'fp-ts/lib/function';
 import { Characteristic, PlatformAccessory, Service } from 'homebridge';
 import { match } from 'ts-pattern';
 import { CapabilityState } from '../domain/alexa';
-import {
-  AlexaApiError,
-  DeviceOffline,
-  InvalidResponse,
-} from '../domain/alexa/errors';
+import { AlexaApiError, InvalidResponse } from '../domain/alexa/errors';
 import { SmartHomeDevice } from '../domain/alexa/get-devices';
 import { RangeCapabilityAssets } from '../domain/alexa/save-device-capabilities';
 import { AlexaSmartHomePlatform } from '../platform';
@@ -79,7 +74,10 @@ export default abstract class BaseAccessory {
       this.platformAcc.addService(this.Service.AccessoryInformation);
 
     service
-      .setCharacteristic(this.Characteristic.Manufacturer, 'Unknown')
+      .setCharacteristic(
+        this.Characteristic.Manufacturer,
+        this.device.manufacturer,
+      )
       .setCharacteristic(
         this.Characteristic.SerialNumber,
         this.device.serialNumber,
@@ -108,40 +106,6 @@ export default abstract class BaseAccessory {
     );
   }
 
-  getState<S, C>(
-    toCharacteristicStateFn: (fa: Option<S[]>) => Option<C>,
-  ): TaskEither<AlexaApiError, C> {
-    return pipe(
-      TE.bindTo('allCapStates')(
-        this.platform.alexaApi.getDeviceStates(this.platform.activeDeviceIds),
-      ),
-      TE.bind('capStates', ({ allCapStates: { statesByDevice } }) =>
-        TE.of(
-          pipe(
-            statesByDevice,
-            RR.lookup(this.device.id),
-            O.map(this.extractStates<S>),
-          ),
-        ),
-      ),
-      TE.tapIO(({ allCapStates: { fromCache } }) =>
-        fromCache
-          ? IO.of(constVoid())
-          : this._logWithContext(
-              'debug',
-              'Device state updated successfully using Alexa API',
-            ),
-      ),
-      TE.flatMapOption(
-        ({ capStates }) => toCharacteristicStateFn(capStates),
-        ({ allCapStates: { fromCache } }) =>
-          fromCache
-            ? new DeviceOffline()
-            : new InvalidResponse('State not available'),
-      ),
-    );
-  }
-
   getStateGraphQl<S, C>(
     toCharacteristicStateFn: (fa: S[]) => Option<C>,
   ): TaskEither<AlexaApiError, C> {
@@ -150,7 +114,11 @@ export default abstract class BaseAccessory {
       this.platform.deviceStore.cacheTTL;
     return pipe(
       <TE.TaskEither<AlexaApiError, [boolean, S[]]>>(
-        this.platform.alexaApi.getDeviceStateGraphQl(this.device, useCache)
+        this.platform.alexaApi.getDeviceStateGraphQl(
+          this.device,
+          this.service,
+          useCache,
+        )
       ),
       TE.map(([fromCache, states]) => {
         if (!fromCache) {
@@ -166,13 +134,13 @@ export default abstract class BaseAccessory {
   }
 
   getCacheValue(
-    namespace: CapabilityState['namespace'],
+    featureName: CapabilityState['featureName'],
     name?: CapabilityState['name'],
     instance?: CapabilityState['instance'],
   ): Option<CapabilityState['value']> {
     return pipe(
       this.platform.deviceStore.getCacheValue(this.device.id, {
-        namespace,
+        featureName,
         name,
         instance,
       }),

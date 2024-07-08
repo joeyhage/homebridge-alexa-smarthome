@@ -1,14 +1,13 @@
-import { CapabilityState, SupportedNamespaces } from './index';
+import { CapabilityState, SupportedFeatures } from './index';
 
 export interface TempSensorState {
-  namespace: keyof typeof TempSensorNamespaces &
-    keyof typeof SupportedNamespaces;
+  featureName: keyof typeof TempSensorFeatures & keyof typeof SupportedFeatures;
   value: CapabilityState['value'];
   name?: CapabilityState['name'];
 }
 
-export const TempSensorNamespaces = {
-  'Alexa.TemperatureSensor': 'Alexa.TemperatureSensor',
+export const TempSensorFeatures = {
+  temperatureSensor: 'temperatureSensor',
 } as const;
 
-export type TempSensorNamespacesType = keyof typeof TempSensorNamespaces;
+export type TempSensorFeaturesType = keyof typeof TempSensorFeatures;

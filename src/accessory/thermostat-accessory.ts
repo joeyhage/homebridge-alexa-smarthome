@@ -1,6 +1,7 @@
 import * as A from 'fp-ts/Array';
 import * as O from 'fp-ts/Option';
 import { Option, Some } from 'fp-ts/Option';
+import * as RR from 'fp-ts/ReadonlyRecord';
 import * as TE from 'fp-ts/TaskEither';
 import {
   constFalse,
@@ -10,11 +11,8 @@ import {
   pipe,
 } from 'fp-ts/lib/function';
 import { CharacteristicValue, Service } from 'homebridge';
-import {
-  CapabilityState,
-  SupportedActionsType,
-  SupportedNamespacesType,
-} from '../domain/alexa';
+import { CapabilityState, SupportedActionsType } from '../domain/alexa';
+import { RangeCapabilityAsset } from '../domain/alexa/save-device-capabilities';
 import { SwitchState } from '../domain/alexa/switch';
 import {
   Temperature,
@@ -22,8 +20,7 @@ import {
   isTemperatureValue,
 } from '../domain/alexa/temperature';
 import {
-  ThermostatNamespaces,
-  ThermostatNamespacesType,
+  ThermostatFeaturesType,
   ThermostatState,
 } from '../domain/alexa/thermostat';
 import * as mapper from '../mapper/power-mapper';
@@ -34,7 +31,6 @@ import BaseAccessory from './base-accessory';
 export default class ThermostatAccessory extends BaseAccessory {
   static requiredOperations: SupportedActionsType[] = ['setTargetTemperature'];
   service: Service;
-  namespaces = ThermostatNamespaces;
   isExternalAccessory = false;
   isPowerSupported = true;
 
@@ -46,11 +42,11 @@ export default class ThermostatAccessory extends BaseAccessory {
         this.device.displayName,
       );
 
-    this.service
-      .getCharacteristic(
-        this.platform.Characteristic.CurrentHeatingCoolingState,
-      )
-      .onGet(this.handleCurrentStateGet.bind(this));
+    // this.service
+    //   .getCharacteristic(
+    //     this.platform.Characteristic.CurrentHeatingCoolingState,
+    //   )
+    //   .onGet(this.handleCurrentStateGet.bind(this));
 
     this.service
       .getCharacteristic(this.Characteristic.CurrentTemperature)
@@ -84,22 +80,20 @@ export default class ThermostatAccessory extends BaseAccessory {
       .onSet(this.handleHeatTempSet.bind(this));
 
     pipe(
-      this.platform.deviceStore.getCacheValue(this.device.id, {
-        namespace: 'Alexa.HumiditySensor',
-      }),
-      O.map(() => {
+      this.rangeCapabilities,
+      RR.lookup('Indoor humidity'),
+      O.map((asset) => {
         this.service
           .getCharacteristic(this.Characteristic.CurrentRelativeHumidity)
-          .onGet(this.handleCurrentRelativeHumidityGet.bind(this));
+          .onGet(this.handleCurrentRelativeHumidityGet.bind(this, asset));
       }),
     );
   }
 
   async handleCurrentTempGet(): Promise<number> {
-    const alexaNamespace: ThermostatNamespacesType = 'Alexa.TemperatureSensor';
     const determineCurrentTemp = flow(
-      O.filterMap<ThermostatState[], ThermostatState>(
-        A.findFirst(({ namespace }) => namespace === alexaNamespace),
+      A.findFirst<ThermostatState>(
+        ({ featureName }) => featureName === 'temperatureSensor',
       ),
       O.flatMap(({ value }) => tempMapper.mapAlexaTempToHomeKit(value)),
       O.tap((s) =>
@@ -110,7 +104,7 @@ export default class ThermostatAccessory extends BaseAccessory {
     );
 
     return pipe(
-      this.getState(determineCurrentTemp),
+      this.getStateGraphQl(determineCurrentTemp),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get current temperature', e);
         throw this.serviceCommunicationError;
@@ -118,11 +112,13 @@ export default class ThermostatAccessory extends BaseAccessory {
     )();
   }
 
-  async handleCurrentRelativeHumidityGet(): Promise<number> {
-    const alexaNamespace: ThermostatNamespacesType = 'Alexa.HumiditySensor';
+  async handleCurrentRelativeHumidityGet(
+    asset: RangeCapabilityAsset,
+  ): Promise<number> {
     const determineCurrentRelativeHumidity = flow(
-      O.filterMap<ThermostatState[], ThermostatState>(
-        A.findFirst(({ namespace }) => namespace === alexaNamespace),
+      A.findFirst<ThermostatState>(
+        ({ featureName, instance }) =>
+          featureName === 'range' && asset.instance === instance,
       ),
       O.flatMap(({ value }) =>
         typeof value === 'number' ? O.of(value) : O.none,
@@ -133,7 +129,7 @@ export default class ThermostatAccessory extends BaseAccessory {
     );
 
     return pipe(
-      this.getState(determineCurrentRelativeHumidity),
+      this.getStateGraphQl(determineCurrentRelativeHumidity),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get current humidity', e);
         throw this.serviceCommunicationError;
@@ -142,10 +138,9 @@ export default class ThermostatAccessory extends BaseAccessory {
   }
 
   async handleTempUnitsGet(): Promise<number> {
-    const alexaNamespace: ThermostatNamespacesType = 'Alexa.TemperatureSensor';
     const determineTempUnits = flow(
-      O.filterMap<ThermostatState[], ThermostatState>(
-        A.findFirst(({ namespace }) => namespace === alexaNamespace),
+      A.findFirst<ThermostatState>(
+        ({ featureName }) => featureName === 'temperatureSensor',
       ),
       O.flatMap(({ value }) =>
         tempMapper.mapAlexaTempUnitsToHomeKit(value, this.Characteristic),
@@ -158,7 +153,7 @@ export default class ThermostatAccessory extends BaseAccessory {
     );
 
     return pipe(
-      this.getState(determineTempUnits),
+      this.getStateGraphQl(determineTempUnits),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get temperature units', e);
         throw this.serviceCommunicationError;
@@ -180,15 +175,11 @@ export default class ThermostatAccessory extends BaseAccessory {
       isDeviceOn = true;
     }
 
-    const alexaNamespace: ThermostatNamespacesType =
-      'Alexa.ThermostatController';
     const alexaValueName = 'thermostatMode';
     const determineTargetState = flow(
-      O.filterMap<ThermostatState[], ThermostatState>(
-        A.findFirst(
-          ({ name, namespace }) =>
-            namespace === alexaNamespace && name === alexaValueName,
-        ),
+      A.findFirst<ThermostatState>(
+        ({ name, featureName }) =>
+          featureName === 'thermostat' && name === alexaValueName,
       ),
       O.map(({ value }) =>
         isDeviceOn
@@ -201,7 +192,7 @@ export default class ThermostatAccessory extends BaseAccessory {
     );
 
     return pipe(
-      this.getState(determineTargetState),
+      this.getStateGraphQl(determineTargetState),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get target state', e);
         throw this.serviceCommunicationError;
@@ -232,7 +223,7 @@ export default class ThermostatAccessory extends BaseAccessory {
       await this.handlePowerSet(false);
       this.updateCacheValue({
         value: tstatMapper.mapHomekitModeToAlexa(value, this.Characteristic),
-        namespace: 'Alexa.ThermostatController',
+        featureName: 'thermostat',
         name: 'thermostatMode',
       });
     } else {
@@ -261,7 +252,7 @@ export default class ThermostatAccessory extends BaseAccessory {
                   value,
                   this.Characteristic,
                 ),
-                namespace: 'Alexa.ThermostatController',
+                featureName: 'thermostat',
                 name: 'thermostatMode',
               });
             },
@@ -271,66 +262,62 @@ export default class ThermostatAccessory extends BaseAccessory {
     }
   }
 
-  async handleCurrentStateGet(): Promise<number> {
-    const alexaNamespace: ThermostatNamespacesType =
-      'Alexa.ThermostatController.HVAC.Components';
-    const alexaValueNameHeat = 'primaryHeaterOperation';
-    const alexaValueNameCool = 'coolerOperation';
-    const alexaValueValueOFF = 'OFF';
+  // async handleCurrentStateGet(): Promise<number> {
+  //   const alexaNamespace: ThermostatNamespacesType =
+  //     'Alexa.ThermostatController.HVAC.Components';
+  //   const alexaValueNameHeat = 'primaryHeaterOperation';
+  //   const alexaValueNameCool = 'coolerOperation';
+  //   const alexaValueValueOFF = 'OFF';
 
-    const determineCurrentState = flow(
-      O.map<ThermostatState[], number>((thermostatStateArr) =>
-        pipe(
-          thermostatStateArr,
-          A.findFirstMap(({ namespace, name, value }) => {
-            if (value !== alexaValueValueOFF) {
-              if (namespace === alexaNamespace && name === alexaValueNameHeat) {
-                return O.of(
-                  this.Characteristic.CurrentHeatingCoolingState.HEAT,
-                );
-              } else if (
-                namespace === alexaNamespace &&
-                name === alexaValueNameCool
-              ) {
-                return O.of(
-                  this.Characteristic.CurrentHeatingCoolingState.COOL,
-                );
-              }
-            }
-            return O.none;
-          }),
-          O.getOrElse(() => this.Characteristic.CurrentHeatingCoolingState.OFF),
-        ),
-      ),
-      O.tap((s) =>
-        O.of(
-          this.logWithContext(
-            'debug',
-            `Get thermostat current state result: ${s}`,
-          ),
-        ),
-      ),
-    );
+  //   const determineCurrentState = flow(
+  //     O.map<ThermostatState[], number>((thermostatStateArr) =>
+  //       pipe(
+  //         thermostatStateArr,
+  //         A.findFirstMap(({ namespace, name, value }) => {
+  //           if (value !== alexaValueValueOFF) {
+  //             if (namespace === alexaNamespace && name === alexaValueNameHeat) {
+  //               return O.of(
+  //                 this.Characteristic.CurrentHeatingCoolingState.HEAT,
+  //               );
+  //             } else if (
+  //               namespace === alexaNamespace &&
+  //               name === alexaValueNameCool
+  //             ) {
+  //               return O.of(
+  //                 this.Characteristic.CurrentHeatingCoolingState.COOL,
+  //               );
+  //             }
+  //           }
+  //           return O.none;
+  //         }),
+  //         O.getOrElse(() => this.Characteristic.CurrentHeatingCoolingState.OFF),
+  //       ),
+  //     ),
+  //     O.tap((s) =>
+  //       O.of(
+  //         this.logWithContext(
+  //           'debug',
+  //           `Get thermostat current state result: ${s}`,
+  //         ),
+  //       ),
+  //     ),
+  //   );
 
-    return pipe(
-      this.getState(determineCurrentState),
-      TE.match((e) => {
-        this.logWithContext('errorT', 'Get thermostat current state', e);
-        throw this.serviceCommunicationError;
-      }, identity),
-    )();
-  }
+  //   return pipe(
+  //     this.getState(determineCurrentState),
+  //     TE.match((e) => {
+  //       this.logWithContext('errorT', 'Get thermostat current state', e);
+  //       throw this.serviceCommunicationError;
+  //     }, identity),
+  //   )();
+  // }
 
   async handleTargetTempGet(): Promise<number> {
-    const alexaNamespace: ThermostatNamespacesType =
-      'Alexa.ThermostatController';
     const alexaValueName = 'targetSetpoint';
     const determineTargetTemp = flow(
-      O.filterMap<ThermostatState[], ThermostatState>(
-        A.findFirst(
-          ({ name, namespace }) =>
-            namespace === alexaNamespace && name === alexaValueName,
-        ),
+      A.findFirst<ThermostatState>(
+        ({ name, featureName }) =>
+          featureName === 'thermostat' && name === alexaValueName,
       ),
       O.flatMap(({ value }) => tempMapper.mapAlexaTempToHomeKit(value)),
       O.tap((s) =>
@@ -345,7 +332,7 @@ export default class ThermostatAccessory extends BaseAccessory {
       return targetTempOnAuto.value;
     } else {
       return pipe(
-        this.getState(determineTargetTemp),
+        this.getStateGraphQl(determineTargetTemp),
         TE.match((e) => {
           this.logWithContext('errorT', 'Get target temperature', e);
           throw this.serviceCommunicationError;
@@ -356,7 +343,7 @@ export default class ThermostatAccessory extends BaseAccessory {
 
   async handleTargetTempSet(value: CharacteristicValue): Promise<void> {
     this.logWithContext('debug', `Triggered set target temperature: ${value}`);
-    const maybeTemp = this.getCacheValue('Alexa.TemperatureSensor');
+    const maybeTemp = this.getCacheValue('temperatureSensor');
     //If received bad data stop
     //If in Auto mode stop
     if (this.onInvalidOrAutoMode() || !this.isTempWithScale(maybeTemp)) {
@@ -387,7 +374,7 @@ export default class ThermostatAccessory extends BaseAccessory {
               value: newTemp,
               scale: units.toUpperCase(),
             },
-            namespace: 'Alexa.ThermostatController',
+            featureName: 'thermostat',
             name: 'targetSetpoint',
           });
         },
@@ -396,15 +383,11 @@ export default class ThermostatAccessory extends BaseAccessory {
   }
 
   async handleCoolTempGet(): Promise<number> {
-    const alexaNamespace: ThermostatNamespacesType =
-      'Alexa.ThermostatController';
     const alexaValueName = 'upperSetpoint';
     const determineCoolTemp = flow(
-      O.filterMap<ThermostatState[], ThermostatState>(
-        A.findFirst(
-          ({ name, namespace }) =>
-            namespace === alexaNamespace && name === alexaValueName,
-        ),
+      A.findFirst<ThermostatState>(
+        ({ name, featureName }) =>
+          featureName === 'thermostat' && name === alexaValueName,
       ),
       O.flatMap(({ value }) => tempMapper.mapAlexaTempToHomeKit(value)),
       O.tap((s) =>
@@ -417,7 +400,7 @@ export default class ThermostatAccessory extends BaseAccessory {
     const autoTemp = this.getAutoTempFromTargetTemp();
     if (this.onAutoMode() || O.isNone(autoTemp)) {
       return pipe(
-        this.getState(determineCoolTemp),
+        this.getStateGraphQl(determineCoolTemp),
         TE.match((e) => {
           this.logWithContext('errorT', 'Get cooling temperature', e);
           throw this.serviceCommunicationError;
@@ -467,7 +450,7 @@ export default class ThermostatAccessory extends BaseAccessory {
               value: newCoolTemp,
               scale: units.toUpperCase(),
             },
-            namespace: 'Alexa.ThermostatController',
+            featureName: 'thermostat',
             name: 'upperSetpoint',
           });
         },
@@ -476,15 +459,11 @@ export default class ThermostatAccessory extends BaseAccessory {
   }
 
   async handleHeatTempGet(): Promise<number> {
-    const alexaNamespace: ThermostatNamespacesType =
-      'Alexa.ThermostatController';
     const alexaValueName = 'lowerSetpoint';
     const determineHeatTemp = flow(
-      O.filterMap<ThermostatState[], ThermostatState>(
-        A.findFirst(
-          ({ name, namespace }) =>
-            namespace === alexaNamespace && name === alexaValueName,
-        ),
+      A.findFirst<ThermostatState>(
+        ({ name, featureName }) =>
+          featureName === 'thermostat' && name === alexaValueName,
       ),
       O.flatMap(({ value }) => tempMapper.mapAlexaTempToHomeKit(value)),
       O.tap((s) =>
@@ -497,7 +476,7 @@ export default class ThermostatAccessory extends BaseAccessory {
     const autoTemp = this.getAutoTempFromTargetTemp();
     if (this.onAutoMode() || O.isNone(autoTemp)) {
       return pipe(
-        this.getState(determineHeatTemp),
+        this.getStateGraphQl(determineHeatTemp),
         TE.match((e) => {
           this.logWithContext('errorT', 'Get heating temperature', e);
           throw this.serviceCommunicationError;
@@ -547,7 +526,7 @@ export default class ThermostatAccessory extends BaseAccessory {
               value: newHeatTemp,
               scale: units.toUpperCase(),
             },
-            namespace: 'Alexa.ThermostatController',
+            featureName: 'thermostat',
             name: 'lowerSetpoint',
           });
         },
@@ -556,11 +535,8 @@ export default class ThermostatAccessory extends BaseAccessory {
   }
 
   async handlePowerGet(): Promise<boolean> {
-    const alexaNamespace: SupportedNamespacesType = 'Alexa.PowerController';
     const determinePowerState = flow(
-      O.filterMap<SwitchState[], SwitchState>(
-        A.findFirst(({ namespace }) => namespace === alexaNamespace),
-      ),
+      A.findFirst<SwitchState>(({ featureName }) => featureName === 'power'),
       O.map(({ value }) => value === 'ON'),
       O.tap((s) =>
         O.of(this.logWithContext('debug', `Get power status result: ${s}`)),
@@ -568,7 +544,7 @@ export default class ThermostatAccessory extends BaseAccessory {
     );
 
     return pipe(
-      this.getState(determinePowerState),
+      this.getStateGraphQl(determinePowerState),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get power', e);
         throw this.serviceCommunicationError;
@@ -592,7 +568,7 @@ export default class ThermostatAccessory extends BaseAccessory {
         () => {
           this.updateCacheValue({
             value: mapper.mapHomeKitPowerToAlexaValue(value),
-            namespace: 'Alexa.PowerController',
+            featureName: 'power',
           });
         },
       ),
@@ -600,10 +576,9 @@ export default class ThermostatAccessory extends BaseAccessory {
   }
 
   private getAutoTempFromTargetTemp() {
-    const alexaNamespace: ThermostatNamespacesType =
-      'Alexa.ThermostatController';
+    const featureName: ThermostatFeaturesType = 'thermostat';
     const alexaValueName = 'targetSetpoint';
-    const maybeTargetTemp = this.getCacheValue(alexaNamespace, alexaValueName);
+    const maybeTargetTemp = this.getCacheValue(featureName, alexaValueName);
     if (this.isTempWithScale(maybeTargetTemp)) {
       return tempMapper.mapAlexaTempToHomeKit({
         value: maybeTargetTemp.value.value,
@@ -615,10 +590,9 @@ export default class ThermostatAccessory extends BaseAccessory {
   }
 
   private calculateTargetTemp() {
-    const alexaNamespace: ThermostatNamespacesType =
-      'Alexa.ThermostatController';
-    const maybeHeatTemp = this.getCacheValue(alexaNamespace, 'lowerSetpoint');
-    const maybeCoolTemp = this.getCacheValue(alexaNamespace, 'upperSetpoint');
+    const featureName: ThermostatFeaturesType = 'thermostat';
+    const maybeHeatTemp = this.getCacheValue(featureName, 'lowerSetpoint');
+    const maybeCoolTemp = this.getCacheValue(featureName, 'upperSetpoint');
     if (
       this.isTempWithScale(maybeHeatTemp) &&
       this.isTempWithScale(maybeCoolTemp)
@@ -642,27 +616,21 @@ export default class ThermostatAccessory extends BaseAccessory {
 
   private onInvalidOrAutoMode() {
     return pipe(
-      this.getCacheValue('Alexa.ThermostatController', 'thermostatMode'),
+      this.getCacheValue('thermostat', 'thermostatMode'),
       O.match(constTrue, (m) => m === 'AUTO'),
     );
   }
 
   private onAutoMode() {
     return pipe(
-      this.getCacheValue('Alexa.ThermostatController', 'thermostatMode'),
+      this.getCacheValue('thermostat', 'thermostatMode'),
       O.match(constFalse, (m) => m === 'AUTO'),
     );
   }
 
   private getCachedTemps() {
-    const maybeCoolTemp = this.getCacheValue(
-      'Alexa.ThermostatController',
-      'upperSetpoint',
-    );
-    const maybeHeatTemp = this.getCacheValue(
-      'Alexa.ThermostatController',
-      'lowerSetpoint',
-    );
+    const maybeCoolTemp = this.getCacheValue('thermostat', 'upperSetpoint');
+    const maybeHeatTemp = this.getCacheValue('thermostat', 'lowerSetpoint');
     if (
       !this.isTempWithScale(maybeCoolTemp) ||
       !this.isTempWithScale(maybeHeatTemp)

@@ -92,8 +92,9 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
       settings.PLUGIN_NAME
     }`;
     this.alexaRemote = new AlexaRemote();
-    this.deviceStore = new DeviceStore(this.log, this.config.performance);
+    this.deviceStore = new DeviceStore(this.config.performance);
     this.alexaApi = new AlexaApiWrapper(
+      this.Service,
       this.alexaRemote,
       this.log,
       this.deviceStore,
@@ -117,35 +118,14 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
         pipe(
           TE.rightIO(handleAuthResult(maybeError)),
           TE.flatMap(this.findDevices.bind(this)),
-          // TE.tap((devices) =>
-          //   TE.asUnit(
-          //     this.alexaApi.getDeviceStates(devices.map(({ id }) => id)),
-          //   ),
-          // ),
           TE.flatMap(this.initDevices.bind(this)),
           TE.flatMapIO(this.findStaleAccessories.bind(this)),
-        )()
-          .then(
-            E.match(
-              (e) => this.log.errorT('After initialization', e)(),
-              this.unregisterStaleAccessories.bind(this),
-            ),
-          )
-          .then(() => {
-            if (this.config.performance?.backgroundRefresh) {
-              const scheduleRefresh = () => {
-                refreshTimeout = setTimeout(() => {
-                  this.log.debug('Starting background refresh');
-                  this.alexaApi
-                    .getDeviceStates(this.activeDeviceIds, 'ENTITY', false)()
-                    .finally(() => {
-                      scheduleRefresh();
-                    });
-                }, this.deviceStore.cacheTTL - 60_000);
-              };
-              scheduleRefresh();
-            }
-          });
+        )().then(
+          E.match(
+            (e) => this.log.errorT('After initialization', e)(),
+            this.unregisterStaleAccessories.bind(this),
+          ),
+        );
       });
     });
 

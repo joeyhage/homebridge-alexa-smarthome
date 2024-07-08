@@ -5,6 +5,7 @@ export const SupportedDeviceTypes = [
   'LIGHT',
   'SWITCH',
   'SMARTLOCK',
+  'FAN',
   'SMARTPLUG',
   'THERMOSTAT',
   'ALEXA_VOICE_ENABLED',
@@ -71,9 +72,24 @@ export const SupportedActions = {
 
 export type SupportedActionsType = keyof typeof SupportedActions;
 
+export const SupportedFeatures = {
+  brightness: 'brightness',
+  color: 'color',
+  colorTemperature: 'colorTemperature',
+  lock: 'lock',
+  power: 'power',
+  range: 'range',
+  temperatureSensor: 'temperatureSensor',
+  thermostat: 'thermostat',
+  toggle: 'toggle',
+} as const;
+
+export type SupportedFeatures = keyof typeof SupportedFeatures;
+
 export interface CapabilityState {
-  namespace: SupportedNamespacesType;
-  name?: Nullable<string>;
+  featureName: SupportedFeatures;
   value: string | number | boolean | Record<string, unknown>;
   instance?: Nullable<string>;
+  name?: Nullable<string>;
+  rangeName?: Nullable<string>;
 }

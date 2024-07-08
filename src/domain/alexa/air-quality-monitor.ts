@@ -7,30 +7,31 @@ import { generateUuid } from '../../util';
 import { HomebridgeAccessoryInfo } from '../homebridge';
 import { isCarbonMonoxideSensor } from './carbon-monoxide-sensor';
 import { isHumiditySensor } from './humidity-sensor';
-import { CapabilityState, SupportedNamespaces } from './index';
+import { CapabilityState, SupportedFeatures } from './index';
 import { RangeCapabilityAssets } from './save-device-capabilities';
 
-export const AirQualityAssets = ['Alexa.AirQuality.IndoorAirQuality'];
+export const AirQualityRangeFeatures = ['Indoor air quality'];
 
 export interface AirQualityMonitorState {
-  namespace: keyof typeof AirQualityMonitorNamespaces &
-    keyof typeof SupportedNamespaces;
+  featureName: keyof typeof AirQualityMonitorFeatures &
+    keyof typeof SupportedFeatures;
   value: CapabilityState['value'];
   instance: CapabilityState['instance'];
 }
 
-export const AirQualityMonitorNamespaces = {
-  'Alexa.RangeController': 'Alexa.RangeController',
+export const AirQualityMonitorFeatures = {
+  range: 'range',
 } as const;
 
 export const isAirQualityMonitor = (
   rangeCapabilities: RangeCapabilityAssets,
   capability: CapabilityState,
 ) =>
-  capability.namespace === 'Alexa.RangeController' &&
+  capability.featureName === 'range' &&
   Object.entries(rangeCapabilities).some(
-    ([assetId, { instance }]) =>
-      instance === capability.instance && AirQualityAssets.includes(assetId),
+    ([configurationName, { instance }]) =>
+      instance === capability.instance &&
+      AirQualityRangeFeatures.includes(configurationName),
   );
 
 export const toSupportedHomeKitAccessories = (
@@ -55,7 +56,7 @@ export const toSupportedHomeKitAccessories = (
             ),
           }),
         )
-        .with({ namespace: 'Alexa.TemperatureSensor' }, () =>
+        .with({ featureName: 'temperatureSensor' }, () =>
           O.of({
             altDeviceName: O.of(`${deviceName} temperature`),
             deviceType: platform.Service.TemperatureSensor.UUID,

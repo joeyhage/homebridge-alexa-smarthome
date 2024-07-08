@@ -56,8 +56,7 @@ export abstract class AlexaDeviceError extends AlexaError {}
 export class UnsupportedDeviceError extends AlexaDeviceError {
   constructor(device: SmartHomeDevice) {
     super(
-      `Unsupported device: ${device.displayName} with type: ${device.deviceType}. ` +
-        `Currently supported device types are: ${SupportedDeviceTypes}.`,
+      `Unsupported device: ${device.displayName} with type: ${device.deviceType}. Device type is either unsupported or device does not support all the required operations. Device supported operations: ${device.supportedOperations}. Currently supported device types are: ${SupportedDeviceTypes}.`,
       UnsupportedDeviceError.name,
     );
   }

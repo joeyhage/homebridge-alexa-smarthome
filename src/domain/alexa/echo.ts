@@ -66,7 +66,7 @@ export const toSupportedHomeKitAccessories = (
     capStates,
     A.filterMap((cap) =>
       match(cap)
-        .with({ namespace: 'Alexa.TemperatureSensor' }, () =>
+        .with({ featureName: 'temperatureSensor' }, () =>
           O.of({
             altDeviceName: O.of(`${deviceName} temperature`),
             deviceType: platform.Service.TemperatureSensor.UUID,

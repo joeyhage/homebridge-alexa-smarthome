@@ -109,13 +109,6 @@
             "minimum": 30,
             "maximum": 3600,
             "default": 60
-          },
-          "backgroundRefresh": {
-            "title": "Refresh device states automatically in the background.",
-            "description": "By default, device states are only updated when requested. For example, when the Home app is opened. If you notice 'This plugin slows down Homebridge' messages in the Homebridge logs, it is recommended to enable background refresh and set the 'Device state cache lifetime' to a value of 300 or more.",
-            "type": "boolean",
-            "required": false,
-            "default": false
           }
         }
       },

@@ -10,7 +10,7 @@ import { AlexaApiError, InvalidResponse } from './errors';
 
 export const validateGetDevicesSuccessful: (
   res: GetDevicesGraphQlResponse,
-) => Either<AlexaApiError, SmartHomeDevice[]> = flow(
+) => Either<AlexaApiError, [Endpoint, SmartHomeDevice][]> = flow(
   O.fromNullable,
   O.flatMap(({ data }) => (util.isRecord<string>(data) ? O.of(data) : O.none)),
   O.flatMap(({ endpoints }) =>
@@ -30,19 +30,23 @@ export const validateGetDevicesSuccessful: (
         ? E.of(
             pipe(
               endpoints,
-              A.map((e) => ({
-                endpointId: e.id,
-                id: e.id.replace('amzn1.alexa.endpoint.', ''),
-                displayName: e.friendlyName,
-                supportedOperations: e.features.flatMap(
-                  (f) => f.operations?.map((o) => o.name) ?? [],
-                ),
-                enabled: e.enablement === 'ENABLED',
-                deviceType: e.displayCategories.primary.value,
-                serialNumber: e.serialNumber?.value.text ?? 'Unknown',
-                model: e.model?.value.text ?? 'Unknown',
-                manufacturer: settings.PLUGIN_NAME,
-              })),
+              A.filter((e) => !!e.displayCategories?.primary?.value),
+              A.map((e) => [
+                e,
+                {
+                  endpointId: e.id,
+                  id: e.id.replace('amzn1.alexa.endpoint.', ''),
+                  displayName: e.friendlyName,
+                  supportedOperations: e.features.flatMap(
+                    (f) => f.operations?.map((o) => o.name) ?? [],
+                  ),
+                  enabled: e.enablement === 'ENABLED',
+                  deviceType: e.displayCategories!.primary.value,
+                  serialNumber: e.serialNumber?.value.text ?? 'Unknown',
+                  model: e.model?.value.text ?? 'Unknown',
+                  manufacturer: settings.PLUGIN_NAME,
+                },
+              ]),
             ),
           )
         : E.left(
@@ -63,41 +67,23 @@ export interface SmartHomeDevice {
   deviceType: string;
   serialNumber: string;
   model: string;
+  manufacturer: string;
 }
 
 export interface RangeCapability {
-  configuration: Nullable<{
-    supportedRange: Nullable<{
-      minimumValue: Nullable<number>;
-      maximumValue: Nullable<number>;
-      precision: Nullable<number>;
-    }>;
-    unitOfMeasure: Nullable<string>;
-  }>;
-  resources: Nullable<{
-    friendlyNames: Nullable<
-      {
-        value: Nullable<{
-          assetId: Nullable<string>;
-        }>;
-      }[]
-    >;
-  }>;
+  featureName: Nullable<string>;
   instance: Nullable<string>;
-  interfaceName: Nullable<string>;
+  configurationName: Nullable<string>;
 }
 
 export interface Endpoint {
   id: string;
   friendlyName: string;
-  displayCategories: {
+  displayCategories: Nullable<{
     primary: {
       value: string;
     };
-  };
-  legacyAppliance: {
-    capabilities: Array<RangeCapability>;
-  };
+  }>;
   serialNumber: Nullable<{
     value: {
       text: string;
@@ -116,12 +102,50 @@ export interface Endpoint {
   }>;
   features: Array<{
     name: string;
+    instance: Nullable<string>;
     operations: Nullable<
       Array<{
         name: string;
       }>
     >;
+    properties: Array<{
+      name: string;
+      rangeValue: Nullable<{
+        value: number;
+      }>;
+      value: Nullable<{
+        value: number;
+        scale: 'CELSIUS' | 'FAHRENHEIT' | 'KELVIN';
+      }>;
+      toggleStateValue: Nullable<'ON' | 'OFF'>;
+      powerStateValue: Nullable<'ON' | 'OFF'>;
+      brightnessStateValue: Nullable<number>;
+      colorStateValue: Nullable<{
+        hue: number;
+        saturation: number;
+        brightness: number;
+      }>;
+      colorTemperatureInKelvinStateValue: Nullable<number>;
+      lockState: Nullable<'LOCKED' | 'UNLOCKED' | 'JAMMED'>;
+      thermostatModeValue: Nullable<'HEAT' | 'COOL' | 'AUTO' | 'ECO' | 'OFF'>;
+    }>;
+    configuration: Nullable<{
+      friendlyName: {
+        value: {
+          text: string;
+        };
+      };
+    }>;
   }>;
+  endpointReports: Nullable<
+    Array<{
+      reporter: {
+        id: string;
+        namespace: string;
+        skillStage: string;
+      };
+    }>
+  >;
 }
 
 export interface GetDevicesGraphQlResponse {

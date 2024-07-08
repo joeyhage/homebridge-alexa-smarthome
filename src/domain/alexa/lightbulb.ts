@@ -1,12 +1,13 @@
-import { CapabilityState, SupportedNamespaces } from './index';
+import { CapabilityState, SupportedFeatures } from './index';
 
 export interface LightbulbState {
-  namespace: keyof typeof LightbulbNamespaces &
-    keyof typeof SupportedNamespaces;
+  featureName: keyof typeof LightbulbFeatures & keyof typeof SupportedFeatures;
   value: CapabilityState['value'];
 }
 
-export const LightbulbNamespaces = {
-  'Alexa.PowerController': 'Alexa.PowerController',
-  'Alexa.BrightnessController': 'Alexa.BrightnessController',
+export const LightbulbFeatures = {
+  power: 'power',
+  brightness: 'brightness',
+  color: 'color',
+  colorTemperature: 'colorTemperature',
 } as const;

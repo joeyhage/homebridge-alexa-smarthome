@@ -4,7 +4,6 @@ import { Option } from 'fp-ts/Option';
 import * as RA from 'fp-ts/ReadonlyArray';
 import * as RR from 'fp-ts/ReadonlyRecord';
 import { constVoid, constant, identity, pipe } from 'fp-ts/lib/function';
-import { match } from 'ts-pattern';
 import { CapabilityState } from '../domain/alexa';
 import {
   CapabilityStatesByDevice,
@@ -16,14 +15,11 @@ import {
 } from '../domain/alexa/save-device-capabilities';
 import { AlexaPlatformConfig } from '../domain/homebridge';
 import { getOrElseNullable } from '../util/fp-util';
-import { PluginLogger } from '../util/plugin-logger';
 
 export interface DeviceStatesCache {
   lastUpdated: Date;
   states: ValidStatesByDevice;
 }
-
-const MIN_CACHE_TTL_WHEN_REFRESH_ENABLED = 120;
 
 export default class DeviceStore {
   public readonly cacheTTL: number;
@@ -34,36 +30,12 @@ export default class DeviceStore {
 
   private _deviceCapabilities: RangeCapabilityAssetsByDevice = {};
 
-  constructor(
-    private readonly log: PluginLogger,
-    performanceSettings?: AlexaPlatformConfig['performance'],
-  ) {
+  constructor(performanceSettings?: AlexaPlatformConfig['performance']) {
     const cacheTTL = getOrElseNullable(
       performanceSettings?.cacheTTL,
       constant(60),
     );
-    const refreshEnabled = getOrElseNullable(
-      performanceSettings?.backgroundRefresh,
-      constant(false),
-    );
-    this.cacheTTL =
-      1_000 *
-      match([cacheTTL, refreshEnabled])
-        .when(
-          ([ttl, refresh]) =>
-            ttl < MIN_CACHE_TTL_WHEN_REFRESH_ENABLED && refresh,
-          ([ttl]) => {
-            this.log.info(
-              'Overriding device state cache lifetime setting from ' +
-                ttl +
-                ' seconds to ' +
-                MIN_CACHE_TTL_WHEN_REFRESH_ENABLED +
-                ' seconds because background refresh is enabled. Device states will be updated every 60 seconds.',
-            );
-            return MIN_CACHE_TTL_WHEN_REFRESH_ENABLED;
-          },
-        )
-        .otherwise(([ttl]) => ttl);
+    this.cacheTTL = 1_000 * cacheTTL;
   }
 
   get deviceCapabilities(): RangeCapabilityAssetsByDevice {
@@ -92,12 +64,16 @@ export default class DeviceStore {
 
   getCacheValue(
     deviceId: string,
-    { namespace, name, instance }: Omit<CapabilityState, 'value'>,
+    {
+      featureName,
+      name,
+      instance,
+    }: Omit<CapabilityState, 'value' | 'namespace'>,
   ): Option<CapabilityState> {
     return pipe(
       this.getCacheStatesForDevice(deviceId),
       A.findFirstMap((cache) =>
-        cache.namespace === namespace &&
+        cache.featureName === featureName &&
         (!name || cache.name === name) &&
         (!instance || cache.instance === instance)
           ? O.of(cache)

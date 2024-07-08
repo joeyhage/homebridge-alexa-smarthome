@@ -3,19 +3,14 @@ import * as O from 'fp-ts/Option';
 import * as TE from 'fp-ts/TaskEither';
 import { flow, identity, pipe } from 'fp-ts/lib/function';
 import { CharacteristicValue, Service } from 'homebridge';
+import { SupportedActionsType } from '../domain/alexa';
+import { LockState } from '../domain/alexa/lock';
 import * as mapper from '../mapper/lock-mapper';
 import BaseAccessory from './base-accessory';
-import {
-  LockNamespaces,
-  LockNamespacesType,
-  LockState,
-} from '../domain/alexa/lock';
-import { SupportedActionsType } from '../domain/alexa';
 
 export default class LockAccessory extends BaseAccessory {
   static requiredOperations: SupportedActionsType[] = ['lockAction'];
   service: Service;
-  namespaces = LockNamespaces;
   isExternalAccessory = false;
 
   configureServices() {
@@ -37,14 +32,11 @@ export default class LockAccessory extends BaseAccessory {
   }
 
   async handleCurrentStateGet(): Promise<number> {
-    const alexaNamespace: LockNamespacesType = 'Alexa.LockController';
     const alexaValueName = 'lockState';
     const determineCurrentState = flow(
-      O.filterMap<LockState[], LockState>(
-        A.findFirst(
-          ({ name, namespace }) =>
-            namespace === alexaNamespace && name === alexaValueName,
-        ),
+      A.findFirst<LockState>(
+        ({ name, featureName }) =>
+          featureName === 'lock' && name === alexaValueName,
       ),
       O.map(({ value }) =>
         mapper.mapAlexaCurrentStateToHomeKit(value, this.Characteristic),
@@ -55,7 +47,7 @@ export default class LockAccessory extends BaseAccessory {
     );
 
     return pipe(
-      this.getState(determineCurrentState),
+      this.getStateGraphQl(determineCurrentState),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get lock state', e);
         throw this.serviceCommunicationError;
@@ -64,14 +56,11 @@ export default class LockAccessory extends BaseAccessory {
   }
 
   async handleTargetStateGet(): Promise<number> {
-    const alexaNamespace: LockNamespacesType = 'Alexa.LockController';
     const alexaValueName = 'lockState';
     const determineTargetState = flow(
-      O.filterMap<LockState[], LockState>(
-        A.findFirst(
-          ({ name, namespace }) =>
-            namespace === alexaNamespace && name === alexaValueName,
-        ),
+      A.findFirst<LockState>(
+        ({ name, featureName }) =>
+          featureName === 'lock' && name === alexaValueName,
       ),
       O.map(({ value }) =>
         mapper.mapAlexaTargetStateToHomeKit(value, this.Characteristic),
@@ -84,7 +73,7 @@ export default class LockAccessory extends BaseAccessory {
     );
 
     return pipe(
-      this.getState(determineTargetState),
+      this.getStateGraphQl(determineTargetState),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get lock target state', e);
         throw this.serviceCommunicationError;
@@ -98,9 +87,14 @@ export default class LockAccessory extends BaseAccessory {
       throw this.invalidValueError;
     }
     return pipe(
-      this.platform.alexaApi.setDeviceState(this.device.id, 'lockAction', {
-        'targetLockState.value': mapper.mapHomeKitTargetStateToAlexa(value),
-      }),
+      this.platform.alexaApi.setDeviceStateGraphQl(
+        this.device.endpointId,
+        'lock',
+        'lockAction',
+        {
+          'targetLockState.value': mapper.mapHomeKitTargetStateToAlexa(value),
+        },
+      ),
       TE.match(
         (e) => {
           this.logWithContext('errorT', 'Set target lock state', e);
@@ -109,8 +103,8 @@ export default class LockAccessory extends BaseAccessory {
         () => {
           this.updateCacheValue({
             value: mapper.mapHomeKitTargetStateToAlexa(value),
-            namespace: 'Alexa.LockController',
             name: 'lockState',
+            featureName: 'lock',
           });
         },
       ),

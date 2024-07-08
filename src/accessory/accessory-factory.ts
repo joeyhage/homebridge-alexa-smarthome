@@ -12,15 +12,14 @@ import { AlexaSmartHomePlatform } from '../platform';
 import AirQualityAccessory from './air-quality-accessory';
 import BaseAccessory from './base-accessory';
 import CarbonMonoxideAccessory from './co-accessory';
+import FanAccessory from './fan-accessory';
 import HumidityAccessory from './humidity-accessory';
 import LightAccessory from './light-accessory';
 import LockAccessory from './lock-accessory';
 import OutletAccessory from './outlet-accessory';
 import SwitchAccessory from './switch-accessory';
-import TelevisionAccessory from './television-accessory';
 import TemperatureAccessory from './temperature-accessory';
 import ThermostatAccessory from './thermostat-accessory';
-import FanAccessory from './fan-accessory';
 
 export default class AccessoryFactory {
   static createAccessory(
@@ -48,9 +47,6 @@ export default class AccessoryFactory {
         )
         .with(platform.Service.Thermostat.UUID, () =>
           E.of(new ThermostatAccessory(platform, device, platAcc)),
-        )
-        .with(platform.Service.Television.UUID, () =>
-          E.of(new TelevisionAccessory(platform, device, platAcc)),
         )
         .with(platform.Service.AirQualitySensor.UUID, () =>
           E.of(new AirQualityAccessory(platform, device, platAcc)),
