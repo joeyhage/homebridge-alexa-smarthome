@@ -26,9 +26,8 @@ export default class OutletAccessory extends BaseAccessory {
   }
 
   async handlePowerGet(): Promise<boolean> {
-    const alexaNamespace = 'Alexa.PowerController';
     const determinePowerState = flow(
-      A.findFirst<OutletState>(({ namespace }) => namespace === alexaNamespace),
+      A.findFirst<OutletState>(({ featureName }) => featureName === 'power'),
       O.map(({ value }) => value === 'ON'),
       O.tap((s) =>
         O.of(this.logWithContext('debug', `Get power result: ${s}`)),
@@ -64,7 +63,7 @@ export default class OutletAccessory extends BaseAccessory {
         () => {
           this.updateCacheValue({
             value: mapper.mapHomeKitPowerToAlexaValue(value),
-            namespace: 'Alexa.PowerController',
+            featureName: 'power',
           });
         },
       ),

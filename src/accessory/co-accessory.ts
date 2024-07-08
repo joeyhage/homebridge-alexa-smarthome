@@ -6,11 +6,8 @@ import * as TE from 'fp-ts/TaskEither';
 import { flow, identity, pipe } from 'fp-ts/lib/function';
 import { Service } from 'homebridge';
 import { SupportedActionsType } from '../domain/alexa';
-import {
-  AirQualityMonitorNamespaces,
-  AirQualityMonitorState,
-} from '../domain/alexa/air-quality-monitor';
-import { CarbonMonoxideSensorAssets } from '../domain/alexa/carbon-monoxide-sensor';
+import { AirQualityMonitorState } from '../domain/alexa/air-quality-monitor';
+import { CarbonMonoxideRangeFeatures } from '../domain/alexa/carbon-monoxide-sensor';
 import { RangeCapabilityAsset } from '../domain/alexa/save-device-capabilities';
 import * as mapper from '../mapper/air-quality-mapper';
 import BaseAccessory from './base-accessory';
@@ -18,7 +15,6 @@ import BaseAccessory from './base-accessory';
 export default class CarbonMonoxideAccessory extends BaseAccessory {
   static requiredOperations: SupportedActionsType[] = [];
   service: Service;
-  namespaces = AirQualityMonitorNamespaces;
   isExternalAccessory = false;
 
   configureServices() {
@@ -30,7 +26,7 @@ export default class CarbonMonoxideAccessory extends BaseAccessory {
       );
 
     pipe(
-      CarbonMonoxideSensorAssets,
+      CarbonMonoxideRangeFeatures,
       RA.findFirstMap((a) => RR.lookup(a)(this.rangeCapabilities)),
       O.match(
         () =>
@@ -53,13 +49,10 @@ export default class CarbonMonoxideAccessory extends BaseAccessory {
   async handleCarbonMonoxideDetectedGet(
     asset: RangeCapabilityAsset,
   ): Promise<number> {
-    const alexaNamespace = 'Alexa.RangeController';
     const determineCoDetected = flow(
-      O.filterMap<AirQualityMonitorState[], AirQualityMonitorState>(
-        A.findFirst(
-          ({ namespace, instance }) =>
-            namespace === alexaNamespace && asset.instance === instance,
-        ),
+      A.findFirst<AirQualityMonitorState>(
+        ({ featureName, instance }) =>
+          featureName === 'range' && asset.instance === instance,
       ),
       O.map(({ value }) =>
         mapper.mapAlexaCoLevelToHomeKitDetected(
@@ -78,7 +71,7 @@ export default class CarbonMonoxideAccessory extends BaseAccessory {
     );
 
     return pipe(
-      this.getState(determineCoDetected),
+      this.getStateGraphQl(determineCoDetected),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get carbon monoxide detected', e);
         throw this.serviceCommunicationError;
@@ -90,7 +83,7 @@ export default class CarbonMonoxideAccessory extends BaseAccessory {
     asset: RangeCapabilityAsset,
   ): Promise<number> {
     return pipe(
-      this.getState(this.determineLevel(asset)),
+      this.getStateGraphQl(this.determineLevel(asset)),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get carbon monoxide level', e);
         throw this.serviceCommunicationError;
@@ -99,19 +92,18 @@ export default class CarbonMonoxideAccessory extends BaseAccessory {
   }
 
   private determineLevel(asset: RangeCapabilityAsset) {
-    const alexaNamespace = 'Alexa.RangeController';
     return flow(
-      O.filterMap<AirQualityMonitorState[], AirQualityMonitorState>(
-        A.findFirst(
-          ({ namespace, instance }) =>
-            namespace === alexaNamespace && asset.instance === instance,
-        ),
+      A.findFirst<AirQualityMonitorState>(
+        ({ featureName, instance }) =>
+          featureName === 'range' && asset.instance === instance,
       ),
       O.flatMap(({ value }) =>
         typeof value === 'number' ? O.of(value) : O.none,
       ),
       O.tap((s) =>
-        O.of(this.logWithContext('debug', `Get ${asset.assetId}: ${s}`)),
+        O.of(
+          this.logWithContext('debug', `Get ${asset.configurationName}: ${s}`),
+        ),
       ),
     );
   }

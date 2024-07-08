@@ -7,9 +7,8 @@ import { flow, identity, pipe } from 'fp-ts/lib/function';
 import { Service } from 'homebridge';
 import { SupportedActionsType } from '../domain/alexa';
 import {
-  AirQualityAssets,
-  AirQualityMonitorNamespaces,
   AirQualityMonitorState,
+  AirQualityRangeFeatures,
 } from '../domain/alexa/air-quality-monitor';
 import { RangeCapabilityAsset } from '../domain/alexa/save-device-capabilities';
 import * as mapper from '../mapper/air-quality-mapper';
@@ -18,7 +17,6 @@ import BaseAccessory from './base-accessory';
 export default class AirQualityAccessory extends BaseAccessory {
   static requiredOperations: SupportedActionsType[] = [];
   service: Service;
-  namespaces = AirQualityMonitorNamespaces;
   isExternalAccessory = false;
 
   configureServices() {
@@ -30,7 +28,7 @@ export default class AirQualityAccessory extends BaseAccessory {
       );
 
     pipe(
-      AirQualityAssets,
+      AirQualityRangeFeatures,
       RA.findFirstMap((a) => RR.lookup(a)(this.rangeCapabilities)),
       O.match(
         () =>
@@ -48,7 +46,7 @@ export default class AirQualityAccessory extends BaseAccessory {
 
     pipe(
       this.rangeCapabilities,
-      RR.lookup('Alexa.AirQuality.ParticulateMatter'),
+      RR.lookup('Particulate matter'),
       O.map((asset) => {
         this.service
           .getCharacteristic(this.Characteristic.PM2_5Density)
@@ -58,7 +56,7 @@ export default class AirQualityAccessory extends BaseAccessory {
 
     pipe(
       this.rangeCapabilities,
-      RR.lookup('Alexa.AirQuality.VolatileOrganicCompounds'),
+      RR.lookup('Volatile organic compounds'),
       O.map((asset) => {
         this.service
           .getCharacteristic(this.Characteristic.VOCDensity)
@@ -68,13 +66,10 @@ export default class AirQualityAccessory extends BaseAccessory {
   }
 
   async handleAirQualityGet(asset: RangeCapabilityAsset): Promise<number> {
-    const alexaNamespace = 'Alexa.RangeController';
     const determineAirQuality = flow(
-      O.filterMap<AirQualityMonitorState[], AirQualityMonitorState>(
-        A.findFirst(
-          ({ namespace, instance }) =>
-            namespace === alexaNamespace && asset.instance === instance,
-        ),
+      A.findFirst<AirQualityMonitorState>(
+        ({ featureName, instance }) =>
+          featureName === 'range' && asset.instance === instance,
       ),
       O.map(({ value }) =>
         mapper.mapAlexaAirQualityToHomeKit(
@@ -88,7 +83,7 @@ export default class AirQualityAccessory extends BaseAccessory {
     );
 
     return pipe(
-      this.getState(determineAirQuality),
+      this.getStateGraphQl(determineAirQuality),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get air quality', e);
         throw this.serviceCommunicationError;
@@ -98,7 +93,7 @@ export default class AirQualityAccessory extends BaseAccessory {
 
   async handlePM25DensityGet(asset: RangeCapabilityAsset): Promise<number> {
     return pipe(
-      this.getState(this.determineDensity(asset)),
+      this.getStateGraphQl(this.determineDensity(asset)),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get PM2.5 density', e);
         throw this.serviceCommunicationError;
@@ -108,7 +103,7 @@ export default class AirQualityAccessory extends BaseAccessory {
 
   async handleVocDensityGet(asset: RangeCapabilityAsset): Promise<number> {
     return pipe(
-      this.getState(this.determineDensity(asset)),
+      this.getStateGraphQl(this.determineDensity(asset)),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get VOC density', e);
         throw this.serviceCommunicationError;
@@ -117,19 +112,18 @@ export default class AirQualityAccessory extends BaseAccessory {
   }
 
   private determineDensity(asset: RangeCapabilityAsset) {
-    const alexaNamespace = 'Alexa.RangeController';
     return flow(
-      O.filterMap<AirQualityMonitorState[], AirQualityMonitorState>(
-        A.findFirst(
-          ({ namespace, instance }) =>
-            namespace === alexaNamespace && asset.instance === instance,
-        ),
+      A.findFirst<AirQualityMonitorState>(
+        ({ featureName, instance }) =>
+          featureName === 'range' && asset.instance === instance,
       ),
       O.flatMap(({ value }) =>
         typeof value === 'number' ? O.of(value) : O.none,
       ),
       O.tap((s) =>
-        O.of(this.logWithContext('debug', `Get ${asset.assetId}: ${s}`)),
+        O.of(
+          this.logWithContext('debug', `Get ${asset.configurationName}: ${s}`),
+        ),
       ),
     );
   }

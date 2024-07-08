@@ -92,12 +92,16 @@ export default class DeviceStore {
 
   getCacheValue(
     deviceId: string,
-    { namespace, name, instance }: Omit<CapabilityState, 'value'>,
+    {
+      featureName,
+      name,
+      instance,
+    }: Omit<CapabilityState, 'value' | 'namespace'>,
   ): Option<CapabilityState> {
     return pipe(
       this.getCacheStatesForDevice(deviceId),
       A.findFirstMap((cache) =>
-        cache.namespace === namespace &&
+        cache.featureName === featureName &&
         (!name || cache.name === name) &&
         (!instance || cache.instance === instance)
           ? O.of(cache)

@@ -1,4 +1,4 @@
-export const SwitchQuery = `query getEndpointState(
+export const LockQuery = `query getLockState(
   $endpointId: String!
   $latencyTolerance: LatencyToleranceValue
 ) {
@@ -7,19 +7,12 @@ export const SwitchQuery = `query getEndpointState(
       name
       __typename
       properties {
-        type
         name
-        accuracy
-        __typename
-        ... on Power {
-          powerStateValue
-        }
-        ... on Brightness {
-          brightnessStateValue
+        ... on Lock {
+          lockState
         }
       }
     }
     __typename
   }
-}
-`;
+}`;

@@ -1,10 +1,10 @@
-import { CapabilityState, SupportedNamespaces } from './index';
+import { CapabilityState, SupportedFeatures } from './index';
 
 export interface FanState {
-  namespace: keyof typeof FanNamespaces & keyof typeof SupportedNamespaces;
+  featureName: keyof typeof FanFeatures & keyof typeof SupportedFeatures;
   value: CapabilityState['value'];
 }
 
-export const FanNamespaces = {
-  'Alexa.PowerController': 'Alexa.PowerController',
+export const FanFeatures = {
+  power: 'power',
 } as const;

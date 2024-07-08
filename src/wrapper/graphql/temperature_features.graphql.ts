@@ -1,4 +1,4 @@
-export const PowerQuery = `query getPowerState(
+export const TempSensorQuery = `query getTemperatureStates(
   $endpointId: String!
   $latencyTolerance: LatencyToleranceValue
 ) {
@@ -7,8 +7,11 @@ export const PowerQuery = `query getPowerState(
       name
       properties {
         name
-        ... on Power {
-          powerStateValue
+        ... on TemperatureSensor {
+          value {
+            value
+            scale
+          }
         }
       }
     }

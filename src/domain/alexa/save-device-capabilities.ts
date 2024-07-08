@@ -4,14 +4,13 @@ import * as RR from 'fp-ts/ReadonlyRecord';
 import { constant, identity, pipe } from 'fp-ts/lib/function';
 import * as S from 'fp-ts/string';
 import { Pattern, match } from 'ts-pattern';
-import { Nullable } from '../index';
 import { RangeCapability, SmartHomeDevice } from './get-devices';
 
 export interface RangeCapabilityAssetsByDevice {
-  [entityId: string]: { [assetId: string]: RangeCapabilityAsset };
+  [entityId: string]: { [configurationName: string]: RangeCapabilityAsset };
 }
 export interface RangeCapabilityAssets {
-  [assetId: string]: RangeCapabilityAsset;
+  [configurationName: string]: RangeCapabilityAsset;
 }
 
 export const extractRangeCapabilities = (
@@ -19,24 +18,30 @@ export const extractRangeCapabilities = (
 ): RangeCapabilityAssetsByDevice => {
   type RangeCapabilities = [string, RangeCapability[]];
 
-  const whereValidApplianceInfo = (
-    info: SmartHomeDevice,
-  ): O.Option<RangeCapabilities> =>
+  const whereValidInfo = (info: SmartHomeDevice): O.Option<RangeCapabilities> =>
     match(info)
       .with(
         {
           id: Pattern.string,
-          legacyAppliance: {
-            capabilities: Pattern.array({
-              instance: Pattern.string,
-              interfaceName: Pattern.string,
-            }),
+          features: {
+            name: Pattern.string,
+            instance: Pattern.string,
+            configuration: {
+              friendlyName: { value: { text: Pattern.string } },
+            },
           },
         },
         (i) =>
           O.of([
-            i.id.replace('amzn1.alexa.endpoint.', ''),
-            i.legacyAppliance.capabilities,
+            i.id,
+            [
+              {
+                featureName: i.features.name,
+                instance: i.features.instance,
+                configurationName:
+                  i.features.configuration.friendlyName.value.text,
+              },
+            ],
           ] as RangeCapabilities),
       )
       .otherwise(constant(O.none));
@@ -46,22 +51,16 @@ export const extractRangeCapabilities = (
     rangeCapabilityAssets: pipe(
       v,
       RA.filterMap((rc) => {
-        const maybeAssetId = pipe(
-          rc.resources?.friendlyNames ?? [],
-          RA.findFirstMap(({ value }) => O.fromNullable(value?.assetId)),
-        );
-        return rc.interfaceName === 'Alexa.RangeController' &&
-          O.isSome(maybeAssetId)
+        return rc.featureName === 'range'
           ? O.of({
-              configuration: rc.configuration,
+              featureName: rc.featureName,
               instance: rc.instance,
-              interfaceName: rc.interfaceName,
-              assetId: maybeAssetId.value,
+              configurationName: rc.configurationName,
             } as RangeCapabilityAsset)
           : O.none;
       }),
       RA.reduce({} as RangeCapabilityAssets, (acc, cur) => {
-        acc[cur.assetId] = cur;
+        acc[cur.configurationName] = cur;
         return acc;
       }),
     ),
@@ -80,7 +79,7 @@ export const extractRangeCapabilities = (
         {},
         (acc, cur) => ({
           ...acc,
-          [cur.id.replace('amzn1.alexa.endpoint.', '')]: cur,
+          [cur.id]: cur,
         }),
       ),
     ),
@@ -88,7 +87,7 @@ export const extractRangeCapabilities = (
       (endpoints) =>
         pipe(
           endpoints,
-          RR.filterMap(whereValidApplianceInfo),
+          RR.filterMap(whereValidInfo),
           RR.map(filterRangeControllers),
           RR.filterMap(whereDeviceHasRangeControllers),
           RR.reduce(S.Ord)({}, (acc, { entityId, rangeCapabilityAssets }) => {
@@ -102,15 +101,7 @@ export const extractRangeCapabilities = (
 };
 
 export interface RangeCapabilityAsset {
-  configuration: Nullable<{
-    supportedRange: Nullable<{
-      minimumValue: Nullable<number>;
-      maximumValue: Nullable<number>;
-      precision: Nullable<number>;
-    }>;
-    unitOfMeasure: Nullable<string>;
-  }>;
-  assetId: string; // required
+  featureName: string; // required
+  configurationName: string; // required
   instance: string; // required
-  interfaceName: string; // required
 }

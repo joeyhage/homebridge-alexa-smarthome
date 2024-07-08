@@ -8,7 +8,6 @@ import LightAccessory from '../accessory/light-accessory';
 import LockAccessory from '../accessory/lock-accessory';
 import OutletAccessory from '../accessory/outlet-accessory';
 import SwitchAccessory from '../accessory/switch-accessory';
-import TelevisionAccessory from '../accessory/television-accessory';
 import ThermostatAccessory from '../accessory/thermostat-accessory';
 import { SupportedActions } from '../domain/alexa';
 import * as airQuality from '../domain/alexa/air-quality-monitor';
@@ -23,13 +22,6 @@ import { RangeCapabilityAssets } from '../domain/alexa/save-device-capabilities'
 import { HomebridgeAccessoryInfo } from '../domain/homebridge';
 import type { AlexaSmartHomePlatform } from '../platform';
 import { generateUuid } from '../util';
-
-const ALEXA_DEVICES_AS_SWITCHES = [
-  'SWITCH',
-  'AIR_FRESHENER',
-  'VACUUM_CLEANER',
-  'GAME_CONSOLE',
-];
 
 export const mapAlexaDeviceToHomeKitAccessoryInfos = (
   platform: AlexaSmartHomePlatform,
@@ -159,24 +151,15 @@ const determineSupportedHomeKitAccessories = (
           },
         ]),
     )
-    .when(
-      ([type, ops]) =>
-        type === 'ALEXA_VOICE_ENABLED' &&
-        supportsRequiredActions(TelevisionAccessory.requiredOperations, ops),
-      () =>
-        E.of([
-          {
-            altDeviceName: O.none,
-            deviceType: platform.Service.Television.UUID,
-            uuid: generateUuid(platform, entityId, device.deviceType),
-          },
-          ...echo.toSupportedHomeKitAccessories(
-            platform,
-            entityId,
-            device.displayName,
-            platform.deviceStore.getCacheStatesForDevice(entityId),
-          ),
-        ]),
+    .with(['ALEXA_VOICE_ENABLED', Pattern._], () =>
+      E.of([
+        ...echo.toSupportedHomeKitAccessories(
+          platform,
+          entityId,
+          device.displayName,
+          platform.deviceStore.getCacheStatesForDevice(entityId),
+        ),
+      ]),
     )
     .with(['AIR_QUALITY_MONITOR', Pattern._], () =>
       E.of(

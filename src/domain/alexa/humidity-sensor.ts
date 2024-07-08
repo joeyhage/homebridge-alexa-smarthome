@@ -1,15 +1,15 @@
 import { CapabilityState } from '.';
 import { RangeCapabilityAssets } from './save-device-capabilities';
 
-export const HumiditySensorAssets = ['Alexa.AirQuality.Humidity'];
+export const HumiditySensorRangeFeatures = ['Indoor humidity'];
 
 export const isHumiditySensor = (
   rangeCapabilities: RangeCapabilityAssets,
   capability: CapabilityState,
 ) =>
-  capability.namespace === 'Alexa.RangeController' &&
+  capability.featureName === 'range' &&
   Object.entries(rangeCapabilities).some(
-    ([assetId, { instance }]) =>
+    ([configurationName, { instance }]) =>
       instance === capability.instance &&
-      HumiditySensorAssets.includes(assetId),
+      HumiditySensorRangeFeatures.includes(configurationName),
   );

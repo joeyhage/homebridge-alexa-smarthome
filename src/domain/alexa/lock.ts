@@ -1,13 +1,11 @@
-import { CapabilityState, SupportedNamespaces } from './index';
+import { CapabilityState, SupportedFeatures } from './index';
 
 export interface LockState {
-  namespace: keyof typeof LockNamespaces & keyof typeof SupportedNamespaces;
+  featureName: keyof typeof LockFeatures & keyof typeof SupportedFeatures;
   value: CapabilityState['value'];
   name?: CapabilityState['name'];
 }
 
-export const LockNamespaces = {
-  'Alexa.LockController': 'Alexa.LockController',
+export const LockFeatures = {
+  lock: 'lock',
 } as const;
-
-export type LockNamespacesType = keyof typeof LockNamespaces;

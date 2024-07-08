@@ -79,7 +79,10 @@ export default abstract class BaseAccessory {
       this.platformAcc.addService(this.Service.AccessoryInformation);
 
     service
-      .setCharacteristic(this.Characteristic.Manufacturer, 'Unknown')
+      .setCharacteristic(
+        this.Characteristic.Manufacturer,
+        this.device.manufacturer,
+      )
       .setCharacteristic(
         this.Characteristic.SerialNumber,
         this.device.serialNumber,
@@ -150,7 +153,11 @@ export default abstract class BaseAccessory {
       this.platform.deviceStore.cacheTTL;
     return pipe(
       <TE.TaskEither<AlexaApiError, [boolean, S[]]>>(
-        this.platform.alexaApi.getDeviceStateGraphQl(this.device, useCache)
+        this.platform.alexaApi.getDeviceStateGraphQl(
+          this.device,
+          this.service,
+          useCache,
+        )
       ),
       TE.map(([fromCache, states]) => {
         if (!fromCache) {
@@ -166,13 +173,13 @@ export default abstract class BaseAccessory {
   }
 
   getCacheValue(
-    namespace: CapabilityState['namespace'],
+    featureName: CapabilityState['featureName'],
     name?: CapabilityState['name'],
     instance?: CapabilityState['instance'],
   ): Option<CapabilityState['value']> {
     return pipe(
       this.platform.deviceStore.getCacheValue(this.device.id, {
-        namespace,
+        featureName,
         name,
         instance,
       }),

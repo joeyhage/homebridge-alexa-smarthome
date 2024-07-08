@@ -94,6 +94,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     this.alexaRemote = new AlexaRemote();
     this.deviceStore = new DeviceStore(this.log, this.config.performance);
     this.alexaApi = new AlexaApiWrapper(
+      this.Service,
       this.alexaRemote,
       this.log,
       this.deviceStore,
@@ -117,11 +118,6 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
         pipe(
           TE.rightIO(handleAuthResult(maybeError)),
           TE.flatMap(this.findDevices.bind(this)),
-          // TE.tap((devices) =>
-          //   TE.asUnit(
-          //     this.alexaApi.getDeviceStates(devices.map(({ id }) => id)),
-          //   ),
-          // ),
           TE.flatMap(this.initDevices.bind(this)),
           TE.flatMapIO(this.findStaleAccessories.bind(this)),
         )()

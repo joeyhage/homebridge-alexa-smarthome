@@ -1,15 +1,15 @@
 import { CapabilityState } from '.';
 import { RangeCapabilityAssets } from './save-device-capabilities';
 
-export const CarbonMonoxideSensorAssets = ['Alexa.AirQuality.CarbonMonoxide'];
+export const CarbonMonoxideRangeFeatures = ['Carbon monoxide'];
 
 export const isCarbonMonoxideSensor = (
   rangeCapabilities: RangeCapabilityAssets,
   capability: CapabilityState,
 ) =>
-  capability.namespace === 'Alexa.RangeController' &&
+  capability.featureName === 'range' &&
   Object.entries(rangeCapabilities).some(
-    ([assetId, { instance }]) =>
+    ([configurationName, { instance }]) =>
       instance === capability.instance &&
-      CarbonMonoxideSensorAssets.includes(assetId),
+      CarbonMonoxideRangeFeatures.includes(configurationName),
   );
