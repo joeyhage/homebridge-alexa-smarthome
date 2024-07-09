@@ -12,7 +12,7 @@ import {
 } from 'fp-ts/lib/function';
 import { CharacteristicValue, Service } from 'homebridge';
 import { CapabilityState, SupportedActionsType } from '../domain/alexa';
-import { RangeCapabilityAsset } from '../domain/alexa/save-device-capabilities';
+import { RangeFeature } from '../domain/alexa/save-device-capabilities';
 import { SwitchState } from '../domain/alexa/switch';
 import {
   Temperature,
@@ -81,7 +81,7 @@ export default class ThermostatAccessory extends BaseAccessory {
       .onSet(this.handleHeatTempSet.bind(this));
 
     pipe(
-      this.rangeCapabilities,
+      this.rangeFeatures,
       RR.lookup('Indoor humidity'),
       O.map((asset) => {
         this.service
@@ -113,9 +113,7 @@ export default class ThermostatAccessory extends BaseAccessory {
     )();
   }
 
-  async handleCurrentRelativeHumidityGet(
-    asset: RangeCapabilityAsset,
-  ): Promise<number> {
+  async handleCurrentRelativeHumidityGet(asset: RangeFeature): Promise<number> {
     const determineCurrentRelativeHumidity = flow(
       A.findFirst<ThermostatState>(
         ({ featureName, instance }) =>
@@ -336,7 +334,7 @@ export default class ThermostatAccessory extends BaseAccessory {
         O.of(
           this.logWithContext(
             'debug',
-            `Get target temperature result: ${s} Celcius`,
+            `Get target temperature result: ${s} Celsius`,
           ),
         ),
       ),
@@ -412,7 +410,7 @@ export default class ThermostatAccessory extends BaseAccessory {
         O.of(
           this.logWithContext(
             'debug',
-            `Get cooling temperature result: ${s} Celcius`,
+            `Get cooling temperature result: ${s} Celsius`,
           ),
         ),
       ),
@@ -496,7 +494,7 @@ export default class ThermostatAccessory extends BaseAccessory {
         O.of(
           this.logWithContext(
             'debug',
-            `Get heating temperature result: ${s} Celcius`,
+            `Get heating temperature result: ${s} Celsius`,
           ),
         ),
       ),

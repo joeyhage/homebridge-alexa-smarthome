@@ -1,15 +1,15 @@
 import { CapabilityState } from '.';
-import { RangeCapabilityAssets } from './save-device-capabilities';
+import { RangeFeatures } from './save-device-capabilities';
 
 export const CarbonMonoxideRangeFeatures = ['Carbon monoxide'];
 
 export const isCarbonMonoxideSensor = (
-  rangeCapabilities: RangeCapabilityAssets,
+  rangeFeatures: RangeFeatures,
   capability: CapabilityState,
 ) =>
   capability.featureName === 'range' &&
-  Object.entries(rangeCapabilities).some(
-    ([configurationName, { instance }]) =>
+  Object.entries(rangeFeatures).some(
+    ([rangeName, { instance }]) =>
       instance === capability.instance &&
-      CarbonMonoxideRangeFeatures.includes(configurationName),
+      CarbonMonoxideRangeFeatures.includes(rangeName),
   );

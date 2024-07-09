@@ -8,7 +8,7 @@ import { Service } from 'homebridge';
 import { SupportedActionsType } from '../domain/alexa';
 import { AirQualityMonitorState } from '../domain/alexa/air-quality-monitor';
 import { HumiditySensorRangeFeatures } from '../domain/alexa/humidity-sensor';
-import { RangeCapabilityAsset } from '../domain/alexa/save-device-capabilities';
+import { RangeFeature } from '../domain/alexa/save-device-capabilities';
 import BaseAccessory from './base-accessory';
 
 export default class HumidityAccessory extends BaseAccessory {
@@ -26,7 +26,7 @@ export default class HumidityAccessory extends BaseAccessory {
 
     pipe(
       HumiditySensorRangeFeatures,
-      RA.findFirstMap((a) => RR.lookup(a)(this.rangeCapabilities)),
+      RA.findFirstMap((a) => RR.lookup(a)(this.rangeFeatures)),
       O.match(
         () =>
           this.logWithContext(
@@ -42,7 +42,7 @@ export default class HumidityAccessory extends BaseAccessory {
     );
   }
 
-  async handleHumidityGet(asset: RangeCapabilityAsset): Promise<number> {
+  async handleHumidityGet(asset: RangeFeature): Promise<number> {
     return pipe(
       this.getStateGraphQl(this.determineLevel(asset)),
       TE.match((e) => {
@@ -52,7 +52,7 @@ export default class HumidityAccessory extends BaseAccessory {
     )();
   }
 
-  private determineLevel(asset: RangeCapabilityAsset) {
+  private determineLevel(asset: RangeFeature) {
     return flow(
       A.findFirst<AirQualityMonitorState>(
         ({ featureName, instance }) =>
@@ -62,9 +62,7 @@ export default class HumidityAccessory extends BaseAccessory {
         typeof value === 'number' ? O.of(value) : O.none,
       ),
       O.tap((s) =>
-        O.of(
-          this.logWithContext('debug', `Get ${asset.configurationName}: ${s}`),
-        ),
+        O.of(this.logWithContext('debug', `Get ${asset.rangeName}: ${s}`)),
       ),
     );
   }

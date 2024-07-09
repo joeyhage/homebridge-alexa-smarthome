@@ -10,7 +10,7 @@ import { match } from 'ts-pattern';
 import { CapabilityState } from '../domain/alexa';
 import { AlexaApiError, InvalidResponse } from '../domain/alexa/errors';
 import { SmartHomeDevice } from '../domain/alexa/get-devices';
-import { RangeCapabilityAssets } from '../domain/alexa/save-device-capabilities';
+import { RangeFeatures } from '../domain/alexa/save-device-capabilities';
 import { AlexaSmartHomePlatform } from '../platform';
 import { PluginLogLevel, PluginLogger } from '../util/plugin-logger';
 
@@ -23,7 +23,7 @@ export default abstract class BaseAccessory {
   readonly log: PluginLogger;
 
   _initialized = false;
-  readonly rangeCapabilities: RangeCapabilityAssets;
+  readonly rangeFeatures: RangeFeatures;
 
   private lastUpdated: Date;
 
@@ -34,8 +34,9 @@ export default abstract class BaseAccessory {
   ) {
     this.log = platform.log;
     this.addAccessoryInfoService();
-    this.rangeCapabilities =
-      this.platform.deviceStore.getRangeCapabilitiesForDevice(this.device.id);
+    this.rangeFeatures = this.platform.deviceStore.getRangeFeaturesForDevice(
+      this.device.id,
+    );
     this.lastUpdated = new Date(0);
   }
 

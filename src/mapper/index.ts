@@ -18,7 +18,7 @@ import {
   UnsupportedDeviceError,
 } from '../domain/alexa/errors';
 import { SmartHomeDevice } from '../domain/alexa/get-devices';
-import { RangeCapabilityAssets } from '../domain/alexa/save-device-capabilities';
+import { RangeFeatures } from '../domain/alexa/save-device-capabilities';
 import { HomebridgeAccessoryInfo } from '../domain/homebridge';
 import type { AlexaSmartHomePlatform } from '../platform';
 import { generateUuid } from '../util';
@@ -30,17 +30,17 @@ export const mapAlexaDeviceToHomeKitAccessoryInfos = (
 ): Either<AlexaDeviceError, HomebridgeAccessoryInfo[]> => {
   return pipe(
     validateDevice(device),
-    E.bind('rangeCapabilities', () =>
-      E.of<AlexaDeviceError, RangeCapabilityAssets>(
-        platform.deviceStore.getRangeCapabilitiesForDevice(entityId),
+    E.bind('rangeFeatures', () =>
+      E.of<AlexaDeviceError, RangeFeatures>(
+        platform.deviceStore.getRangeFeaturesForDevice(entityId),
       ),
     ),
-    E.flatMap(({ rangeCapabilities }) =>
+    E.flatMap(({ rangeFeatures }) =>
       determineSupportedHomeKitAccessories(
         platform,
         entityId,
         device,
-        rangeCapabilities,
+        rangeFeatures,
       ),
     ),
   );
@@ -69,7 +69,7 @@ const determineSupportedHomeKitAccessories = (
   platform: AlexaSmartHomePlatform,
   entityId: string,
   device: SmartHomeDevice,
-  rangeCapabilities: RangeCapabilityAssets,
+  rangeFeatures: RangeFeatures,
 ): Either<AlexaDeviceError, HomebridgeAccessoryInfo[]> =>
   match([device.deviceType, device.supportedOperations])
     .when(
@@ -168,7 +168,7 @@ const determineSupportedHomeKitAccessories = (
           entityId,
           device.displayName,
           platform.deviceStore.getCacheStatesForDevice(entityId),
-          rangeCapabilities,
+          rangeFeatures,
         ),
       ),
     )

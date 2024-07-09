@@ -30,7 +30,7 @@ import {
   SmartHomeDevice,
   validateGetDevicesSuccessful,
 } from '../domain/alexa/get-devices';
-import { extractRangeCapabilities } from '../domain/alexa/save-device-capabilities';
+import { extractRangeFeatures } from '../domain/alexa/save-device-capabilities';
 import DeviceStore from '../store/device-store';
 import { PluginLogger } from '../util/plugin-logger';
 import {
@@ -90,9 +90,7 @@ export class AlexaApiWrapper {
       TE.flatMapEither(validateGetDevicesSuccessful),
       TE.map(A.filter(([e]) => excludeHomebridgeAlexaPluginDevices(e))),
       TE.tapIO((devices) => {
-        this.deviceStore.deviceCapabilities = extractRangeCapabilities(
-          devices.map(([, d]) => d),
-        );
+        this.deviceStore.deviceCapabilities = extractRangeFeatures(devices);
         devices.forEach(([e, d]) => {
           this.deviceStore.updateCache([d.id], {
             [d.id]: O.of(extractStates(e.features).map(E.right)),

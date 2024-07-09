@@ -1,4 +1,4 @@
-import { extractRangeCapabilities } from './save-device-capabilities';
+import { extractRangeFeatures } from './save-device-capabilities';
 
 describe('extractRangeCapabilities', () => {
   test('should work', () => {
@@ -64,7 +64,7 @@ describe('extractRangeCapabilities', () => {
     };
 
     // when
-    const actual = extractRangeCapabilities(response as any);
+    const actual = extractRangeFeatures(response as any);
 
     // then
     expect(actual).toStrictEqual({

@@ -8,7 +8,7 @@ import { HomebridgeAccessoryInfo } from '../homebridge';
 import { isCarbonMonoxideSensor } from './carbon-monoxide-sensor';
 import { isHumiditySensor } from './humidity-sensor';
 import { CapabilityState, SupportedFeatures } from './index';
-import { RangeCapabilityAssets } from './save-device-capabilities';
+import { RangeFeatures } from './save-device-capabilities';
 
 export const AirQualityRangeFeatures = ['Indoor air quality'];
 
@@ -24,14 +24,14 @@ export const AirQualityMonitorFeatures = {
 } as const;
 
 export const isAirQualityMonitor = (
-  rangeCapabilities: RangeCapabilityAssets,
+  rangeFeatures: RangeFeatures,
   capability: CapabilityState,
 ) =>
   capability.featureName === 'range' &&
-  Object.entries(rangeCapabilities).some(
-    ([configurationName, { instance }]) =>
+  Object.entries(rangeFeatures).some(
+    ([rangeName, { instance }]) =>
       instance === capability.instance &&
-      AirQualityRangeFeatures.includes(configurationName),
+      AirQualityRangeFeatures.includes(rangeName),
   );
 
 export const toSupportedHomeKitAccessories = (
@@ -39,13 +39,13 @@ export const toSupportedHomeKitAccessories = (
   entityId: string,
   deviceName: string,
   capStates: CapabilityState[],
-  rangeCapabilities: RangeCapabilityAssets,
+  rangeFeatures: RangeFeatures,
 ): HomebridgeAccessoryInfo[] =>
   pipe(
     capStates,
     A.filterMap((cap) =>
       match(cap)
-        .when(isAirQualityMonitor.bind(undefined, rangeCapabilities), () =>
+        .when(isAirQualityMonitor.bind(undefined, rangeFeatures), () =>
           O.of({
             altDeviceName: O.none,
             deviceType: platform.Service.AirQualitySensor.UUID,
@@ -67,7 +67,7 @@ export const toSupportedHomeKitAccessories = (
             ),
           }),
         )
-        .when(isHumiditySensor.bind(undefined, rangeCapabilities), () =>
+        .when(isHumiditySensor.bind(undefined, rangeFeatures), () =>
           O.of({
             altDeviceName: O.of(`${deviceName} humidity`),
             deviceType: platform.Service.HumiditySensor.UUID,
@@ -78,7 +78,7 @@ export const toSupportedHomeKitAccessories = (
             ),
           }),
         )
-        .when(isCarbonMonoxideSensor.bind(undefined, rangeCapabilities), () =>
+        .when(isCarbonMonoxideSensor.bind(undefined, rangeFeatures), () =>
           O.of({
             altDeviceName: O.of(`${deviceName} carbon monoxide`),
             deviceType: platform.Service.CarbonMonoxideSensor.UUID,

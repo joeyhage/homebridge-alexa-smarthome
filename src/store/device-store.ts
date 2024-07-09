@@ -10,8 +10,8 @@ import {
   ValidStatesByDevice,
 } from '../domain/alexa/get-device-states';
 import {
-  RangeCapabilityAssets,
-  RangeCapabilityAssetsByDevice,
+  RangeFeatures,
+  RangeFeaturesByDevice,
 } from '../domain/alexa/save-device-capabilities';
 import { AlexaPlatformConfig } from '../domain/homebridge';
 import { getOrElseNullable } from '../util/fp-util';
@@ -28,7 +28,7 @@ export default class DeviceStore {
     states: {},
   };
 
-  private _deviceCapabilities: RangeCapabilityAssetsByDevice = {};
+  private _deviceCapabilities: RangeFeaturesByDevice = {};
 
   constructor(performanceSettings?: AlexaPlatformConfig['performance']) {
     const cacheTTL = getOrElseNullable(
@@ -38,15 +38,15 @@ export default class DeviceStore {
     this.cacheTTL = 1_000 * cacheTTL;
   }
 
-  get deviceCapabilities(): RangeCapabilityAssetsByDevice {
+  get deviceCapabilities(): RangeFeaturesByDevice {
     return RR.toRecord(this._deviceCapabilities);
   }
 
-  set deviceCapabilities(deviceCapabilities: RangeCapabilityAssetsByDevice) {
+  set deviceCapabilities(deviceCapabilities: RangeFeaturesByDevice) {
     this._deviceCapabilities = deviceCapabilities;
   }
 
-  getRangeCapabilitiesForDevice(deviceId: string): RangeCapabilityAssets {
+  getRangeFeaturesForDevice(deviceId: string): RangeFeatures {
     return pipe(
       this.deviceCapabilities,
       RR.lookup(deviceId),
