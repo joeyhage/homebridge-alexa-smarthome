@@ -11,9 +11,12 @@ import { Pattern, match } from 'ts-pattern';
 import AlexaRemote, {
   type CallbackWithErrorAndBody,
   type EntityType,
-  type MessageCommands,
 } from '../alexa-remote.js';
-import { CapabilityState, SupportedActionsType } from '../domain/alexa';
+import {
+  CapabilityState,
+  SupportedActionsType,
+  SupportedFeatures,
+} from '../domain/alexa';
 import { AlexaApiError, HttpError, TimeoutError } from '../domain/alexa/errors';
 import EndpointStateResponse, {
   extractStates,
@@ -27,14 +30,7 @@ import {
   SmartHomeDevice,
   validateGetDevicesSuccessful,
 } from '../domain/alexa/get-devices';
-import GetPlayerInfoResponse, {
-  PlayerInfo,
-  validateGetPlayerInfoSuccessful,
-} from '../domain/alexa/get-player-info';
 import { extractRangeCapabilities } from '../domain/alexa/save-device-capabilities';
-import SetDeviceStateResponse, {
-  validateSetStateSuccessful,
-} from '../domain/alexa/set-device-state';
 import DeviceStore from '../store/device-store';
 import { PluginLogger } from '../util/plugin-logger';
 import {
@@ -152,9 +148,9 @@ export class AlexaApiWrapper {
               ),
               TE.tapIO((query) =>
                 this.log.debug(
-                  `Querying for changes to ${device.displayName} using ${
-                    query.split('\n')[0]
-                  }`,
+                  `Querying for changes to ${
+                    device.displayName
+                  } using ${query.substring(0, query.indexOf('('))}`,
                 ),
               ),
               TE.flatMap((query) =>
@@ -192,6 +188,15 @@ export class AlexaApiWrapper {
             ),
         ),
       ),
+      TE.tapIO(([, states]) =>
+        this.log.debug(
+          `${device.displayName} ::: Raw device states: ${JSON.stringify(
+            states,
+            undefined,
+            2,
+          )}`,
+        ),
+      ),
       TE.mapBoth(
         (e) => {
           this.semaphore.release();
@@ -207,22 +212,21 @@ export class AlexaApiWrapper {
 
   setDeviceStateGraphQl(
     endpointId: string,
-    featureName: string,
+    featureName: SupportedFeatures,
     featureOperationName: SupportedActionsType,
-    payload: Record<string, string> = {},
+    payload: Record<string, unknown> = {},
   ): TaskEither<AlexaApiError, void> {
+    const request = {
+      endpointId,
+      featureOperationName,
+      featureName,
+      ...(Object.keys(payload).length > 0 ? { payload } : {}),
+    };
     return pipe(
       TE.tryCatch(
         () =>
           this.executeGraphQlQuery<EndpointStateResponse>(SetEndpointFeatures, {
-            featureControlRequests: [
-              {
-                endpointId,
-                featureOperationName,
-                featureName,
-                ...(Object.keys(payload).length > 0 ? { payload } : {}),
-              },
-            ],
+            featureControlRequests: [request],
           }),
         (reason) =>
           new HttpError(
@@ -232,114 +236,6 @@ export class AlexaApiWrapper {
           ),
       ),
       TE.map(constVoid),
-    );
-  }
-
-  setDeviceState(
-    deviceId: string,
-    action: SupportedActionsType,
-    parameters: Record<string, string> = {},
-    entityType: EntityType = 'APPLIANCE',
-  ): TaskEither<AlexaApiError, void> {
-    return pipe(
-      TE.tryCatch(
-        () =>
-          this.changeDeviceState(
-            deviceId,
-            { action, ...parameters },
-            entityType,
-          ),
-        (reason) =>
-          new HttpError(
-            `Error setting smart home device state. Reason: ${
-              (reason as Error).message
-            }`,
-          ),
-      ),
-      TE.flatMapEither(validateSetStateSuccessful),
-      TE.map(constVoid),
-    );
-  }
-
-  getPlayerInfo(deviceName: string): TaskEither<AlexaApiError, PlayerInfo> {
-    return pipe(
-      TE.tryCatch(
-        () =>
-          AlexaApiWrapper.toPromise<GetPlayerInfoResponse>(
-            this.alexaRemote.getPlayerInfo.bind(this.alexaRemote, deviceName),
-          ),
-        (reason) =>
-          new HttpError(
-            `Error getting media player information. Reason: ${
-              (reason as Error).message
-            }`,
-          ),
-      ),
-      TE.flatMapEither(validateGetPlayerInfoSuccessful),
-    );
-  }
-
-  setVolume(
-    deviceName: string,
-    volume: number,
-  ): TaskEither<AlexaApiError, void> {
-    return pipe(
-      TE.tryCatch(
-        () =>
-          AlexaApiWrapper.toPromise<void>(
-            this.alexaRemote.sendMessage.bind(
-              this.alexaRemote,
-              deviceName,
-              'volume',
-              volume,
-            ),
-          ),
-        (reason) =>
-          new HttpError(
-            `Error setting volume. Reason: ${(reason as Error).message}`,
-          ),
-      ),
-    );
-  }
-
-  controlMedia(
-    deviceName: string,
-    command: MessageCommands,
-  ): TaskEither<AlexaApiError, void> {
-    return pipe(
-      TE.tryCatch(
-        () =>
-          AlexaApiWrapper.toPromise<void>(
-            this.alexaRemote.sendMessage.bind(
-              this.alexaRemote,
-              deviceName,
-              command,
-              false,
-            ),
-          ),
-        (reason) =>
-          new HttpError(
-            `Error sending ${command} command to media player. Reason: ${
-              (reason as Error).message
-            }`,
-          ),
-      ),
-    );
-  }
-
-  private changeDeviceState(
-    entityId: string,
-    parameters: Record<string, string>,
-    entityType: EntityType = 'APPLIANCE',
-  ): Promise<SetDeviceStateResponse> {
-    return AlexaApiWrapper.toPromise<SetDeviceStateResponse>(
-      this.alexaRemote.executeSmarthomeDeviceAction.bind(
-        this.alexaRemote,
-        [entityId],
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        parameters as any,
-        entityType,
-      ),
     );
   }
 

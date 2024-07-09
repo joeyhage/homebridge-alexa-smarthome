@@ -11,10 +11,12 @@ import * as util from '../util';
 
 export const mapAlexaTempToHomeKit = (state: CapabilityState['value']) => {
   if (isTemperatureValue(state)) {
+    const value =
+      typeof state.value === 'number' ? state.value : parseFloat(state.value);
     return O.of(
-      match(state.scale)
-        .with('FAHRENHEIT', () => util.round((state.value - 32) / 1.8, 1))
-        .otherwise(constant(state.value)),
+      match(state.scale.toLowerCase())
+        .with('fahrenheit', () => util.round((value - 32) / 1.8, 1))
+        .otherwise(constant(value)),
     );
   } else {
     return O.none;
@@ -30,9 +32,9 @@ export const mapAlexaTempUnitsToHomeKit = (
 ) => {
   if (isTemperatureValue(state)) {
     return O.of(
-      match(state.scale)
+      match(state.scale.toLowerCase())
         .with(
-          'FAHRENHEIT',
+          'fahrenheit',
           constant(characteristic.TemperatureDisplayUnits.FAHRENHEIT),
         )
         .otherwise(constant(characteristic.TemperatureDisplayUnits.CELSIUS)),
