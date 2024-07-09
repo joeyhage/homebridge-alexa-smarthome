@@ -97,13 +97,16 @@ export default class CarbonMonoxideAccessory extends BaseAccessory {
         ({ featureName, instance }) =>
           featureName === 'range' && asset.instance === instance,
       ),
+      O.tap(({ value }) =>
+        O.of(
+          this.logWithContext(
+            'debug',
+            `Get ${asset.configurationName}: ${value}`,
+          ),
+        ),
+      ),
       O.flatMap(({ value }) =>
         typeof value === 'number' ? O.of(value) : O.none,
-      ),
-      O.tap((s) =>
-        O.of(
-          this.logWithContext('debug', `Get ${asset.configurationName}: ${s}`),
-        ),
       ),
     );
   }

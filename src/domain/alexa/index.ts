@@ -62,7 +62,8 @@ export const SupportedNamespaces = {
 export type SupportedNamespacesType = keyof typeof SupportedNamespaces;
 
 export const SupportedActions = {
-  lockAction: 'lockAction',
+  lock: 'lock',
+  unlock: 'unlock',
   turnOn: 'turnOn',
   turnOff: 'turnOff',
   setBrightness: 'setBrightness',

@@ -34,7 +34,10 @@ export default class TemperatureAccessory extends BaseAccessory {
       O.flatMap(({ value }) => tempMapper.mapAlexaTempToHomeKit(value)),
       O.tap((s) =>
         O.of(
-          this.logWithContext('debug', `Get current temperature result: ${s}`),
+          this.logWithContext(
+            'debug',
+            `Get current temperature result: ${s} Celsius`,
+          ),
         ),
       ),
     );
