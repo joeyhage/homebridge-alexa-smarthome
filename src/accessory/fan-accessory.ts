@@ -52,7 +52,11 @@ export default class FanAccessory extends BaseAccessory {
       this.Characteristic,
     );
     return pipe(
-      this.platform.alexaApi.setDeviceState(this.device.id, action),
+      this.platform.alexaApi.setDeviceStateGraphQl(
+        this.device.endpointId,
+        'power',
+        action,
+      ),
       TE.match(
         (e) => {
           this.logWithContext('errorT', 'Set power', e);

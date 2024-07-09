@@ -100,8 +100,6 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
       this.deviceStore,
     );
 
-    let refreshTimeout: NodeJS.Timeout | undefined;
-
     const handleAuthResult = flow(
       O.match(
         () => {
@@ -127,10 +125,6 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
           ),
         );
       });
-    });
-
-    this.api.on('shutdown', () => {
-      !!refreshTimeout && clearTimeout(refreshTimeout);
     });
   }
 

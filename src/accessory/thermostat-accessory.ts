@@ -29,7 +29,7 @@ import * as tstatMapper from '../mapper/thermostat-mapper';
 import BaseAccessory from './base-accessory';
 
 export default class ThermostatAccessory extends BaseAccessory {
-  static requiredOperations: SupportedActionsType[] = ['setTargetTemperature'];
+  static requiredOperations: SupportedActionsType[] = ['setTargetSetpoint'];
   service: Service;
   isExternalAccessory = false;
   isPowerSupported = true;
@@ -231,11 +231,12 @@ export default class ThermostatAccessory extends BaseAccessory {
         await this.handlePowerSet(true);
       } else {
         return pipe(
-          this.platform.alexaApi.setDeviceState(
-            this.device.id,
+          this.platform.alexaApi.setDeviceStateGraphQl(
+            this.device.endpointId,
+            'thermostat',
             'setThermostatMode',
             {
-              'thermostatMode.value': tstatMapper.mapHomekitModeToAlexa(
+              thermostatMode: tstatMapper.mapHomekitModeToAlexa(
                 value,
                 this.Characteristic,
               ),
@@ -352,15 +353,18 @@ export default class ThermostatAccessory extends BaseAccessory {
     if (typeof value !== 'number') {
       throw this.invalidValueError;
     }
-    const units = maybeTemp.value.scale.toLowerCase() as TemperatureScale;
+    const units = maybeTemp.value.scale.toUpperCase() as TemperatureScale;
     const newTemp = tempMapper.mapHomeKitTempToAlexa(value, units);
     return pipe(
-      this.platform.alexaApi.setDeviceState(
-        this.device.id,
-        'setTargetTemperature',
+      this.platform.alexaApi.setDeviceStateGraphQl(
+        this.device.endpointId,
+        'thermostat',
+        'setTargetSetpoint',
         {
-          'targetTemperature.scale': units,
-          'targetTemperature.value': newTemp.toString(10),
+          targetSetpoint: {
+            value: newTemp.toString(10),
+            scale: units,
+          },
         },
       ),
       TE.match(
@@ -372,7 +376,7 @@ export default class ThermostatAccessory extends BaseAccessory {
           this.updateCacheValue({
             value: {
               value: newTemp,
-              scale: units.toUpperCase(),
+              scale: units,
             },
             featureName: 'thermostat',
             name: 'targetSetpoint',
@@ -429,14 +433,19 @@ export default class ThermostatAccessory extends BaseAccessory {
     }
 
     return pipe(
-      this.platform.alexaApi.setDeviceState(
-        this.device.id,
-        'setTargetTemperature',
+      this.platform.alexaApi.setDeviceStateGraphQl(
+        this.device.endpointId,
+        'thermostat',
+        'setTargetSetpoint',
         {
-          'upperSetTemperature.scale': units,
-          'upperSetTemperature.value': newCoolTemp.toString(10),
-          'lowerSetTemperature.scale': units,
-          'lowerSetTemperature.value': heatTemp.value.toString(10),
+          lowerSetpoint: {
+            value: heatTemp.value.toString(10),
+            scale: units,
+          },
+          upperSetpoint: {
+            value: newCoolTemp.toString(10),
+            scale: units,
+          },
         },
       ),
       TE.match(
@@ -448,7 +457,7 @@ export default class ThermostatAccessory extends BaseAccessory {
           this.updateCacheValue({
             value: {
               value: newCoolTemp,
-              scale: units.toUpperCase(),
+              scale: units,
             },
             featureName: 'thermostat',
             name: 'upperSetpoint',
@@ -505,14 +514,19 @@ export default class ThermostatAccessory extends BaseAccessory {
     }
 
     return pipe(
-      this.platform.alexaApi.setDeviceState(
-        this.device.id,
-        'setTargetTemperature',
+      this.platform.alexaApi.setDeviceStateGraphQl(
+        this.device.endpointId,
+        'thermostat',
+        'setTargetSetpoint',
         {
-          'lowerSetTemperature.scale': units,
-          'lowerSetTemperature.value': newHeatTemp.toString(10),
-          'upperSetTemperature.scale': units,
-          'upperSetTemperature.value': coolTemp.value.toString(10),
+          lowerSetpoint: {
+            value: newHeatTemp.toString(10),
+            scale: units,
+          },
+          upperSetpoint: {
+            value: coolTemp.value.toString(10),
+            scale: units,
+          },
         },
       ),
       TE.match(
@@ -524,7 +538,7 @@ export default class ThermostatAccessory extends BaseAccessory {
           this.updateCacheValue({
             value: {
               value: newHeatTemp,
-              scale: units.toUpperCase(),
+              scale: units,
             },
             featureName: 'thermostat',
             name: 'lowerSetpoint',
@@ -559,7 +573,11 @@ export default class ThermostatAccessory extends BaseAccessory {
     }
     const action = mapper.mapHomeKitPowerToAlexaAction(value);
     return pipe(
-      this.platform.alexaApi.setDeviceState(this.device.id, action),
+      this.platform.alexaApi.setDeviceStateGraphQl(
+        this.device.endpointId,
+        'thermostat',
+        action,
+      ),
       TE.match(
         (e) => {
           this.logWithContext('errorT', 'Set power', e);
@@ -646,7 +664,7 @@ export default class ThermostatAccessory extends BaseAccessory {
       throw this.invalidValueError;
     }
 
-    const units = coolTemp.scale.toLowerCase() as TemperatureScale;
+    const units = coolTemp.scale.toUpperCase() as TemperatureScale;
     return {
       units,
       coolTemp,
