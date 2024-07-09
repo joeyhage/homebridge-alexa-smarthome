@@ -71,14 +71,14 @@ export default class AirQualityAccessory extends BaseAccessory {
         ({ featureName, instance }) =>
           featureName === 'range' && asset.instance === instance,
       ),
+      O.tap(({ value }) =>
+        O.of(this.logWithContext('debug', `Get air quality result: ${value}`)),
+      ),
       O.map(({ value }) =>
         mapper.mapAlexaAirQualityToHomeKit(
           value,
           this.Characteristic.AirQuality,
         ),
-      ),
-      O.tap((s) =>
-        O.of(this.logWithContext('debug', `Get air quality result: ${s}`)),
       ),
     );
 

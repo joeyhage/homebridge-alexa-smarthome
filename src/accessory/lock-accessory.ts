@@ -9,7 +9,7 @@ import * as mapper from '../mapper/lock-mapper';
 import BaseAccessory from './base-accessory';
 
 export default class LockAccessory extends BaseAccessory {
-  static requiredOperations: SupportedActionsType[] = ['lockAction'];
+  static requiredOperations: SupportedActionsType[] = ['lock', 'unlock'];
   service: Service;
   isExternalAccessory = false;
 
@@ -38,11 +38,11 @@ export default class LockAccessory extends BaseAccessory {
         ({ name, featureName }) =>
           featureName === 'lock' && name === alexaValueName,
       ),
+      O.tap(({ value }) =>
+        O.of(this.logWithContext('debug', `Get lock state result: ${value}`)),
+      ),
       O.map(({ value }) =>
         mapper.mapAlexaCurrentStateToHomeKit(value, this.Characteristic),
-      ),
-      O.tap((s) =>
-        O.of(this.logWithContext('debug', `Get lock state result: ${s}`)),
       ),
     );
 
@@ -86,14 +86,15 @@ export default class LockAccessory extends BaseAccessory {
     if (value !== 0 && value !== 1) {
       throw this.invalidValueError;
     }
+    const targetState =
+      value === this.Characteristic.LockTargetState.UNSECURED
+        ? 'unlock'
+        : 'lock';
     return pipe(
       this.platform.alexaApi.setDeviceStateGraphQl(
         this.device.endpointId,
         'lock',
-        'lockAction',
-        {
-          'targetLockState.value': mapper.mapHomeKitTargetStateToAlexa(value),
-        },
+        targetState,
       ),
       TE.match(
         (e) => {
@@ -102,8 +103,7 @@ export default class LockAccessory extends BaseAccessory {
         },
         () => {
           this.updateCacheValue({
-            value: mapper.mapHomeKitTargetStateToAlexa(value),
-            name: 'lockState',
+            value: targetState,
             featureName: 'lock',
           });
         },

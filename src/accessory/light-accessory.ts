@@ -37,10 +37,10 @@ export default class LightAccessory extends BaseAccessory {
   async handlePowerGet(): Promise<boolean> {
     const determinePowerState = flow(
       A.findFirst<LightbulbState>(({ featureName }) => featureName === 'power'),
-      O.map(({ value }) => value === 'ON'),
-      O.tap((s) =>
-        O.of(this.logWithContext('debug', `Get power result: ${s}`)),
+      O.tap(({ value }) =>
+        O.of(this.logWithContext('debug', `Get power result: ${value}`)),
       ),
+      O.map(({ value }) => value === 'ON'),
     );
 
     return pipe(

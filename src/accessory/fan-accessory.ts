@@ -27,10 +27,10 @@ export default class FanAccessory extends BaseAccessory {
   async handleActiveGet(): Promise<boolean> {
     const determinePowerState = flow(
       A.findFirst<FanState>(({ featureName }) => featureName === 'power'),
-      O.map(({ value }) => value === 'ON'),
-      O.tap((s) =>
-        O.of(this.logWithContext('debug', `Get power result: ${s}`)),
+      O.tap(({ value }) =>
+        O.of(this.logWithContext('debug', `Get power result: ${value}`)),
       ),
+      O.map(({ value }) => value === 'ON'),
     );
 
     return pipe(

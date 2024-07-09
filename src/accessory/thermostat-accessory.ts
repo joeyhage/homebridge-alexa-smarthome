@@ -26,6 +26,7 @@ import {
 import * as mapper from '../mapper/power-mapper';
 import * as tempMapper from '../mapper/temperature-mapper';
 import * as tstatMapper from '../mapper/thermostat-mapper';
+import * as util from '../util';
 import BaseAccessory from './base-accessory';
 
 export default class ThermostatAccessory extends BaseAccessory {
@@ -142,14 +143,19 @@ export default class ThermostatAccessory extends BaseAccessory {
       A.findFirst<ThermostatState>(
         ({ featureName }) => featureName === 'temperatureSensor',
       ),
+      O.tap(({ value }) => {
+        return O.of(
+          this.logWithContext(
+            'debug',
+            `Get temperature units result: ${
+              util.isRecord(value) ? value.scale : 'Unknown'
+            }`,
+          ),
+        );
+      }),
       O.flatMap(({ value }) =>
         tempMapper.mapAlexaTempUnitsToHomeKit(value, this.Characteristic),
       ),
-      O.tap((s) => {
-        return O.of(
-          this.logWithContext('debug', `Get temperature units result: ${s}`),
-        );
-      }),
     );
 
     return pipe(
@@ -181,13 +187,18 @@ export default class ThermostatAccessory extends BaseAccessory {
         ({ name, featureName }) =>
           featureName === 'thermostat' && name === alexaValueName,
       ),
+      O.tap(({ value }) =>
+        O.of(
+          this.logWithContext(
+            'debug',
+            `Get target state result: ${value}. Is device on: ${isDeviceOn}`,
+          ),
+        ),
+      ),
       O.map(({ value }) =>
         isDeviceOn
           ? tstatMapper.mapAlexaModeToHomeKit(value, this.Characteristic)
           : tstatMapper.mapAlexaModeToHomeKit(0, this.Characteristic),
-      ),
-      O.tap((s) =>
-        O.of(this.logWithContext('debug', `Get target state result: ${s}`)),
       ),
     );
 
@@ -323,7 +334,10 @@ export default class ThermostatAccessory extends BaseAccessory {
       O.flatMap(({ value }) => tempMapper.mapAlexaTempToHomeKit(value)),
       O.tap((s) =>
         O.of(
-          this.logWithContext('debug', `Get target temperature result: ${s}`),
+          this.logWithContext(
+            'debug',
+            `Get target temperature result: ${s} Celcius`,
+          ),
         ),
       ),
     );
@@ -396,7 +410,10 @@ export default class ThermostatAccessory extends BaseAccessory {
       O.flatMap(({ value }) => tempMapper.mapAlexaTempToHomeKit(value)),
       O.tap((s) =>
         O.of(
-          this.logWithContext('debug', `Get cooling temperature result: ${s}`),
+          this.logWithContext(
+            'debug',
+            `Get cooling temperature result: ${s} Celcius`,
+          ),
         ),
       ),
     );
@@ -477,7 +494,10 @@ export default class ThermostatAccessory extends BaseAccessory {
       O.flatMap(({ value }) => tempMapper.mapAlexaTempToHomeKit(value)),
       O.tap((s) =>
         O.of(
-          this.logWithContext('debug', `Get heating temperature result: ${s}`),
+          this.logWithContext(
+            'debug',
+            `Get heating temperature result: ${s} Celcius`,
+          ),
         ),
       ),
     );
@@ -551,10 +571,10 @@ export default class ThermostatAccessory extends BaseAccessory {
   async handlePowerGet(): Promise<boolean> {
     const determinePowerState = flow(
       A.findFirst<SwitchState>(({ featureName }) => featureName === 'power'),
-      O.map(({ value }) => value === 'ON'),
-      O.tap((s) =>
-        O.of(this.logWithContext('debug', `Get power status result: ${s}`)),
+      O.tap(({ value }) =>
+        O.of(this.logWithContext('debug', `Get power result: ${value}`)),
       ),
+      O.map(({ value }) => value === 'ON'),
     );
 
     return pipe(
