@@ -459,13 +459,6 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
             ),
           ),
         ),
-        IOE.bind('rangeCapabilities', () =>
-          IOE.fromEither(
-            util.stringifyJson(
-              this.deviceStore.getRangeCapabilitiesForDevice(device.id),
-            ),
-          ),
-        ),
         IOE.tapIO(({ deviceJson }) =>
           this.log.debug(
             `${device.displayName} ::: Attempting to add accessory(s) for device: ${deviceJson}`,
@@ -473,11 +466,6 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
         ),
         IOE.tapIO(({ state }) =>
           this.log.debug(`${device.displayName} ::: Current state: ${state}`),
-        ),
-        IOE.tapIO(({ rangeCapabilities }) =>
-          this.log.debug(
-            `${device.displayName} ::: Range capabilities: ${rangeCapabilities}`,
-          ),
         ),
       );
   }

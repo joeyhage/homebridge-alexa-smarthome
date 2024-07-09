@@ -8,7 +8,7 @@ import { Service } from 'homebridge';
 import { SupportedActionsType } from '../domain/alexa';
 import { AirQualityMonitorState } from '../domain/alexa/air-quality-monitor';
 import { CarbonMonoxideRangeFeatures } from '../domain/alexa/carbon-monoxide-sensor';
-import { RangeCapabilityAsset } from '../domain/alexa/save-device-capabilities';
+import { RangeFeature } from '../domain/alexa/save-device-capabilities';
 import * as mapper from '../mapper/air-quality-mapper';
 import BaseAccessory from './base-accessory';
 
@@ -27,7 +27,7 @@ export default class CarbonMonoxideAccessory extends BaseAccessory {
 
     pipe(
       CarbonMonoxideRangeFeatures,
-      RA.findFirstMap((a) => RR.lookup(a)(this.rangeCapabilities)),
+      RA.findFirstMap((a) => RR.lookup(a)(this.rangeFeatures)),
       O.match(
         () =>
           this.logWithContext(
@@ -46,9 +46,7 @@ export default class CarbonMonoxideAccessory extends BaseAccessory {
     );
   }
 
-  async handleCarbonMonoxideDetectedGet(
-    asset: RangeCapabilityAsset,
-  ): Promise<number> {
+  async handleCarbonMonoxideDetectedGet(asset: RangeFeature): Promise<number> {
     const determineCoDetected = flow(
       A.findFirst<AirQualityMonitorState>(
         ({ featureName, instance }) =>
@@ -79,9 +77,7 @@ export default class CarbonMonoxideAccessory extends BaseAccessory {
     )();
   }
 
-  async handleCarbonMonoxideLevelGet(
-    asset: RangeCapabilityAsset,
-  ): Promise<number> {
+  async handleCarbonMonoxideLevelGet(asset: RangeFeature): Promise<number> {
     return pipe(
       this.getStateGraphQl(this.determineLevel(asset)),
       TE.match((e) => {
@@ -91,19 +87,14 @@ export default class CarbonMonoxideAccessory extends BaseAccessory {
     )();
   }
 
-  private determineLevel(asset: RangeCapabilityAsset) {
+  private determineLevel(asset: RangeFeature) {
     return flow(
       A.findFirst<AirQualityMonitorState>(
         ({ featureName, instance }) =>
           featureName === 'range' && asset.instance === instance,
       ),
       O.tap(({ value }) =>
-        O.of(
-          this.logWithContext(
-            'debug',
-            `Get ${asset.configurationName}: ${value}`,
-          ),
-        ),
+        O.of(this.logWithContext('debug', `Get ${asset.rangeName}: ${value}`)),
       ),
       O.flatMap(({ value }) =>
         typeof value === 'number' ? O.of(value) : O.none,

@@ -70,12 +70,6 @@ export interface SmartHomeDevice {
   manufacturer: string;
 }
 
-export interface RangeCapability {
-  featureName: Nullable<string>;
-  instance: Nullable<string>;
-  configurationName: Nullable<string>;
-}
-
 export interface Endpoint {
   id: string;
   friendlyName: string;

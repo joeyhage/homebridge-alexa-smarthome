@@ -1,15 +1,15 @@
 import { CapabilityState } from '.';
-import { RangeCapabilityAssets } from './save-device-capabilities';
+import { RangeFeatures } from './save-device-capabilities';
 
 export const HumiditySensorRangeFeatures = ['Indoor humidity'];
 
 export const isHumiditySensor = (
-  rangeCapabilities: RangeCapabilityAssets,
+  rangeFeatures: RangeFeatures,
   capability: CapabilityState,
 ) =>
   capability.featureName === 'range' &&
-  Object.entries(rangeCapabilities).some(
-    ([configurationName, { instance }]) =>
+  Object.entries(rangeFeatures).some(
+    ([rangeName, { instance }]) =>
       instance === capability.instance &&
-      HumiditySensorRangeFeatures.includes(configurationName),
+      HumiditySensorRangeFeatures.includes(rangeName),
   );

@@ -10,7 +10,7 @@ import {
   AirQualityMonitorState,
   AirQualityRangeFeatures,
 } from '../domain/alexa/air-quality-monitor';
-import { RangeCapabilityAsset } from '../domain/alexa/save-device-capabilities';
+import { RangeFeature } from '../domain/alexa/save-device-capabilities';
 import * as mapper from '../mapper/air-quality-mapper';
 import BaseAccessory from './base-accessory';
 
@@ -29,7 +29,7 @@ export default class AirQualityAccessory extends BaseAccessory {
 
     pipe(
       AirQualityRangeFeatures,
-      RA.findFirstMap((a) => RR.lookup(a)(this.rangeCapabilities)),
+      RA.findFirstMap((a) => RR.lookup(a)(this.rangeFeatures)),
       O.match(
         () =>
           this.logWithContext(
@@ -45,7 +45,7 @@ export default class AirQualityAccessory extends BaseAccessory {
     );
 
     pipe(
-      this.rangeCapabilities,
+      this.rangeFeatures,
       RR.lookup('Particulate matter'),
       O.map((asset) => {
         this.service
@@ -55,7 +55,7 @@ export default class AirQualityAccessory extends BaseAccessory {
     );
 
     pipe(
-      this.rangeCapabilities,
+      this.rangeFeatures,
       RR.lookup('Volatile organic compounds'),
       O.map((asset) => {
         this.service
@@ -65,7 +65,7 @@ export default class AirQualityAccessory extends BaseAccessory {
     );
   }
 
-  async handleAirQualityGet(asset: RangeCapabilityAsset): Promise<number> {
+  async handleAirQualityGet(asset: RangeFeature): Promise<number> {
     const determineAirQuality = flow(
       A.findFirst<AirQualityMonitorState>(
         ({ featureName, instance }) =>
@@ -91,7 +91,7 @@ export default class AirQualityAccessory extends BaseAccessory {
     )();
   }
 
-  async handlePM25DensityGet(asset: RangeCapabilityAsset): Promise<number> {
+  async handlePM25DensityGet(asset: RangeFeature): Promise<number> {
     return pipe(
       this.getStateGraphQl(this.determineDensity(asset)),
       TE.match((e) => {
@@ -101,7 +101,7 @@ export default class AirQualityAccessory extends BaseAccessory {
     )();
   }
 
-  async handleVocDensityGet(asset: RangeCapabilityAsset): Promise<number> {
+  async handleVocDensityGet(asset: RangeFeature): Promise<number> {
     return pipe(
       this.getStateGraphQl(this.determineDensity(asset)),
       TE.match((e) => {
@@ -111,7 +111,7 @@ export default class AirQualityAccessory extends BaseAccessory {
     )();
   }
 
-  private determineDensity(asset: RangeCapabilityAsset) {
+  private determineDensity(asset: RangeFeature) {
     return flow(
       A.findFirst<AirQualityMonitorState>(
         ({ featureName, instance }) =>
@@ -121,9 +121,7 @@ export default class AirQualityAccessory extends BaseAccessory {
         typeof value === 'number' ? O.of(value) : O.none,
       ),
       O.tap((s) =>
-        O.of(
-          this.logWithContext('debug', `Get ${asset.configurationName}: ${s}`),
-        ),
+        O.of(this.logWithContext('debug', `Get ${asset.rangeName}: ${s}`)),
       ),
     );
   }
