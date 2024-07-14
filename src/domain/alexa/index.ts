@@ -67,6 +67,8 @@ export const SupportedActions = {
   turnOn: 'turnOn',
   turnOff: 'turnOff',
   setBrightness: 'setBrightness',
+  setColor: 'setColor',
+  setColorTemperature: 'setColorTemperature',
   setTargetSetpoint: 'setTargetSetpoint',
   adjustTargetSetpoint: 'adjustTargetSetpoint',
   setThermostatMode: 'setThermostatMode',

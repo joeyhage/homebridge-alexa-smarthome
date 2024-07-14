@@ -1,44 +1,82 @@
-name: Build, lint, and test
+name: Build
 
 on:
   push:
-    branches: [ main ]
+    tags:
+      - '**'
     paths-ignore:
       - '.github/**'
       - '.husky/**'
       - '.vscode/**'
-  pull_request:
-    branches: [ main ]
+
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        # the Node.js versions to build on
-        node-version: [16.x, 18.x, 20.x]
-
+    outputs:
+      pkg_version: ${{ steps.pkg_version.outputs.pkg_version }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Use Node.js ${{ matrix.node-version }} 
+      - name: Use Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 22.x
+
+      - name: Determine package version
+        id: pkg_version
+        run: |
+          pkg_version=$(node -p "require('./package.json').version")
+          echo "Package version: $pkg_version"
+          echo "pkg_version=$pkg_version" >> "$GITHUB_ENV"
+          echo "pkg_version=$pkg_version" >> "$GITHUB_OUTPUT"
+
+      - name: Check tag matches package version
+        run: |
+          tag=$(echo "${GITHUB_REF#refs/tags/}")
+          if [ "$tag" != "v${pkg_version}" ]; then
+            echo "Tag '$tag' does not match package version 'v${pkg_version}'"
+            exit 1
+          fi
+
       - name: Install dependencies
         run: npm install
-
-      - name: Lint the project
-        run: npm run lint
-
-      - name: Format the project
-        run: npm run format
 
       - name: Build the project
         run: npm run build
         env:
           CI: true
 
-      - name: Test the project
-        run: npm run test-ci
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: distribution
+          path: dist/
+
+  upload-release:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: distribution
+          path: dist/
+
+      - name: Zip artifacts
+        run: |
+          artifact_path="homebridge-alexa-smarthome.${{ needs.build.outputs.pkg_version }}.zip"
+          echo "artifact_path=$artifact_path" >> "$GITHUB_ENV"
+          zip -r "$artifact_path" dist/
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: ${{ env.artifact_path }}
+          generate_release_notes: true

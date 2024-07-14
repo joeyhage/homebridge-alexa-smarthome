@@ -1,9 +1,8 @@
 export const LightQuery = `query getPowerBrightnessColorColorTempStates(
   $endpointId: String!
-  $latencyTolerance: LatencyToleranceValue
 ) {
   endpoint(id: $endpointId) {
-    features(latencyToleranceValue: $latencyTolerance) {
+    features {
       name
       properties {
         name

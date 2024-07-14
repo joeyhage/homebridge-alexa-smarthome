@@ -31,6 +31,9 @@ import {
   validateGetDevicesSuccessful,
 } from '../domain/alexa/get-devices';
 import { extractRangeFeatures } from '../domain/alexa/save-device-capabilities';
+import SetDeviceStateResponse, {
+  validateSetStateSuccessful,
+} from '../domain/alexa/set-device-state.js';
 import DeviceStore from '../store/device-store';
 import { PluginLogger } from '../util/plugin-logger';
 import {
@@ -92,8 +95,23 @@ export class AlexaApiWrapper {
       TE.tapIO((devices) => {
         this.deviceStore.deviceCapabilities = extractRangeFeatures(devices);
         devices.forEach(([e, d]) => {
+          this.log.debug(
+            `${d.displayName} ::: Raw device features: ${JSON.stringify(
+              e.features,
+              undefined,
+              2,
+            )}`,
+          )();
+          const states = extractStates(e.features);
+          this.log.debug(
+            `${d.displayName} ::: Device states: ${JSON.stringify(
+              states,
+              undefined,
+              2,
+            )}`,
+          );
           this.deviceStore.updateCache([d.id], {
-            [d.id]: O.of(extractStates(e.features).map(E.right)),
+            [d.id]: O.of(states.map(E.right)),
           });
         });
         return this.log.debug(
@@ -156,7 +174,6 @@ export class AlexaApiWrapper {
                   () =>
                     this.executeGraphQlQuery<EndpointStateResponse>(query, {
                       endpointId: device.endpointId,
-                      latencyTolerance: 'LOW',
                     }),
                   (reason) =>
                     new HttpError(
@@ -184,15 +201,6 @@ export class AlexaApiWrapper {
                 this.log.debug('Obtained device state from cache'),
               ),
             ),
-        ),
-      ),
-      TE.tapIO(([, states]) =>
-        this.log.debug(
-          `${device.displayName} ::: Raw device states: ${JSON.stringify(
-            states,
-            undefined,
-            2,
-          )}`,
         ),
       ),
       TE.mapBoth(
@@ -237,6 +245,32 @@ export class AlexaApiWrapper {
     );
   }
 
+  setDeviceState(
+    deviceId: string,
+    action: SupportedActionsType,
+    parameters: Record<string, string> = {},
+    entityType: EntityType = 'APPLIANCE',
+  ): TaskEither<AlexaApiError, void> {
+    return pipe(
+      TE.tryCatch(
+        () =>
+          this.changeDeviceState(
+            deviceId,
+            { action, ...parameters },
+            entityType,
+          ),
+        (reason) =>
+          new HttpError(
+            `Error setting smart home device state. Reason: ${
+              (reason as Error).message
+            }`,
+          ),
+      ),
+      TE.flatMapEither(validateSetStateSuccessful),
+      TE.map(constVoid),
+    );
+  }
+
   private async executeGraphQlQuery<T>(
     query: string,
     variables: Record<string, unknown> = {},
@@ -250,6 +284,22 @@ export class AlexaApiWrapper {
     };
     return AlexaApiWrapper.toPromise<T>((cb) =>
       this.alexaRemote.httpsGet(false, '/nexus/v1/graphql', cb, flags),
+    );
+  }
+
+  private changeDeviceState(
+    entityId: string,
+    parameters: Record<string, string>,
+    entityType: EntityType = 'APPLIANCE',
+  ): Promise<SetDeviceStateResponse> {
+    return AlexaApiWrapper.toPromise<SetDeviceStateResponse>(
+      this.alexaRemote.executeSmarthomeDeviceAction.bind(
+        this.alexaRemote,
+        [entityId],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        parameters as any,
+        entityType,
+      ),
     );
   }
 
