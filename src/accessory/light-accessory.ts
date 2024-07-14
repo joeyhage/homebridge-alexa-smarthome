@@ -154,15 +154,13 @@ export default class LightAccessory extends BaseAccessory {
   async handleHueGet(): Promise<number> {
     const determineHueState = flow(
       A.findFirst<LightbulbState>(({ featureName }) => featureName === 'color'),
-      O.tap(({ value }) =>
-        O.of(this.logWithContext('debug', `Get hue result: ${value}`)),
-      ),
       O.flatMap(({ value }) => {
         if (typeof value !== 'object' || typeof value.hue !== 'number') {
           return O.none;
         }
         return O.of(Math.trunc(value.hue));
       }),
+      O.tap((s) => O.of(this.logWithContext('debug', `Get hue result: ${s}`))),
     );
 
     return pipe(
@@ -211,15 +209,15 @@ export default class LightAccessory extends BaseAccessory {
   async handleSaturationGet(): Promise<number> {
     const determineSaturationState = flow(
       A.findFirst<LightbulbState>(({ featureName }) => featureName === 'color'),
-      O.tap(({ value }) =>
-        O.of(this.logWithContext('debug', `Get saturation result: ${value}`)),
-      ),
       O.flatMap(({ value }) => {
         if (typeof value !== 'object' || typeof value.saturation !== 'number') {
           return O.none;
         }
         return O.of(Math.trunc(value.saturation * 100));
       }),
+      O.tap((s) =>
+        O.of(this.logWithContext('debug', `Get saturation result: ${s}%`)),
+      ),
     );
 
     return pipe(

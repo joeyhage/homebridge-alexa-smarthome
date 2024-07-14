@@ -59,10 +59,6 @@ Node.js versions supported: 16.x, 18.x, 20.x
 - Locks
 - Air Quality Monitors
   - Only confirmed to work with Amazon Air Quality Monitor. Please report an issue if it doesn't work with your air quality monitor.
-- Echo smart speakers / Echo smart displays
-  - Play + pause
-  - Next track / previous track
-  - Change volume
 - Device types not listed above that support on/off will be added as switches. For example:
   - Air fresheners
   - Vacuum cleaners
@@ -73,7 +69,7 @@ Node.js versions supported: 16.x, 18.x, 20.x
 
 - Devices already linked to your Alexa account can be integrated with HomeKit automatically.
 - Only Amazon credentials needed to configure this plugin rather than credentials for all your devices.
-- This plugin does not store your Amazon username or password. Instead, it uses session cookies that are valid for up to 14 days.
+- This plugin does not store your Amazon username or password. Instead, it uses session cookies that are valid for up to 14 days. This plugin will automatically refresh the session cookie before it expires.
 
 ### Air quality monitors
 
@@ -87,28 +83,6 @@ All of the following are supported depending on what your device measures:
 - Temperature
 
 When you first add an Air Quality Monitor to HomeKit, the above measurements may appear in the Default Room but can be assigned to any room you choose.
-
-### Echo devices
-
-Echo devices appear in HomeKit as Televisions which enables media control via the [Control Center remote controls](https://support.apple.com/guide/tv/use-ios-or-ipados-control-center-atvb701cadc1/tvos).
-
-Echo devices are added to HomeKit as external accessories that need to be added manually. Restart Homebridge and review the Homebridge logs for a message similar to: `Please add [DEVICE NAME] manually in Home app. Setup Code: xxx-xx-xxx`
-
-To use the Control Center remote controls, follow [these instructions](https://support.apple.com/guide/tv/use-ios-or-ipados-control-center-atvb701cadc1/tvos) to add the remote to your device's Control Center. Once the remote is open, you can change the device you are controlling using the `⌄` arrow next to the device name at the top of the screen.
-
-Remote control features - **you must start the media on the Echo (music, audio book, etc) before you can control it. It may take up to a minute for the remote to start working once media is playing**:
-
-- Play
-- Pause
-- Next (right arrow)
-- Previous (left arrow)
-- Volume control (hardware volume buttons, a.k.a. volume button on the side of your iPhone/iPad)
-
-Siri is not supported out of the box but I may be able to support in the future.
-
-AirPlay is unrelated to Homebridge/HomeKit and needs to be supported by the device (the Echo). If you wish to use AirPlay, the best option is to buy an AppleTV or Apple HomePod.
-
-When you first add an Echo device with a temperature sensor to HomeKit, the temperature may appear in the Default Room but can be assigned to any room you choose.
 
 ## Initial configuration
 

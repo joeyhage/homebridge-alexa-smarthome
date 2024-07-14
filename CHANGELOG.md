@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, unreleased work in progress.
 
+### Added
+
+- Color and color temperature support for lightbulbs.
+
 ### Changed
 
 - Accessories pull information from a different API now (GraphQL) to address rate limiting and timeouts.

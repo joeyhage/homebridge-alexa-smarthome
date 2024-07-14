@@ -72,7 +72,7 @@ jobs:
         run: |
           artifact_path="homebridge-alexa-smarthome.${{ needs.build.outputs.pkg_version }}.zip"
           echo "artifact_path=$artifact_path" >> "$GITHUB_ENV"
-          zip -r "$artifact_path" dist/
+          zip -r "$artifact_path" dist/*
 
       - name: Release
         uses: softprops/action-gh-release@v2
