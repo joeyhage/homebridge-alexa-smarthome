@@ -1,9 +1,8 @@
 export const RangeQuery = `query getRangeStates(
   $endpointId: String!
-  $latencyTolerance: LatencyToleranceValue
 ) {
   endpoint(id: $endpointId) {
-    features(latencyToleranceValue: $latencyTolerance) {
+    features {
       name
       instance
       properties {

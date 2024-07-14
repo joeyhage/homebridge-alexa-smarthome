@@ -1,9 +1,8 @@
 export const ThermostatQuery = `query getThermostatStates(
   $endpointId: String!
-  $latencyTolerance: LatencyToleranceValue
 ) {
   endpoint(id: $endpointId) {
-    features(latencyToleranceValue: $latencyTolerance) {
+    features {
       name
       properties {
         name

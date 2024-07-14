@@ -1,9 +1,8 @@
 export const LockQuery = `query getLockState(
   $endpointId: String!
-  $latencyTolerance: LatencyToleranceValue
 ) {
   endpoint(id: $endpointId) {
-    features(latencyToleranceValue: $latencyTolerance) {
+    features {
       name
       __typename
       properties {

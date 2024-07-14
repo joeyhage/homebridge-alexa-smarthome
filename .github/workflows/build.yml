@@ -1,4 +1,4 @@
-name: Code checks
+name: Build
 
 on:
   push:
@@ -8,6 +8,9 @@ on:
       - '.github/**'
       - '.husky/**'
       - '.vscode/**'
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -63,35 +66,17 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: distribution
+          path: dist/
 
       - name: Zip artifacts
         run: |
           artifact_path="homebridge-alexa-smarthome.${{ needs.build.outputs.pkg_version }}.zip"
           echo "artifact_path=$artifact_path" >> "$GITHUB_ENV"
-          zip -r "$artifact_path" dist/
+          zip -r "$artifact_path" dist/*
 
-      - name: Fetch release information
-        id: get_release
-        uses: actions/github-script@v7
+      - name: Release
+        uses: softprops/action-gh-release@v2
         with:
-          script: |
-            const tag = '${{ github.ref }}'.split('/').pop();
-            const release = await github.rest.repos.getReleaseByTag({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag: tag
-            });
-            return {
-              upload_url: release.data.upload_url,
-              id: release.data.id,
-            };
-
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./${{ env.artifact_path }}
-          asset_name: ${{ env.artifact_path }}
-          asset_content_type: application/zip
+          draft: true
+          files: ${{ env.artifact_path }}
+          generate_release_notes: true
