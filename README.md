@@ -33,7 +33,6 @@ This plugin **does not** allow Alexa to control devices in HomeKit. For that, pl
 - [Currently supported devices](#currently-supported-devices)
 - [Features](#features)
   - [Air quality monitors](#air-quality-monitors)
-  - [Echo devices](#echo-devices)
 - [Initial configuration](#initial-configuration)
 - [Common issues](#common-issues)
 - [Support](#support)
@@ -125,15 +124,10 @@ The first time this plugin starts, you will need to authenticate using your Amaz
   Please update the Performance section of the plugin settings. More information can be found on the plugin settings page.
 </details>
 <details>
-  <summary><code>No media player information found</code> or <code>Cannot control player because there is no media selected.</code></summary>
-  Echo devices can only be controlled once there is media (e.g. music, audio book, etc) playing.
-</details>
-<details>
   <summary>I can't find my device in HomeKit/Apple Home app.</summary>
   <ul>
     <li>Please check the Default Room for the device. Air quality, humidity, and temperature sensors appear as statuses at the top of the room, not as device tiles.</li>
     <li>Double check the name of the device in the Alexa app matches the name specified in the plugin settings. Spaces, uppercase, and lowercase matter.</li>
-    <li>Echo devices are added to HomeKit as external accessories that need to be added manually. Restart Homebridge and review the Homebridge logs for a message similar to: <code>Please add [DEVICE NAME] manually in Home app. Setup Code: xxx-xx-xxx</code></li>
   </ul>
 </details>
 
