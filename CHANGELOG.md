@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, unreleased work in progress.
 
+## [2.2.1] - 2024-08-13
+
+### Changed
+
+- Prepare for Homebridge v2
+
 ## [2.2.0] - 2024-07-16
 
 ### Added
@@ -241,7 +247,8 @@ See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, 
 
 - Support for outlets i.e. smart plugs.
 
-[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.2.0...HEAD
+[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.2.1...HEAD
+[2.2.1]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.5...v2.2.0
 [2.1.5]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.4...v2.1.5
 [2.1.4]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.3...v2.1.4
