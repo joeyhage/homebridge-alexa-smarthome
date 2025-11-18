@@ -1,7 +1,7 @@
 import * as O from 'fp-ts/Option';
 import * as hapNodeJs from 'hap-nodejs';
 import type { API } from 'homebridge';
-import AlexaRemote from './alexa-remote.js';
+import AlexaRemote from 'alexa-remote2';
 import { AlexaSmartHomePlatform } from './platform';
 
 it('should initialize', async () => {

@@ -45,6 +45,7 @@
   ],
   "dependencies": {
     "alexa-cookie2": "^5.0.2",
+    "alexa-remote2": "^8.0.4",
     "async-mutex": "^0.5.0",
     "extend": "^3.0.2",
     "fp-ts": "^2.16.9",
