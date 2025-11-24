@@ -1,0 +1,30 @@
+{
+    "bridge": {
+        "name": "Homebridge",
+        "username": "CC:22:3D:E3:CE:30",
+        "port": 53543,
+        "pin": "123-45-678",
+        "advertiser": "bonjour-hap"
+    },
+    "platforms": [
+        {
+            "name": "Homebridge UI",
+            "port": 8581,
+            "auth": "none",
+            "platform": "config"
+        },
+        {
+            "platform": "HomebridgeAlexaSmartHome",
+            "amazonDomain": "amazon.com",
+            "auth": {
+                "cookie": "",
+                "proxy": {
+                    "clientHost": "localhost",
+                    "port": 2345
+                }
+            },
+            "debug": false,
+            "language": "en-US"
+        }
+    ]
+}

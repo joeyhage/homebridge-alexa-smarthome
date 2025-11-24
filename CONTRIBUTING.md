@@ -20,7 +20,7 @@ It's best practice to create a new branch for each new feature or bug fix you're
 
 ## Local Setup
 
-This project requires Node.js version 18.x or 20.x. If you don't have Node.js installed, you can download it from [the official Node.js website](https://nodejs.org/). After installing Node.js, you can verify the version by running `node -v` in your terminal. 
+This project requires Node.js version 18.x, 20.x, or 22.x. If you don't have Node.js installed, you can download it from [the official Node.js website](https://nodejs.org/). After installing Node.js, you can verify the version by running `node -v` in your terminal.
 
 Once you have the correct version of Node.js installed, navigate to the project directory and install the dependencies listed in the `package.json` file by running `npm install`. This will install all the necessary packages for you to be able to run the project locally.
 

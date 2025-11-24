@@ -1,0 +1,28 @@
+{
+    "name": "devcontainer",
+    "image": "mcr.microsoft.com/devcontainers/javascript-node:4.0.3-22-trixie",
+    "remoteUser": "node",
+    "postCreateCommand": "./.devcontainer/post-create.sh",
+    "postAttachCommand": "./.devcontainer/post-attach.sh",
+    "mounts": [
+        "source=nodemodules-${devcontainerId},target=${containerWorkspaceFolder}/node_modules,type=volume",
+        "source=homebridge-${devcontainerId},target=/home/node/.homebridge,type=volume"
+    ],
+    "portsAttributes": {
+        "8581": {
+            "label": "Homebridge Config UI X"
+        },
+        "53543": {
+            "label": "Homebridge HAP",
+            "onAutoForward": "ignore"
+        }
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "dbaeumer.vscode-eslint",
+                "esbenp.prettier-vscode"
+            ]
+        }
+    }
+}
