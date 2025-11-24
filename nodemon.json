@@ -1,8 +1,14 @@
 {
-  "watch": ["src"],
+  "watch": [
+    "src"
+  ],
   "ext": "ts",
-  "ignore": ["src/**/*.it.ts", "src/**/*.spec.ts", "src/**/*.test.ts"],
-  "exec": "tsc -p tsconfig.prod.json && homebridge -I -D",
+  "ignore": [
+    "src/**/*.it.ts",
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts"
+  ],
+  "exec": "tsc -p tsconfig.prod.json && homebridge -D -I -P ../ --strict-plugin-resolution",
   "signal": "SIGTERM",
   "env": {
     "NODE_OPTIONS": "--trace-warnings"

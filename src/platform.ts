@@ -1,3 +1,4 @@
+import AlexaRemote, { type InitOptions } from 'alexa-remote2';
 import * as A from 'fp-ts/Array';
 import * as E from 'fp-ts/Either';
 import * as IO from 'fp-ts/IO';
@@ -21,7 +22,6 @@ import {
 import { match } from 'ts-pattern';
 import AccessoryFactory from './accessory/accessory-factory';
 import BaseAccessory from './accessory/base-accessory';
-import AlexaRemote, { type InitOptions } from './alexa-remote.js';
 import { AlexaDeviceError, AlexaError } from './domain/alexa/errors';
 import { SmartHomeDevice } from './domain/alexa/get-devices';
 import { AlexaPlatformConfig } from './domain/homebridge';
@@ -189,9 +189,10 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
             macDms: auth?.macDms,
             proxyOwnIp: this.config.auth.proxy.clientHost,
             proxyPort: this.config.auth.proxy.port,
-            useWsMqtt: false,
             logger: this.alexaRemoteLogger.bind(this),
             proxyLogLevel: 'error',
+            usePushConnectType: 3,
+            useWsMqtt: false,
           } as InitOptions,
           (error) => {
             pipe(

@@ -8,7 +8,7 @@ import {
   constant,
   pipe,
 } from 'fp-ts/lib/function';
-import AlexaRemote, { InitOptions } from '../alexa-remote.js';
+import AlexaRemote, { InitOptions } from 'alexa-remote2';
 import { Authentication } from '../domain/alexa';
 import { PLUGIN_NAME } from '../settings';
 import DeviceStore from '../store/device-store';

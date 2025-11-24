@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 import * as E from 'fp-ts/Either';
 import * as O from 'fp-ts/Option';
 import { constVoid } from 'fp-ts/lib/function';
-import AlexaRemote, { CallbackWithErrorAndBody } from '../alexa-remote.js';
+import AlexaRemote, { CallbackWithErrorAndBody } from 'alexa-remote2';
 import { DeviceResponse } from '../domain/alexa';
 import {
   HttpError,
@@ -18,7 +18,7 @@ import DeviceStore from '../store/device-store';
 import { PluginLogger } from '../util/plugin-logger';
 import { AlexaApiWrapper } from './alexa-api-wrapper';
 
-jest.mock('../alexa-remote.js');
+jest.mock('alexa-remote2');
 
 const alexaRemoteMocks = AlexaRemote as jest.MockedClass<typeof AlexaRemote>;
 

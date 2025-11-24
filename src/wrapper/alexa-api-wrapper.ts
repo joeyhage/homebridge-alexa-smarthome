@@ -11,7 +11,7 @@ import { Pattern, match } from 'ts-pattern';
 import AlexaRemote, {
   type CallbackWithErrorAndBody,
   type EntityType,
-} from '../alexa-remote.js';
+} from 'alexa-remote2';
 import {
   CapabilityState,
   SupportedActionsType,

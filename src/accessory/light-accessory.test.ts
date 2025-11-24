@@ -2,7 +2,7 @@
 import * as O from 'fp-ts/Option';
 import * as TE from 'fp-ts/TaskEither';
 import { HomebridgeAPI } from 'homebridge/lib/api';
-import AlexaRemote from '../alexa-remote.js';
+import AlexaRemote from 'alexa-remote2';
 import { HttpError } from '../domain/alexa/errors';
 import { AlexaSmartHomePlatform } from '../platform';
 import DeviceStore from '../store/device-store';

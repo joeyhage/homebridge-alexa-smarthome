@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, unreleased work in progress.
+## [2.4.0] - 2025-11-23
+
+### Changed
+
+- Added Node major version 24 to supported engines
+- Upgraded alexa-remote2 to version 8.0.4
 
 ## [2.3.0] - 2025-04-12
 
@@ -253,36 +258,37 @@ See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, 
 
 - Support for outlets i.e. smart plugs.
 
-[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.3.0...HEAD
-[2.3.0]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.2.1...v2.3.0
-[2.2.1]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.2.0...v2.2.1
-[2.2.0]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.5...v2.2.0
-[2.1.5]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.4...v2.1.5
-[2.1.4]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.3...v2.1.4
-[2.1.3]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.2...v2.1.3
-[2.1.2]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.1...v2.1.2
-[2.1.1]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.0...v2.1.1
-[2.1.0]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.0.8...v2.1.0
-[2.0.8]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.0.7...v2.0.8
-[2.0.7]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.0.6...v2.0.7
-[2.0.6]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.0.5...v2.0.6
-[2.0.5]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.0.4...v2.0.5
-[2.0.4]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.0.3...v2.0.4
-[2.0.3]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.0.2...v2.0.3
-[2.0.2]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.0.1...v2.0.2
-[2.0.1]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.0.0...v2.0.1
-[2.0.0]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v1.0.3...v2.0.0
-[1.0.3]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v1.0.2...v1.0.3
-[1.0.2]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v1.0.1...v1.0.2
-[1.0.1]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v1.0.0...v1.0.1
-[1.0.0]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.2.1...v1.0.0
-[0.2.1]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.2.0...v0.2.1
-[0.2.0]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.1.2...v0.2.0
-[0.1.2]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.1.1...v0.1.2
-[0.1.1]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.1.0...v0.1.1
-[0.1.0]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.0.19...v0.1.0
-[0.0.19]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.0.18...v0.0.19
-[0.0.18]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.0.17...v0.0.18
-[0.0.17]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.0.16...v0.0.17
-[0.0.16]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v0.0.15...v0.0.16
-[0.0.15]: https://github.com/joeyhage/homebridge-spotify-speaker/releases/tag/v0.0.15
+[unreleased]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v2.4.0...HEAD
+[2.4.0]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v2.3.0...v2.4.0
+[2.3.0]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v2.2.1...v2.3.0
+[2.2.1]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v2.2.0...v2.2.1
+[2.2.0]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v2.1.5...v2.2.0
+[2.1.5]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v2.1.4...v2.1.5
+[2.1.4]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v2.1.3...v2.1.4
+[2.1.3]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v2.1.2...v2.1.3
+[2.1.2]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v2.1.1...v2.1.2
+[2.1.1]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v2.1.0...v2.1.1
+[2.1.0]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v2.0.8...v2.1.0
+[2.0.8]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v2.0.7...v2.0.8
+[2.0.7]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v2.0.6...v2.0.7
+[2.0.6]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v2.0.5...v2.0.6
+[2.0.5]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v2.0.4...v2.0.5
+[2.0.4]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v2.0.3...v2.0.4
+[2.0.3]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v2.0.2...v2.0.3
+[2.0.2]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v2.0.1...v2.0.2
+[2.0.1]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v2.0.0...v2.0.1
+[2.0.0]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v1.0.3...v2.0.0
+[1.0.3]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v1.0.2...v1.0.3
+[1.0.2]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v1.0.1...v1.0.2
+[1.0.1]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v1.0.0...v1.0.1
+[1.0.0]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v0.2.1...v1.0.0
+[0.2.1]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v0.1.2...v0.2.0
+[0.1.2]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v0.1.1...v0.1.2
+[0.1.1]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v0.0.19...v0.1.0
+[0.0.19]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v0.0.18...v0.0.19
+[0.0.18]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v0.0.17...v0.0.18
+[0.0.17]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v0.0.16...v0.0.17
+[0.0.16]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v0.0.15...v0.0.16
+[0.0.15]: https://github.com/joeyhage/homebridge-alexa-smarthome/releases/tag/v0.0.15
