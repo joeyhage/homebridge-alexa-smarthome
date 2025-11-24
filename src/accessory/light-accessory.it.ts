@@ -3,7 +3,7 @@
 import * as E from 'fp-ts/Either';
 import { constant } from 'fp-ts/lib/function';
 import { HomebridgeAPI } from 'homebridge/lib/api';
-import AlexaRemote, { InitOptions } from '../alexa-remote.js';
+import AlexaRemote, { InitOptions } from 'alexa-remote2';
 import { Authentication } from '../domain/alexa';
 import { AlexaSmartHomePlatform } from '../platform';
 import { PLUGIN_NAME } from '../settings';
