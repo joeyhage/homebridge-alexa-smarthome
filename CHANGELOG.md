@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, unreleased work in progress.
+## [2.4.0] - 2025-11-23
+
+### Changed
+
+- Added Node major version 24 to supported engines
+- Upgraded alexa-remote2 to version 8.0.4
 
 ## [2.3.0] - 2025-04-12
 
@@ -253,7 +258,8 @@ See the [roadmap](https://homebridge-alexa-smarthome.canny.io/) for up-to-date, 
 
 - Support for outlets i.e. smart plugs.
 
-[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.3.0...HEAD
+[unreleased]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.4.0...HEAD
+[2.4.0]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.3.0...v2.4.0
 [2.3.0]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.2.1...v2.3.0
 [2.2.1]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/joeyhage/homebridge-spotify-speaker/compare/v2.1.5...v2.2.0
