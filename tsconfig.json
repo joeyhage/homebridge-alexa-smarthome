@@ -14,5 +14,5 @@
     "strictPropertyInitialization": false,
     "allowJs": true
   },
-  "include": ["src/", "__tests__/"]
+  "include": ["src/"]
 }

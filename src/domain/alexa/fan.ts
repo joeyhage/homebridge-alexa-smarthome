@@ -7,4 +7,5 @@ export interface FanState {
 
 export const FanFeatures = {
   power: 'power',
+  percentage: 'percentage',
 } as const;

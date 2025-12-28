@@ -11,16 +11,16 @@ import * as mapper from './index';
 describe('mapAlexaDeviceToHomeKitAccessoryInfos', () => {
   test('should not create an unsupported device', async () => {
     // given
-    const device = {
+    const device: SmartHomeDevice = {
       id: '123',
+      endpointId: 'amzn1.alexa.endpoint.123',
       displayName: 'test light group',
-      description: 'test',
       supportedOperations: [],
-      providerData: {
-        enabled: true,
-        categoryType: 'APPLIANCE',
-        deviceType: 'OTHER',
-      },
+      enabled: true,
+      deviceType: 'OTHER',
+      serialNumber: 'test-serial',
+      model: 'test-model',
+      manufacturer: 'test-manufacturer',
     };
     const platform = global.createPlatform();
 
@@ -28,11 +28,14 @@ describe('mapAlexaDeviceToHomeKitAccessoryInfos', () => {
     const lightAcc = mapper.mapAlexaDeviceToHomeKitAccessoryInfos(
       platform,
       randomUUID(),
-      device,
+      device as SmartHomeDevice,
+      false,
     );
 
     // then
-    expect(lightAcc).toStrictEqual(E.left(new UnsupportedDeviceError(device)));
+    expect(lightAcc).toStrictEqual(
+      E.left(new UnsupportedDeviceError(device as SmartHomeDevice)),
+    );
   });
 
   test('should not create an invalid device', async () => {
@@ -48,6 +51,7 @@ describe('mapAlexaDeviceToHomeKitAccessoryInfos', () => {
       platform,
       randomUUID(),
       device,
+      false,
     );
 
     // then
@@ -56,16 +60,16 @@ describe('mapAlexaDeviceToHomeKitAccessoryInfos', () => {
 
   test('should map switch with brightness capability to light bulb accessory', async () => {
     // given
-    const device = {
+    const device: SmartHomeDevice = {
       id: '123',
+      endpointId: 'amzn1.alexa.endpoint.123',
       displayName: 'test switch with brightness',
-      description: 'test',
       supportedOperations: ['turnOn', 'turnOff', 'setBrightness'],
-      providerData: {
-        enabled: true,
-        categoryType: 'APPLIANCE',
-        deviceType: 'SWITCH',
-      },
+      enabled: true,
+      deviceType: 'SWITCH',
+      serialNumber: 'test-serial',
+      model: 'test-model',
+      manufacturer: 'test-manufacturer',
     };
     const platform = global.createPlatform();
 
@@ -74,6 +78,7 @@ describe('mapAlexaDeviceToHomeKitAccessoryInfos', () => {
       platform,
       randomUUID(),
       device,
+      false,
     );
 
     // then
@@ -90,16 +95,16 @@ describe('mapAlexaDeviceToHomeKitAccessoryInfos', () => {
 
   test('should map switch without brightness capability to switch accessory', async () => {
     // given
-    const device = {
+    const device: SmartHomeDevice = {
       id: '123',
+      endpointId: 'amzn1.alexa.endpoint.123',
       displayName: 'test switch',
-      description: 'test',
       supportedOperations: ['turnOn', 'turnOff'],
-      providerData: {
-        enabled: true,
-        categoryType: 'APPLIANCE',
-        deviceType: 'SWITCH',
-      },
+      enabled: true,
+      deviceType: 'SWITCH',
+      serialNumber: 'test-serial',
+      model: 'test-model',
+      manufacturer: 'test-manufacturer',
     };
     const platform = global.createPlatform();
 
@@ -108,6 +113,7 @@ describe('mapAlexaDeviceToHomeKitAccessoryInfos', () => {
       platform,
       randomUUID(),
       device,
+      false,
     );
 
     // then

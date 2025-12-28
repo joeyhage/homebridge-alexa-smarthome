@@ -216,9 +216,18 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
   }
 
   findDevices(): TE.TaskEither<AlexaError, SmartHomeDevice[]> {
+    // Extract device names from both string and object formats
     const deviceFilter = pipe(
       O.fromNullable(this.config.devices),
-      O.map(A.map((d) => d.trim())),
+      O.map(
+        A.map((d) => {
+          if (typeof d === 'string') {
+            return d.trim();
+          } else {
+            return d.name.trim();
+          }
+        }),
+      ),
       O.getOrElse(constant(new Array<string>())),
     );
     const excludeDevices = pipe(
@@ -263,6 +272,26 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     );
   }
 
+  getDeviceMapToFan(deviceName: string): boolean {
+    return pipe(
+      O.fromNullable(this.config.devices),
+      O.flatMap((devices) => {
+        const deviceConfig = devices.find((d) => {
+          if (typeof d === 'string') {
+            return d.trim() === deviceName.trim();
+          } else {
+            return d.name.trim() === deviceName.trim();
+          }
+        });
+        if (deviceConfig && typeof deviceConfig === 'object') {
+          return O.fromNullable(deviceConfig.mapToFan);
+        }
+        return O.none;
+      }),
+      O.getOrElse(constant(false)),
+    );
+  }
+
   initDevices(
     devices: SmartHomeDevice[],
   ): TE.TaskEither<AlexaError | void, BaseAccessory[]> {
@@ -292,7 +321,12 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     return pipe(
       E.bindTo('entityId')(util.extractEntityId(device.id)),
       E.bind('hbAccessories', ({ entityId }) =>
-        mapAlexaDeviceToHomeKitAccessoryInfos(this, entityId, device),
+        mapAlexaDeviceToHomeKitAccessoryInfos(
+          this,
+          entityId,
+          device,
+          this.getDeviceMapToFan(device.displayName),
+        ),
       ),
       E.map(({ entityId, hbAccessories }) =>
         pipe(

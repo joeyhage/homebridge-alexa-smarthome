@@ -1,25 +1,24 @@
 import { randomUUID } from 'crypto';
 import * as O from 'fp-ts/Option';
 import DeviceStore from './device-store';
-import { PluginLogger } from '../util/plugin-logger';
+import { CapabilityState } from '../domain/alexa';
 
 describe('updateCacheValue', () => {
   test('should update given device and namespace were previously cached', () => {
     // given
     const deviceId = randomUUID();
-    const store = new DeviceStore(getPluginLogger());
+    const store = new DeviceStore(global.createPlatformConfig().performance);
+    const existingState: CapabilityState = {
+      featureName: 'power',
+      value: true,
+    };
     store.cache.states = {
-      [deviceId]: [
-        O.of({
-          namespace: 'Alexa.PowerController',
-          value: true,
-        }),
-      ],
+      [deviceId]: [O.of(existingState)],
     };
 
     // when
     const cache = store.updateCacheValue(deviceId, {
-      namespace: 'Alexa.PowerController',
+      featureName: 'power',
       value: false,
     });
 
@@ -33,19 +32,18 @@ describe('updateCacheValue', () => {
   test('should not update given no previous value', () => {
     // given
     const deviceId = randomUUID();
-    const store = new DeviceStore(getPluginLogger());
+    const store = new DeviceStore(global.createPlatformConfig().performance);
+    const existingState: CapabilityState = {
+      featureName: 'power',
+      value: true,
+    };
     store.cache.states = {
-      [deviceId]: [
-        O.of({
-          namespace: 'Alexa.PowerController',
-          value: true,
-        }),
-      ],
+      [deviceId]: [O.of(existingState)],
     };
 
     // when
     const cache = store.updateCacheValue(deviceId, {
-      namespace: 'Alexa.BrightnessController',
+      featureName: 'brightness',
       value: 100,
     });
 
@@ -56,6 +54,3 @@ describe('updateCacheValue', () => {
     ).toStrictEqual(O.of(true));
   });
 });
-
-const getPluginLogger = () =>
-  new PluginLogger(global.MockLogger, global.createPlatformConfig());

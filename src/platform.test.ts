@@ -1,22 +1,23 @@
 import * as E from 'fp-ts/Either';
 import * as hapNodeJs from 'hap-nodejs';
 import type { API } from 'homebridge';
+import { SmartHomeDevice } from './domain/alexa/get-devices';
 import { ValidationError } from './domain/homebridge/errors';
 import { AlexaSmartHomePlatform } from './platform';
 
 test('should not initialize devices with invalid ids', async () => {
   // given
   const platform = getPlatform();
-  const device = {
+  const device: SmartHomeDevice = {
     id: '123',
+    endpointId: 'amzn1.alexa.endpoint.123',
     displayName: 'test light',
-    description: 'test',
     supportedOperations: ['turnOff', 'turnOn', 'setBrightness'],
-    providerData: {
-      enabled: true,
-      categoryType: 'APPLIANCE',
-      deviceType: 'LIGHT',
-    },
+    enabled: true,
+    deviceType: 'LIGHT',
+    serialNumber: 'test-serial',
+    model: 'test-model',
+    manufacturer: 'test-manufacturer',
   };
 
   // when

@@ -1,20 +1,21 @@
 import * as E from 'fp-ts/Either';
 import { UnsupportedDeviceError } from '../domain/alexa/errors';
+import { SmartHomeDevice } from '../domain/alexa/get-devices';
 import AccessoryFactory from './accessory-factory';
 
 describe('createAccessory', () => {
   test('should create a LightAccessory', () => {
     // given
-    const device = {
+    const device: SmartHomeDevice = {
       id: '123',
+      endpointId: 'amzn1.alexa.endpoint.123',
       displayName: 'test light',
-      description: 'test',
       supportedOperations: ['turnOff', 'turnOn', 'setBrightness'],
-      providerData: {
-        enabled: true,
-        categoryType: 'APPLIANCE',
-        deviceType: 'LIGHT',
-      },
+      enabled: true,
+      deviceType: 'LIGHT',
+      serialNumber: 'test-serial',
+      model: 'test-model',
+      manufacturer: 'test-manufacturer',
     };
     const platform = global.createPlatform();
     const uuid = platform.HAP.uuid.generate(device.id);
@@ -37,16 +38,16 @@ describe('createAccessory', () => {
 
   test('should create an OutletAccessory', () => {
     // given
-    const device = {
+    const device: SmartHomeDevice = {
       id: '123',
+      endpointId: 'amzn1.alexa.endpoint.123',
       displayName: 'test plug',
-      description: 'test',
       supportedOperations: ['turnOff', 'turnOn'],
-      providerData: {
-        enabled: true,
-        categoryType: 'APPLIANCE',
-        deviceType: 'SMARTPLUG',
-      },
+      enabled: true,
+      deviceType: 'SMARTPLUG',
+      serialNumber: 'test-serial',
+      model: 'test-model',
+      manufacturer: 'test-manufacturer',
     };
     const platform = global.createPlatform();
     const uuid = platform.HAP.uuid.generate(device.id);
@@ -69,16 +70,16 @@ describe('createAccessory', () => {
 
   test('should not create an unsupported device', async () => {
     // given
-    const device = {
+    const device: SmartHomeDevice = {
       id: '123',
+      endpointId: 'amzn1.alexa.endpoint.123',
       displayName: 'test light group',
-      description: 'test',
       supportedOperations: [],
-      providerData: {
-        enabled: true,
-        categoryType: 'APPLIANCE',
-        deviceType: 'OTHER',
-      },
+      enabled: true,
+      deviceType: 'OTHER',
+      serialNumber: 'test-serial',
+      model: 'test-model',
+      manufacturer: 'test-manufacturer',
     };
     const platform = global.createPlatform();
     const uuid = platform.HAP.uuid.generate(device.id);

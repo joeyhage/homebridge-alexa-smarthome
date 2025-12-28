@@ -20,7 +20,7 @@ import {
 import { AlexaApiError, HttpError, TimeoutError } from '../domain/alexa/errors';
 import EndpointStateResponse, {
   extractStates,
-} from '../domain/alexa/get-device-state.js';
+} from '../domain/alexa/get-device-state';
 import GetDeviceStatesResponse, {
   ValidStatesByDevice,
 } from '../domain/alexa/get-device-states';
@@ -33,7 +33,7 @@ import {
 import { extractRangeFeatures } from '../domain/alexa/save-device-capabilities';
 import SetDeviceStateResponse, {
   validateSetStateSuccessful,
-} from '../domain/alexa/set-device-state.js';
+} from '../domain/alexa/set-device-state';
 import DeviceStore from '../store/device-store';
 import { PluginLogger } from '../util/plugin-logger';
 import {

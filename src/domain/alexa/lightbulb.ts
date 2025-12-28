@@ -10,4 +10,5 @@ export const LightbulbFeatures = {
   brightness: 'brightness',
   color: 'color',
   colorTemperature: 'colorTemperature',
+  percentage: 'percentage',
 } as const;

@@ -22,6 +22,19 @@ export default class SwitchAccessory extends BaseAccessory {
       .getCharacteristic(this.Characteristic.On)
       .onGet(this.handlePowerGet.bind(this))
       .onSet(this.handlePowerSet.bind(this));
+
+    if (
+      this.device.supportedOperations.includes('setPercentage') ||
+      this.device.supportedOperations.includes('rampPercentage')
+    ) {
+      // Add Brightness characteristic for percentage control (0-100%)
+      // HomeKit Switch service doesn't have a standard percentage characteristic,
+      // so we use Brightness as it represents 0-100% range
+      this.service
+        .getCharacteristic(this.Characteristic.Brightness)
+        .onGet(this.handlePercentageGet.bind(this))
+        .onSet(this.handlePercentageSet.bind(this));
+    }
   }
 
   async handlePowerGet(): Promise<boolean> {
@@ -63,6 +76,75 @@ export default class SwitchAccessory extends BaseAccessory {
           this.updateCacheValue({
             value: mapper.mapHomeKitPowerToAlexaValue(value),
             featureName: 'power',
+          });
+        },
+      ),
+    )();
+  }
+
+  async handlePercentageGet(): Promise<number> {
+    const determinePercentageState = flow(
+      A.findFirst<SwitchState>(
+        ({ featureName }) => featureName === 'percentage',
+      ),
+      O.flatMap(({ value }) => {
+        if (typeof value === 'number') {
+          return O.of(value);
+        }
+        if (typeof value === 'string') {
+          const parsed = parseFloat(value);
+          return isNaN(parsed) ? O.none : O.of(parsed);
+        }
+        return O.none;
+      }),
+      O.tap((s) =>
+        O.of(this.logWithContext('debug', `Get percentage result: ${s}%`)),
+      ),
+    );
+
+    return pipe(
+      this.getStateGraphQl(determinePercentageState),
+      TE.match((e) => {
+        this.logWithContext('errorT', 'Get percentage', e);
+        throw this.serviceCommunicationError;
+      }, identity),
+    )();
+  }
+
+  async handlePercentageSet(value: CharacteristicValue): Promise<void> {
+    this.logWithContext('debug', `Triggered set percentage: ${value}`);
+    if (typeof value !== 'number') {
+      throw this.invalidValueError;
+    }
+
+    // Clamp value to 0-100 range
+    const clampedValue = Math.max(0, Math.min(100, value));
+    const percentageValue = clampedValue.toString(10);
+
+    // Check if device supports setPercentage or rampPercentage
+    const action: SupportedActionsType =
+      this.device.supportedOperations.includes('setPercentage')
+        ? 'setPercentage'
+        : 'rampPercentage';
+
+    return pipe(
+      this.platform.alexaApi.setDeviceStateGraphQl(
+        this.device.endpointId,
+        'percentage',
+        action,
+        {
+          percentage: percentageValue,
+        },
+      ),
+      TE.match(
+        (e) => {
+          this.logWithContext('errorT', 'Set percentage', e);
+          throw this.serviceCommunicationError;
+        },
+        () => {
+          this.updateCacheValue({
+            value: percentageValue,
+            featureName: 'percentage',
           });
         },
       ),

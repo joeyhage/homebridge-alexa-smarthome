@@ -13,8 +13,32 @@
         "required": true,
         "default": [],
         "items": {
-          "title": "Device name",
-          "type": "string"
+          "title": "Device",
+          "oneOf": [
+            {
+              "title": "Device name (string)",
+              "type": "string"
+            },
+            {
+              "title": "Device configuration (object)",
+              "type": "object",
+              "properties": {
+                "name": {
+                  "title": "Device name",
+                  "type": "string",
+                  "required": true
+                },
+                "mapToFan": {
+                  "title": "Map to Fan",
+                  "description": "Map this SWITCH device to a HomeKit Fan accessory instead of a Switch or Light accessory.",
+                  "type": "boolean",
+                  "required": false,
+                  "default": false
+                }
+              },
+              "required": ["name"]
+            }
+          ]
         }
       },
       "excludeDevices": {

@@ -28,7 +28,11 @@ export default class LightAccessory extends BaseAccessory {
       .onGet(this.handlePowerGet.bind(this))
       .onSet(this.handlePowerSet.bind(this));
 
-    if (this.device.supportedOperations.includes('setBrightness')) {
+    if (
+      this.device.supportedOperations.includes('setBrightness') ||
+      this.device.supportedOperations.includes('setPercentage') ||
+      this.device.supportedOperations.includes('adjustPercentage')
+    ) {
       this.service
         .getCharacteristic(this.Characteristic.Brightness)
         .onGet(this.handleBrightnessGet.bind(this))
@@ -100,6 +104,46 @@ export default class LightAccessory extends BaseAccessory {
   }
 
   async handleBrightnessGet(): Promise<number> {
+    // Check if device uses percentage instead of brightness
+    const usesPercentage =
+      !this.device.supportedOperations.includes('setBrightness') &&
+      (this.device.supportedOperations.includes('setPercentage') ||
+        this.device.supportedOperations.includes('adjustPercentage'));
+
+    if (usesPercentage) {
+      const determinePercentageState = flow(
+        A.findFirst<LightbulbState>(
+          ({ featureName }) => featureName === 'percentage',
+        ),
+        O.flatMap(({ value }) => {
+          if (typeof value === 'number') {
+            return O.of(value);
+          }
+          if (typeof value === 'string') {
+            const parsed = parseFloat(value);
+            return isNaN(parsed) ? O.none : O.of(parsed);
+          }
+          return O.none;
+        }),
+        O.tap((s) =>
+          O.of(
+            this.logWithContext(
+              'debug',
+              `Get brightness (from percentage) result: ${s}`,
+            ),
+          ),
+        ),
+      );
+
+      return pipe(
+        this.getStateGraphQl(determinePercentageState),
+        TE.match((e) => {
+          this.logWithContext('errorT', 'Get brightness', e);
+          throw this.serviceCommunicationError;
+        }, identity),
+      )();
+    }
+
     const determineBrightnessState = flow(
       A.findFirst<LightbulbState>(
         ({ featureName }) => featureName === 'brightness',
@@ -126,7 +170,55 @@ export default class LightAccessory extends BaseAccessory {
     if (typeof value !== 'number') {
       throw this.invalidValueError;
     }
-    const newBrightness = value.toString(10);
+
+    // Clamp value to 0-100 range
+    const clampedValue = Math.max(0, Math.min(100, value));
+
+    // Check if device uses percentage instead of brightness
+    const usesPercentage =
+      !this.device.supportedOperations.includes('setBrightness') &&
+      (this.device.supportedOperations.includes('setPercentage') ||
+        this.device.supportedOperations.includes('adjustPercentage'));
+
+    if (usesPercentage) {
+      const percentageValue = clampedValue.toString(10);
+
+      // Determine which action to use based on device capabilities
+      // Prefer setPercentage, then adjustPercentage
+      let action: SupportedActionsType;
+      if (this.device.supportedOperations.includes('setPercentage')) {
+        action = 'setPercentage';
+      } else if (this.device.supportedOperations.includes('adjustPercentage')) {
+        action = 'adjustPercentage';
+      } else {
+        throw this.invalidValueError;
+      }
+
+      return pipe(
+        this.platform.alexaApi.setDeviceStateGraphQl(
+          this.device.endpointId,
+          'percentage',
+          action,
+          {
+            percentage: percentageValue,
+          },
+        ),
+        TE.match(
+          (e) => {
+            this.logWithContext('errorT', 'Set brightness', e);
+            throw this.serviceCommunicationError;
+          },
+          () => {
+            this.updateCacheValue({
+              value: percentageValue,
+              featureName: 'percentage',
+            });
+          },
+        ),
+      )();
+    }
+
+    const newBrightness = clampedValue.toString(10);
     return pipe(
       this.platform.alexaApi.setDeviceStateGraphQl(
         this.device.endpointId,

@@ -2,13 +2,14 @@
   "displayName": "Homebridge Alexa Smart Home",
   "name": "homebridge-alexa-smarthome",
   "version": "2.4.0",
+  "private": "true",
   "description": "Homebridge plugin that can control smart home devices connected to Alexa.",
   "license": "MIT",
   "author": "Joey Hage <contact@jmhage.com>",
-  "homepage": "https://github.com/joeyhage/homebridge-alexa-smarthome#readme",
+  "homepage": "https://github.com/pjkuras/homebridge-alexa-smarthome#readme",
   "repository": {
     "type": "git",
-    "url": "git://github.com/joeyhage/homebridge-alexa-smarthome.git"
+    "url": "git://github.com/pjkuras/homebridge-alexa-smarthome.git"
   },
   "bugs": {
     "url": "https://github.com/joeyhage/homebridge-alexa-smarthome/issues"
@@ -48,7 +49,7 @@
     "alexa-remote2": "^8.0.4",
     "async-mutex": "^0.5.0",
     "extend": "^3.0.2",
-    "fp-ts": "^2.16.9",
+    "fp-ts": "^2.16.11",
     "nearest-color": "^0.4.4",
     "ts-pattern": "^4.3.0",
     "uuid": "^9.0.1"
@@ -64,7 +65,7 @@
     "eslint": "^8.48.0",
     "eslint-config-prettier": "^8.10.0",
     "eslint-plugin-prettier": "^4.2.1",
-    "homebridge": "^1.11.0",
+    "homebridge": "^1.11.1",
     "homebridge-config-ui-x": "^5.10.0",
     "husky": "^8.0.3",
     "jest": "^29.7.0",

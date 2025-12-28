@@ -8,4 +8,5 @@ export interface SwitchState {
 export const SwitchFeatures = {
   power: 'power',
   brightness: 'brightness',
+  percentage: 'percentage',
 } as const;

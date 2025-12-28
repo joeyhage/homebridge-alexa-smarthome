@@ -3,7 +3,9 @@ import * as O from 'fp-ts/Option';
 import * as TE from 'fp-ts/TaskEither';
 import { HomebridgeAPI } from 'homebridge/lib/api';
 import AlexaRemote from 'alexa-remote2';
+import { CapabilityState } from '../domain/alexa';
 import { HttpError } from '../domain/alexa/errors';
+import type { SmartHomeDevice } from '../domain/alexa/get-devices';
 import { AlexaSmartHomePlatform } from '../platform';
 import DeviceStore from '../store/device-store';
 import { AlexaApiWrapper } from '../wrapper/alexa-api-wrapper';
@@ -22,18 +24,15 @@ describe('handlePowerGet', () => {
     const acc = createLightAccessory();
     const mockAlexaApi = getMockedAlexaApi();
     mockAlexaApi.getDeviceStateGraphQl.mockReturnValueOnce(
-      TE.of({
-        fromCache: false,
-        statesByDevice: {
-          [acc.device.id]: [
-            O.of({
-              namespace: 'Alexa.PowerController',
-              name: 'power',
-              value: 'ON',
-            }),
-          ],
-        },
-      }),
+      TE.of([
+        false,
+        [
+          {
+            featureName: 'power',
+            value: 'ON',
+          } as CapabilityState,
+        ],
+      ]),
     );
 
     // when
@@ -48,18 +47,15 @@ describe('handlePowerGet', () => {
     const acc = createLightAccessory();
     const mockAlexaApi = getMockedAlexaApi();
     mockAlexaApi.getDeviceStateGraphQl.mockReturnValueOnce(
-      TE.of({
-        fromCache: false,
-        statesByDevice: {
-          [acc.device.id]: [
-            O.of({
-              namespace: 'Alexa.BrightnessController',
-              name: 'brightness',
-              value: '100',
-            }),
-          ],
-        },
-      }),
+      TE.of([
+        false,
+        [
+          {
+            featureName: 'brightness',
+            value: 100,
+          } as CapabilityState,
+        ],
+      ]),
     );
 
     // when
@@ -101,8 +97,11 @@ function createPlatform() {
     global.createPlatformConfig(),
     new HomebridgeAPI(),
   );
-  (platform as any).deviceStore = new DeviceStore(platform.log);
+  (platform as any).deviceStore = new DeviceStore(
+    global.createPlatformConfig().performance,
+  );
   (platform as any).alexaApi = new AlexaApiWrapper(
+    platform.Service,
     new AlexaRemote(),
     platform.log,
     platform.deviceStore,
@@ -111,16 +110,16 @@ function createPlatform() {
 }
 
 function createLightAccessory() {
-  const device = {
+  const device: SmartHomeDevice = {
     id: '123',
+    endpointId: 'amzn1.alexa.endpoint.123',
     displayName: 'test light',
-    description: 'test',
     supportedOperations: ['turnOff', 'turnOn', 'setBrightness'],
-    providerData: {
-      enabled: true,
-      categoryType: 'APPLIANCE',
-      deviceType: 'LIGHT',
-    },
+    enabled: true,
+    deviceType: 'LIGHT',
+    serialNumber: 'test-serial',
+    model: 'test-model',
+    manufacturer: 'test-manufacturer',
   };
   const platform = createPlatform();
   const uuid = platform.HAP.uuid.generate(device.id);

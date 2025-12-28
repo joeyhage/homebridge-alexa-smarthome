@@ -129,21 +129,43 @@ export const extractStates = (
                 value: Pattern.number,
               },
             }),
-            configuration: {
+            configuration: Pattern.optional({
               friendlyName: {
                 value: {
                   text: Pattern.string,
                 },
               },
-            },
+            }),
           },
-          (_) =>
-            O.of({
-              ...withCommonProps(_),
-              value: _.properties[0].rangeValue.value,
-              instance: _.instance,
-              rangeName: _.configuration.friendlyName.value.text,
-            } as CapabilityState),
+          (f) => {
+            // Check if this range feature is for percentage
+            const instance = f.instance?.toLowerCase();
+            const rangeName =
+              f.configuration?.friendlyName?.value?.text?.toLowerCase();
+            const propertyName = f.properties[0]?.name?.toLowerCase();
+            if (
+              instance === 'percentage' ||
+              rangeName === 'percentage' ||
+              propertyName === 'percentage'
+            ) {
+              return O.of({
+                ...withCommonProps(f),
+                value: f.properties[0].rangeValue.value,
+                instance: f.instance,
+                featureName: 'percentage' as const,
+              } as CapabilityState);
+            }
+            // For devices that support percentage operations, if there's no explicit percentage identifier
+            // but this is the only range feature, it might be percentage
+            // This will be handled by checking device capabilities in the accessory
+            // Regular range feature
+            return O.of({
+              ...withCommonProps(f),
+              value: f.properties[0].rangeValue.value,
+              instance: f.instance,
+              rangeName: f.configuration?.friendlyName?.value?.text,
+            } as CapabilityState);
+          },
         )
         .with(
           {
