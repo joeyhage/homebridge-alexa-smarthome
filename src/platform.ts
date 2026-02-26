@@ -295,11 +295,15 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
         constant([] as { deviceName: string; operations?: string | null }[]),
       ),
       A.map(
-        ({ deviceName: deviceName, operations }) =>
+        ({ deviceName, operations }) =>
           [deviceName.trim(), operations] as const,
       ),
       A.reduce(new Map<string, string[]>(), (map, [name, ops]) => {
-        map.set(name, ops?.split(',').map((o) => o.trim()) ?? []);
+        map.set(
+          name,
+          ops?.split(',').map((o) => o.trim()).filter((o) => o.length > 0) ??
+            [],
+        );
         return map;
       }),
     );

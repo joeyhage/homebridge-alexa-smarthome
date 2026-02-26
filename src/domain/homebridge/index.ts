@@ -26,12 +26,10 @@ export interface AlexaPlatformConfig extends PlatformConfig {
     cacheTTL: Nullable<number>;
   }>;
   disabledOperations: Nullable<
-    [
-      {
-        deviceName: string;
-        operations: Nullable<string>;
-      },
-    ]
+    Array<{
+      deviceName: string;
+      operations: Nullable<string>;
+    }>
   >;
   debug: Nullable<boolean>;
 }
