@@ -129,7 +129,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
   }
 
   configureAccessory(accessory: PlatformAccessory) {
-    this.log.info('Loading accessory from cache:', accessory.displayName)();
+    this.log.debug('Loading accessory from cache:', accessory.displayName)();
     this.cachedAccessories.push(accessory);
   }
 
@@ -140,7 +140,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     this.alexaRemote.on('cookie', () => {
       const cookieData = this.alexaRemote.cookieData;
       if (util.isValidAuthentication(cookieData as unknown as J.Json)) {
-        this.log.info(
+        this.log.debug(
           'Alexa login cookie updated. Storing cookie in file:',
           this.cookiePersistPath,
         )();
@@ -378,7 +378,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
       !acc.context?.deviceType ||
       !acc.context?.homebridgeDeviceType
     ) {
-      this.log.info('Update accessory context:', acc.displayName)();
+      this.log.debug('Update accessory context:', acc.displayName)();
       acc.context = {
         ...acc.context,
         deviceId: device.id,
@@ -393,7 +393,7 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
         AccessoryFactory.createAccessory(this, acc, device, hbDeviceType),
       ),
       IOE.tapIO(() =>
-        this.log.info(
+        this.log.debug(
           'Restored existing accessory from cache:',
           device.displayName,
         ),
