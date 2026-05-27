@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.1] - 2026-05-26
+
+### Changed
+
+- Reduced logging verbosity. Logs are still visible using debug level.
+
 ## [2.5.0] - 2026-02-26
 
 ### Added
@@ -275,7 +281,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support for outlets i.e. smart plugs.
 
-[unreleased]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v2.5.0...HEAD
+[unreleased]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v2.5.1...HEAD
+[2.5.1]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v2.5.0...v2.5.1
 [2.5.0]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v2.4.0...v2.5.0
 [2.4.0]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v2.3.0...v2.4.0
 [2.3.0]: https://github.com/joeyhage/homebridge-alexa-smarthome/compare/v2.2.1...v2.3.0
