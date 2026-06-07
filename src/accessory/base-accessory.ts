@@ -124,6 +124,11 @@ export default abstract class BaseAccessory {
       TE.map(([fromCache, states]) => {
         if (!fromCache) {
           this.lastUpdated = new Date();
+          if (states.length === 0) {
+            return this.platform.deviceStore.getCacheStatesForDevice(
+              this.device.id,
+            ) as unknown as S[];
+          }
         }
         return states;
       }),
