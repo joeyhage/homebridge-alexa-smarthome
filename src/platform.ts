@@ -169,13 +169,22 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
     pipe(
       util.getAuthentication(this.cookiePersistPath),
       IOE.match(logStoredAuthErrors, identity),
-      IO.map((auth) =>
-        this.alexaRemote.init(
+      IO.map((auth) => {
+        // Prefer the marketplace from saved cookie data over the config.
+        const effectiveDomain =
+          auth?.amazonPage && auth.amazonPage !== amazonDomain
+            ? (this.log.debug(
+                `amazonPage corrected: "${amazonDomain}" → "${auth?.amazonPage}"`,
+              ),
+              auth.amazonPage)
+            : amazonDomain;
+
+        return this.alexaRemote.init(
           {
             acceptLanguage:
               this.config.language ?? settings.DEFAULT_ACCEPT_LANG,
-            alexaServiceHost: `alexa.${amazonDomain}`,
-            amazonPage: amazonDomain,
+            alexaServiceHost: `alexa.${effectiveDomain}`,
+            amazonPage: effectiveDomain,
             amazonPageProxyLanguage:
               this.config.language?.replace('-', '_') ??
               settings.DEFAULT_PROXY_PAGE_LANG,
@@ -210,8 +219,8 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
               ),
             );
           },
-        ),
-      ),
+        );
+      }),
     )();
   }
 
