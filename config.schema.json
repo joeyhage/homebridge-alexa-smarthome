@@ -5,6 +5,13 @@
   "schema": {
     "type": "object",
     "properties": {
+      "name": {
+        "type": "string",
+        "default": "HomebridgeAlexaSmartHome",
+        "condition": {
+          "functionBody": "return false;"
+        }
+      },
       "devices": {
         "title": "Include device names",
         "description": "List of smart home device names to add as HomeKit accessories. If no devices are specified, the plugin will attempt to add all supported accessories.",
