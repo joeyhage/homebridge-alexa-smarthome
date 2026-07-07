@@ -110,9 +110,11 @@ export class AlexaApiWrapper {
               2,
             )}`,
           );
-          this.deviceStore.updateCache([d.id], {
-            [d.id]: O.of(states.map(E.right)),
-          });
+          if (states.length > 0) {
+            this.deviceStore.updateCache([d.id], {
+              [d.id]: O.of(states.map(E.right)),
+            });
+          }
         });
         return this.log.debug(
           'Successfully obtained devices and their capabilities',
@@ -185,9 +187,11 @@ export class AlexaApiWrapper {
               ),
               TE.map((_) => extractStates(_.data.endpoint.features)),
               TE.map((states) => {
-                this.deviceStore.updateCache([device.id], {
-                  [device.id]: O.of(states.map(E.right)),
-                });
+                if (states.length > 0) {
+                  this.deviceStore.updateCache([device.id], {
+                    [device.id]: O.of(states.map(E.right)),
+                  });
+                }
                 return [false, states] as [boolean, CapabilityState[]];
               }),
             ),
