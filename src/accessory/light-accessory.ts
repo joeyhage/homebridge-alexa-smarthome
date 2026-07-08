@@ -199,15 +199,33 @@ export default class LightAccessory extends BaseAccessory {
           this.logWithContext('errorT', 'Set hue', e);
           throw this.serviceCommunicationError;
         },
-        async () => {
-          this.updateCacheValue({
-            value: {
-              hue: value,
-              saturation: await this.handleSaturationGet(),
-              brightness: await this.handleBrightnessGet(),
-            },
-            featureName: 'color',
-          });
+        () => {
+          pipe(
+            this.getCacheValue('color'),
+            O.filter(
+              (
+                color,
+              ): color is {
+                brightness: number;
+                hue: number;
+                saturation: number;
+              } =>
+                typeof color === 'object' &&
+                color !== null &&
+                typeof color.brightness === 'number' &&
+                typeof color.hue === 'number' &&
+                typeof color.saturation === 'number',
+            ),
+            O.map((color) =>
+              this.updateCacheValue({
+                value: {
+                  ...color,
+                  hue: value,
+                },
+                featureName: 'color',
+              }),
+            ),
+          );
         },
       ),
     )();
