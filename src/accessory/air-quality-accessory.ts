@@ -85,8 +85,32 @@ export default class AirQualityAccessory extends BaseAccessory {
     return pipe(
       this.getStateGraphQl(determineAirQuality),
       TE.match((e) => {
-        this.logWithContext('errorT', 'Get air quality', e);
-        throw this.serviceCommunicationError;
+        this.logWithContext(
+          'warn',
+          `Air quality data unavailable for ${this.device.displayName}, using fallback value. Error: ${e.message}`,
+        );
+
+        const cachedValue = this.getCacheValue(
+          'range',
+          undefined,
+          asset.instance,
+        );
+        if (O.isSome(cachedValue)) {
+          this.logWithContext(
+            'debug',
+            `Using cached air quality value: ${cachedValue.value}`,
+          );
+          return mapper.mapAlexaAirQualityToHomeKit(
+            cachedValue.value,
+            this.Characteristic.AirQuality,
+          );
+        }
+
+        this.logWithContext(
+          'debug',
+          'No cached value available, returning UNKNOWN air quality',
+        );
+        return this.Characteristic.AirQuality.UNKNOWN;
       }, identity),
     )();
   }
@@ -95,8 +119,29 @@ export default class AirQualityAccessory extends BaseAccessory {
     return pipe(
       this.getStateGraphQl(this.determineDensity(asset)),
       TE.match((e) => {
-        this.logWithContext('errorT', 'Get PM2.5 density', e);
-        throw this.serviceCommunicationError;
+        this.logWithContext(
+          'warn',
+          `PM2.5 density data unavailable for ${this.device.displayName}, using fallback value. Error: ${e.message}`,
+        );
+
+        const cachedValue = this.getCacheValue(
+          'range',
+          undefined,
+          asset.instance,
+        );
+        if (O.isSome(cachedValue) && typeof cachedValue.value === 'number') {
+          this.logWithContext(
+            'debug',
+            `Using cached PM2.5 density value: ${cachedValue.value}`,
+          );
+          return cachedValue.value;
+        }
+
+        this.logWithContext(
+          'debug',
+          'No cached PM2.5 density value available, returning 0',
+        );
+        return 0;
       }, identity),
     )();
   }
@@ -105,8 +150,29 @@ export default class AirQualityAccessory extends BaseAccessory {
     return pipe(
       this.getStateGraphQl(this.determineDensity(asset)),
       TE.match((e) => {
-        this.logWithContext('errorT', 'Get VOC density', e);
-        throw this.serviceCommunicationError;
+        this.logWithContext(
+          'warn',
+          `VOC density data unavailable for ${this.device.displayName}, using fallback value. Error: ${e.message}`,
+        );
+
+        const cachedValue = this.getCacheValue(
+          'range',
+          undefined,
+          asset.instance,
+        );
+        if (O.isSome(cachedValue) && typeof cachedValue.value === 'number') {
+          this.logWithContext(
+            'debug',
+            `Using cached VOC density value: ${cachedValue.value}`,
+          );
+          return cachedValue.value;
+        }
+
+        this.logWithContext(
+          'debug',
+          'No cached VOC density value available, returning 0',
+        );
+        return 0;
       }, identity),
     )();
   }
