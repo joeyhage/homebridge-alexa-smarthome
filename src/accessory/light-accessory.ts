@@ -159,16 +159,23 @@ export default class LightAccessory extends BaseAccessory {
   }
 
   async handleHueGet(): Promise<number> {
-    const determineHueState = flow(
-      A.findFirst<LightbulbState>(({ featureName }) => featureName === 'color'),
-      O.flatMap(({ value }) => {
-        if (typeof value !== 'object' || typeof value.hue !== 'number') {
-          return O.none;
-        }
-        return O.of(Math.trunc(value.hue));
-      }),
-      O.tap((s) => O.of(this.logWithContext('debug', `Get hue result: ${s}`))),
-    );
+    const determineHueState = (states: LightbulbState[]) =>
+      pipe(
+        states,
+        A.findFirst<LightbulbState>(
+          ({ featureName }) => featureName === 'color',
+        ),
+        O.flatMap(({ value }) => {
+          if (typeof value !== 'object' || typeof value.hue !== 'number') {
+            return O.none;
+          }
+          return O.of(Math.trunc(value.hue));
+        }),
+        O.tap((s) =>
+          O.of(this.logWithContext('debug', `Get hue result: ${s}`)),
+        ),
+        O.orElse(() => this.fallbackColorValue(states, 'hue')),
+      );
 
     return pipe(
       this.getStateGraphQl(determineHueState),
@@ -214,18 +221,33 @@ export default class LightAccessory extends BaseAccessory {
   }
 
   async handleSaturationGet(): Promise<number> {
-    const determineSaturationState = flow(
-      A.findFirst<LightbulbState>(({ featureName }) => featureName === 'color'),
-      O.flatMap(({ value }) => {
-        if (typeof value !== 'object' || typeof value.saturation !== 'number') {
-          return O.none;
-        }
-        return O.of(Math.trunc(value.saturation * 100));
-      }),
-      O.tap((s) =>
-        O.of(this.logWithContext('debug', `Get saturation result: ${s}%`)),
-      ),
-    );
+    const determineSaturationState = (states: LightbulbState[]) =>
+      pipe(
+        states,
+        A.findFirst<LightbulbState>(
+          ({ featureName }) => featureName === 'color',
+        ),
+        O.flatMap(({ value }) => {
+          if (
+            typeof value !== 'object' ||
+            typeof value.saturation !== 'number'
+          ) {
+            return O.none;
+          }
+          // Alexa usually reports saturation as a 0-1 fraction, but has
+          // been observed returning it already as a 0-100 percentage.
+          // Detect which scale we got and clamp to a valid 0-100 range.
+          const asPercent =
+            value.saturation <= 1
+              ? value.saturation * 100
+              : value.saturation;
+          return O.of(Math.min(100, Math.max(0, Math.trunc(asPercent))));
+        }),
+        O.tap((s) =>
+          O.of(this.logWithContext('debug', `Get saturation result: ${s}%`)),
+        ),
+        O.orElse(() => this.fallbackColorValue(states, 'saturation')),
+      );
 
     return pipe(
       this.getStateGraphQl(determineSaturationState),
@@ -300,5 +322,36 @@ export default class LightAccessory extends BaseAccessory {
         },
       ),
     )();
+  }
+
+  /**
+   * Some devices advertise the `setColor` operation but never actually
+   * return a `color` feature in their live state — only `colorTemperature`.
+   * This happens with tunable-white (CCT-only) bulbs whose Alexa skill
+   * over-reports color capability. Treating that as a hard error causes
+   * persistent "not responding" noise for a state that will never arrive.
+   * In that specific case, fall back to a neutral (fully desaturated)
+   * value instead of failing the characteristic read.
+   */
+  private fallbackColorValue(
+    states: LightbulbState[],
+    channel: 'hue' | 'saturation',
+  ): O.Option<number> {
+    const hasColorFeature = states.some(
+      ({ featureName }) => featureName === 'color',
+    );
+    const hasColorTemperatureOnly =
+      !hasColorFeature &&
+      states.some(({ featureName }) => featureName === 'colorTemperature');
+
+    if (!hasColorTemperatureOnly) {
+      return O.none;
+    }
+
+    this.logWithContext(
+      'debug',
+      `Color state not available but colorTemperature is; defaulting ${channel} to 0`,
+    );
+    return O.of(0);
   }
 }

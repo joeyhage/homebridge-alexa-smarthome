@@ -95,6 +95,140 @@ describe('handlePowerGet', () => {
   });
 });
 
+describe('handleHueGet', () => {
+  test('should throw an error if color state not available and no colorTemperature either', async () => {
+    // given
+    const acc = createLightAccessory();
+    const mockAlexaApi = getMockedAlexaApi();
+    mockAlexaApi.getDeviceStateGraphQl.mockReturnValueOnce(
+      TE.of({
+        fromCache: false,
+        statesByDevice: {
+          [acc.device.id]: [
+            O.of({
+              namespace: 'Alexa.PowerController',
+              name: 'power',
+              value: 'ON',
+            }),
+          ],
+        },
+      }),
+    );
+
+    // when
+    const hue = acc.handleHueGet();
+
+    // then
+    await expect(hue).rejects.toStrictEqual(acc.serviceCommunicationError);
+  });
+
+  test('should default to 0 when color is missing but colorTemperature is present', async () => {
+    // given
+    const acc = createLightAccessory();
+    const mockAlexaApi = getMockedAlexaApi();
+    mockAlexaApi.getDeviceStateGraphQl.mockReturnValueOnce(
+      TE.of({
+        fromCache: false,
+        statesByDevice: {
+          [acc.device.id]: [
+            O.of({
+              namespace: 'Alexa.ColorTemperatureController',
+              name: 'colorTemperatureInKelvin',
+              value: 3000,
+            }),
+          ],
+        },
+      }),
+    );
+
+    // when
+    const hue = acc.handleHueGet();
+
+    // then
+    await expect(hue).resolves.toBe(0);
+  });
+});
+
+describe('handleSaturationGet', () => {
+  test('should scale a 0-1 fraction saturation to a 0-100 percentage', async () => {
+    // given
+    const acc = createLightAccessory();
+    const mockAlexaApi = getMockedAlexaApi();
+    mockAlexaApi.getDeviceStateGraphQl.mockReturnValueOnce(
+      TE.of({
+        fromCache: false,
+        statesByDevice: {
+          [acc.device.id]: [
+            O.of({
+              namespace: 'Alexa.ColorController',
+              name: 'color',
+              value: { hue: 240, saturation: 1, brightness: 1 },
+            }),
+          ],
+        },
+      }),
+    );
+
+    // when
+    const saturation = acc.handleSaturationGet();
+
+    // then
+    await expect(saturation).resolves.toBe(100);
+  });
+
+  test('should not re-scale a saturation value already reported as 0-100', async () => {
+    // given
+    const acc = createLightAccessory();
+    const mockAlexaApi = getMockedAlexaApi();
+    mockAlexaApi.getDeviceStateGraphQl.mockReturnValueOnce(
+      TE.of({
+        fromCache: false,
+        statesByDevice: {
+          [acc.device.id]: [
+            O.of({
+              namespace: 'Alexa.ColorController',
+              name: 'color',
+              value: { hue: 240, saturation: 100, brightness: 1 },
+            }),
+          ],
+        },
+      }),
+    );
+
+    // when
+    const saturation = acc.handleSaturationGet();
+
+    // then
+    await expect(saturation).resolves.toBe(100);
+  });
+
+  test('should default to 0 when color is missing but colorTemperature is present', async () => {
+    // given
+    const acc = createLightAccessory();
+    const mockAlexaApi = getMockedAlexaApi();
+    mockAlexaApi.getDeviceStateGraphQl.mockReturnValueOnce(
+      TE.of({
+        fromCache: false,
+        statesByDevice: {
+          [acc.device.id]: [
+            O.of({
+              namespace: 'Alexa.ColorTemperatureController',
+              name: 'colorTemperatureInKelvin',
+              value: 3000,
+            }),
+          ],
+        },
+      }),
+    );
+
+    // when
+    const saturation = acc.handleSaturationGet();
+
+    // then
+    await expect(saturation).resolves.toBe(0);
+  });
+});
+
 function createPlatform() {
   const platform = new AlexaSmartHomePlatform(
     global.MockLogger,
