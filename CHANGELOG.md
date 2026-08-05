@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Air quality monitor sensors (air quality, PM2.5 density, VOC density) failed with `InvalidResponse(State not available)` because the air quality state query did not request the range feature `instance` field, so all range states were discarded when parsing the response (#178, #181, #238).
+- Multi-service endpoints such as the Amazon Smart Air Quality Monitor no longer lose sibling accessory states on refresh. Air quality, temperature, humidity, and carbon monoxide services now query the complete endpoint state instead of partial per-service queries that replaced the shared device state cache with a subset of states.
+
 ## [2.5.2] - 2026-07-05
 
 ### Added
