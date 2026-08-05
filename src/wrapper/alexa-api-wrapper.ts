@@ -37,14 +37,12 @@ import SetDeviceStateResponse, {
 import DeviceStore from '../store/device-store';
 import { PluginLogger } from '../util/plugin-logger';
 import {
-  AirQualityQuery,
+  EndpointStateQuery,
   EndpointsQuery,
   LightQuery,
   LockQuery,
   PowerQuery,
-  RangeQuery,
   SetEndpointFeatures,
-  TempSensorQuery,
   ThermostatQuery,
 } from './graphql';
 
@@ -148,18 +146,23 @@ export class AlexaApiWrapper {
             pipe(
               TE.of(
                 match(service.UUID)
-                  .with(AirQualitySensor.UUID, constant(AirQualityQuery))
-                  .with(Lightbulb.UUID, constant(LightQuery))
-                  .with(LockMechanism.UUID, constant(LockQuery))
-                  .with(TemperatureSensor.UUID, constant(TempSensorQuery))
-                  .with(Thermostat.UUID, constant(ThermostatQuery))
+                  // Multi-service endpoints (e.g. the Amazon Smart Air Quality
+                  // Monitor) share one state cache per device, and a state
+                  // refresh replaces that cache. These services must query the
+                  // complete endpoint state (including range `instance` ids)
+                  // or each refresh would drop sibling accessory states.
                   .with(
                     Pattern.union(
+                      AirQualitySensor.UUID,
                       CarbonMonoxideSensor.UUID,
                       HumiditySensor.UUID,
+                      TemperatureSensor.UUID,
                     ),
-                    constant(RangeQuery),
+                    constant(EndpointStateQuery),
                   )
+                  .with(Lightbulb.UUID, constant(LightQuery))
+                  .with(LockMechanism.UUID, constant(LockQuery))
+                  .with(Thermostat.UUID, constant(ThermostatQuery))
                   .otherwise(constant(PowerQuery)),
               ),
               TE.tapIO((query) =>
