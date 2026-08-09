@@ -133,14 +133,17 @@ export default class LightAccessory extends BaseAccessory {
     if (typeof value !== 'number') {
       throw this.invalidValueError;
     }
-    const newBrightness = value.toString(10);
     return pipe(
       this.platform.alexaApi.setDeviceStateGraphQl(
         this.device.endpointId,
         'brightness',
         'setBrightness',
         {
-          brightness: newBrightness,
+          // Must be sent as a number: a live capture of the Alexa
+          // website's own setBrightness mutation confirmed its payload
+          // is `{"brightness": 95}` (an int), not the stringified
+          // `{"brightness": "95"}` this previously sent.
+          brightness: value,
         },
       ),
       TE.match(
@@ -150,7 +153,7 @@ export default class LightAccessory extends BaseAccessory {
         },
         () => {
           this.updateCacheValue({
-            value: newBrightness,
+            value,
             featureName: 'brightness',
           });
         },
