@@ -22,18 +22,10 @@ describe('handlePowerGet', () => {
     const acc = createLightAccessory();
     const mockAlexaApi = getMockedAlexaApi();
     mockAlexaApi.getDeviceStateGraphQl.mockReturnValueOnce(
-      TE.of({
-        fromCache: false,
-        statesByDevice: {
-          [acc.device.id]: [
-            O.of({
-              namespace: 'Alexa.PowerController',
-              name: 'power',
+      TE.of([false, [{
+              featureName: 'power',
               value: 'ON',
-            }),
-          ],
-        },
-      }),
+            }]]),
     );
 
     // when
@@ -48,18 +40,10 @@ describe('handlePowerGet', () => {
     const acc = createLightAccessory();
     const mockAlexaApi = getMockedAlexaApi();
     mockAlexaApi.getDeviceStateGraphQl.mockReturnValueOnce(
-      TE.of({
-        fromCache: false,
-        statesByDevice: {
-          [acc.device.id]: [
-            O.of({
-              namespace: 'Alexa.BrightnessController',
-              name: 'brightness',
+      TE.of([false, [{
+              featureName: 'brightness',
               value: '100',
-            }),
-          ],
-        },
-      }),
+            }]]),
     );
 
     // when
@@ -95,14 +79,111 @@ describe('handlePowerGet', () => {
   });
 });
 
+describe('handleHueGet', () => {
+  test('should throw an error if color state not available and no colorTemperature either', async () => {
+    // given
+    const acc = createLightAccessory();
+    const mockAlexaApi = getMockedAlexaApi();
+    mockAlexaApi.getDeviceStateGraphQl.mockReturnValueOnce(
+      TE.of([false, [{
+              featureName: 'power',
+              value: 'ON',
+            }]]),
+    );
+
+    // when
+    const hue = acc.handleHueGet();
+
+    // then
+    await expect(hue).rejects.toStrictEqual(acc.serviceCommunicationError);
+  });
+
+  test('should default to 0 when color is missing but colorTemperature is present', async () => {
+    // given
+    const acc = createLightAccessory();
+    const mockAlexaApi = getMockedAlexaApi();
+    mockAlexaApi.getDeviceStateGraphQl.mockReturnValueOnce(
+      TE.of([false, [{
+              featureName: 'colorTemperature',
+              value: 3000,
+            }]]),
+    );
+
+    // when
+    const hue = acc.handleHueGet();
+
+    // then
+    await expect(hue).resolves.toBe(0);
+  });
+});
+
+describe('handleSaturationGet', () => {
+  test('should scale a 0-1 fraction saturation to a 0-100 percentage', async () => {
+    // given
+    const acc = createLightAccessory();
+    const mockAlexaApi = getMockedAlexaApi();
+    mockAlexaApi.getDeviceStateGraphQl.mockReturnValueOnce(
+      TE.of([false, [{
+              featureName: 'color',
+              value: { hue: 240, saturation: 1, brightness: 1 },
+            }]]),
+    );
+
+    // when
+    const saturation = acc.handleSaturationGet();
+
+    // then
+    await expect(saturation).resolves.toBe(100);
+  });
+
+  test('should not re-scale a saturation value already reported as 0-100', async () => {
+    // given
+    const acc = createLightAccessory();
+    const mockAlexaApi = getMockedAlexaApi();
+    mockAlexaApi.getDeviceStateGraphQl.mockReturnValueOnce(
+      TE.of([false, [{
+              featureName: 'color',
+              value: { hue: 240, saturation: 100, brightness: 1 },
+            }]]),
+    );
+
+    // when
+    const saturation = acc.handleSaturationGet();
+
+    // then
+    await expect(saturation).resolves.toBe(100);
+  });
+
+  test('should default to 0 when color is missing but colorTemperature is present', async () => {
+    // given
+    const acc = createLightAccessory();
+    const mockAlexaApi = getMockedAlexaApi();
+    mockAlexaApi.getDeviceStateGraphQl.mockReturnValueOnce(
+      TE.of([false, [{
+              featureName: 'colorTemperature',
+              value: 3000,
+            }]]),
+    );
+
+    // when
+    const saturation = acc.handleSaturationGet();
+
+    // then
+    await expect(saturation).resolves.toBe(0);
+  });
+});
+
 function createPlatform() {
   const platform = new AlexaSmartHomePlatform(
     global.MockLogger,
     global.createPlatformConfig(),
     new HomebridgeAPI(),
   );
-  (platform as any).deviceStore = new DeviceStore(platform.log);
+  (platform as any).deviceStore = new DeviceStore(
+    platform.config.performance,
+  );
   (platform as any).alexaApi = new AlexaApiWrapper(
+    platform.Service,
     new AlexaRemote(),
     platform.log,
     platform.deviceStore,
@@ -113,14 +194,14 @@ function createPlatform() {
 function createLightAccessory() {
   const device = {
     id: '123',
+    endpointId: 'amzn1.alexa.endpoint.123',
     displayName: 'test light',
-    description: 'test',
     supportedOperations: ['turnOff', 'turnOn', 'setBrightness'],
-    providerData: {
-      enabled: true,
-      categoryType: 'APPLIANCE',
-      deviceType: 'LIGHT',
-    },
+    enabled: true,
+    deviceType: 'LIGHT',
+    serialNumber: 'Unknown',
+    model: 'Unknown',
+    manufacturer: 'homebridge-alexa-smarthome',
   };
   const platform = createPlatform();
   const uuid = platform.HAP.uuid.generate(device.id);
@@ -142,5 +223,9 @@ function getMockedAlexaApi(): jest.Mocked<AlexaApiWrapper> {
 function mockDeviceStore(): jest.Mocked<DeviceStore> {
   const mock = deviceStoreMocks.mock.instances[0] as jest.Mocked<DeviceStore>;
   mock.getCacheValue.mockReturnValueOnce(O.none);
+  // getStateGraphQl falls back to this when the live/cached response omits
+  // the requested feature; the tests exercising that fallback expect it to
+  // come back genuinely empty, matching a device with no prior cache entry.
+  mock.getCacheStatesForDevice.mockReturnValue([]);
   return mock;
 }

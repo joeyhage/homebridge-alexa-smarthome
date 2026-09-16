@@ -9,14 +9,14 @@ test('should not initialize devices with invalid ids', async () => {
   const platform = getPlatform();
   const device = {
     id: '123',
+    endpointId: 'amzn1.alexa.endpoint.123',
     displayName: 'test light',
-    description: 'test',
     supportedOperations: ['turnOff', 'turnOn', 'setBrightness'],
-    providerData: {
-      enabled: true,
-      categoryType: 'APPLIANCE',
-      deviceType: 'LIGHT',
-    },
+    enabled: true,
+    deviceType: 'LIGHT',
+    serialNumber: 'Unknown',
+    model: 'Unknown',
+    manufacturer: 'homebridge-alexa-smarthome',
   };
 
   // when

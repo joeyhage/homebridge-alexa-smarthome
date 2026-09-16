@@ -49,7 +49,6 @@ export const validateConfig = (
             },
             performance: Pattern.optional({
               cacheTTL: Pattern.optional(Pattern.number),
-              backgroundRefresh: Pattern.optional(Pattern.boolean),
             }),
             debug: Pattern.optional(Pattern.boolean),
           },

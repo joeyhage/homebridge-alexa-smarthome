@@ -44,18 +44,15 @@
     "smarthome"
   ],
   "dependencies": {
-    "alexa-cookie2": "5.0.4",
-    "alexa-remote2": "8.0.5",
+    "alexa-cookie2": "^5.0.6",
+    "alexa-remote2": "^8.1.1",
     "async-mutex": "^0.5.0",
     "extend": "^3.0.2",
     "fp-ts": "^2.16.9",
-    "nearest-color": "^0.4.4",
-    "ts-pattern": "^4.3.0",
-    "uuid": "^9.0.1"
+    "ts-pattern": "^4.3.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
-    "@types/nearest-color": "^0.4.1",
     "@types/node": "^18.19.86",
     "@types/uuid": "^9.0.8",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
@@ -76,5 +73,9 @@
     "ts-jest": "^29.3.1",
     "ts-node": "^10.9.2",
     "typescript": "^4.9.5"
+  },
+  "overrides": {
+    "micromatch": "^4.0.8",
+    "cookie": "^0.7.2"
   }
 }

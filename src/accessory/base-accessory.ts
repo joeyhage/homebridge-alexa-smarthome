@@ -125,11 +125,36 @@ export default abstract class BaseAccessory {
         if (!fromCache) {
           this.lastUpdated = new Date();
         }
-        return states;
+        return [fromCache, states] as [boolean, S[]];
       }),
-      TE.flatMapOption(
-        toCharacteristicStateFn,
-        () => new InvalidResponse('State not available'),
+      TE.flatMap(([, states]) =>
+        pipe(
+          toCharacteristicStateFn(states),
+          O.match(
+            () =>
+              // Alexa's response - whether freshly fetched or served from
+              // getDeviceStateGraphQl's own query-level cache - can be
+              // non-empty (e.g. power/color present) while still omitting
+              // the specific feature we asked about, not just returning an
+              // empty array outright. Either way, fall back to the
+              // device-store's last-known state (which includes anything
+              // we ourselves wrote via updateCacheValue after a successful
+              // set) before giving up - there's no reason to only try this
+              // when the outer call happened to be a live fetch, since the
+              // feature is equally missing from a cached query response.
+              pipe(
+                this.platform.deviceStore.getCacheStatesForDevice(
+                  this.device.id,
+                ) as unknown as S[],
+                toCharacteristicStateFn,
+                O.match(
+                  () => TE.left(new InvalidResponse('State not available')),
+                  (c: C) => TE.right(c),
+                ),
+              ),
+            (c: C) => TE.right(c),
+          ),
+        ),
       ),
     );
   }

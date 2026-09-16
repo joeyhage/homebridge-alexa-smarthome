@@ -7,14 +7,14 @@ describe('createAccessory', () => {
     // given
     const device = {
       id: '123',
+      endpointId: 'amzn1.alexa.endpoint.123',
       displayName: 'test light',
-      description: 'test',
       supportedOperations: ['turnOff', 'turnOn', 'setBrightness'],
-      providerData: {
-        enabled: true,
-        categoryType: 'APPLIANCE',
-        deviceType: 'LIGHT',
-      },
+      enabled: true,
+      deviceType: 'LIGHT',
+      serialNumber: 'Unknown',
+      model: 'Unknown',
+      manufacturer: 'homebridge-alexa-smarthome',
     };
     const platform = global.createPlatform();
     const uuid = platform.HAP.uuid.generate(device.id);
@@ -39,14 +39,14 @@ describe('createAccessory', () => {
     // given
     const device = {
       id: '123',
+      endpointId: 'amzn1.alexa.endpoint.123',
       displayName: 'test plug',
-      description: 'test',
       supportedOperations: ['turnOff', 'turnOn'],
-      providerData: {
-        enabled: true,
-        categoryType: 'APPLIANCE',
-        deviceType: 'SMARTPLUG',
-      },
+      enabled: true,
+      deviceType: 'SMARTPLUG',
+      serialNumber: 'Unknown',
+      model: 'Unknown',
+      manufacturer: 'homebridge-alexa-smarthome',
     };
     const platform = global.createPlatform();
     const uuid = platform.HAP.uuid.generate(device.id);
@@ -71,14 +71,14 @@ describe('createAccessory', () => {
     // given
     const device = {
       id: '123',
+      endpointId: 'amzn1.alexa.endpoint.123',
       displayName: 'test light group',
-      description: 'test',
       supportedOperations: [],
-      providerData: {
-        enabled: true,
-        categoryType: 'APPLIANCE',
-        deviceType: 'OTHER',
-      },
+      enabled: true,
+      deviceType: 'OTHER',
+      serialNumber: 'Unknown',
+      model: 'Unknown',
+      manufacturer: 'homebridge-alexa-smarthome',
     };
     const platform = global.createPlatform();
     const uuid = platform.HAP.uuid.generate(device.id);

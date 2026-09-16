@@ -1,89 +1,89 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { extractRangeFeatures } from './save-device-capabilities';
 
-describe('extractRangeCapabilities', () => {
-  test('should work', () => {
+describe('extractRangeFeatures', () => {
+  test('should extract range features keyed by device id and friendly name', () => {
     // given
-    const response = {
-      data: {
-        endpoints: {
-          items: [
+    const endpoint = {
+      id: 'amzn1.alexa.endpoint.12345678-abcd-1234-1234-098765432101',
+      friendlyName: 'Air Quality Monitor',
+      features: [
+        {
+          name: 'range',
+          instance: '9',
+          properties: [
             {
-              id: 'amzn1.alexa.endpoint.12345678-abcd-1234-1234-098765432101',
-              friendlyName: 'Air Quality Monitor',
-              legacyAppliance: {
-                capabilities: [
-                  {
-                    capabilityType: 'AVSInterfaceCapability',
-                    type: 'AlexaInterface',
-                    version: '3',
-                    properties: {
-                      supported: [{ name: 'rangeValue' }],
-                      proactivelyReported: true,
-                      retrievable: true,
-                      readOnly: true,
-                    },
-                    configuration: {
-                      supportedRange: {
-                        minimumValue: 0.0,
-                        maximumValue: 100.0,
-                        precision: 1.0,
-                      },
-                      unitOfMeasure: '',
-                      presets: [],
-                    },
-                    resources: {
-                      friendlyNames: [
-                        {
-                          value: {
-                            assetId: 'Alexa.AirQuality.IndoorAirQuality',
-                          },
-                          '@type': 'asset',
-                        },
-                        {
-                          value: {
-                            text: 'Indoor Air Quality',
-                            locale: 'en-US',
-                          },
-                          '@type': 'text',
-                        },
-                      ],
-                    },
-                    instance: '9',
-                    interfaceName: 'Alexa.RangeController',
-                  },
-                ],
-                applianceTypes: ['AIR_QUALITY_MONITOR'],
-                isEnabled: true,
-                aliases: [],
-                applianceKey: '12345678-abcd-1234-1234-098765432101',
-              },
+              name: 'rangeValue',
+              rangeValue: { value: 75 },
             },
           ],
+          configuration: {
+            friendlyName: {
+              value: {
+                text: 'Indoor Air Quality',
+              },
+            },
+          },
         },
-      },
+      ],
+    };
+    const device = {
+      id: '12345678-abcd-1234-1234-098765432101',
+      endpointId: endpoint.id,
+      displayName: 'Air Quality Monitor',
+      supportedOperations: [],
+      enabled: true,
+      deviceType: 'AIR_QUALITY_MONITOR',
+      serialNumber: 'Unknown',
+      model: 'Unknown',
+      manufacturer: 'homebridge-alexa-smarthome',
     };
 
     // when
-    const actual = extractRangeFeatures(response as any);
+    const actual = extractRangeFeatures([[endpoint, device]] as any);
 
     // then
     expect(actual).toStrictEqual({
       '12345678-abcd-1234-1234-098765432101': {
-        'Alexa.AirQuality.IndoorAirQuality': {
-          configuration: {
-            presets: [],
-            supportedRange: {
-              maximumValue: 100,
-              minimumValue: 0,
-              precision: 1,
-            },
-            unitOfMeasure: '',
-          },
+        'Indoor Air Quality': {
+          featureName: 'range',
           instance: '9',
-          interfaceName: 'Alexa.RangeController',
-          assetId: 'Alexa.AirQuality.IndoorAirQuality',
+          rangeName: 'Indoor Air Quality',
         },
       },
     });
+  });
+
+  test('should return an empty object given a device with no range controllers', () => {
+    // given
+    const endpoint = {
+      id: 'amzn1.alexa.endpoint.other',
+      friendlyName: 'Light',
+      features: [
+        {
+          name: 'power',
+          instance: null,
+          properties: [{ name: 'powerState', powerStateValue: 'ON' }],
+          configuration: null,
+        },
+      ],
+    };
+    const device = {
+      id: 'other',
+      endpointId: endpoint.id,
+      displayName: 'Light',
+      supportedOperations: ['turnOn', 'turnOff'],
+      enabled: true,
+      deviceType: 'LIGHT',
+      serialNumber: 'Unknown',
+      model: 'Unknown',
+      manufacturer: 'homebridge-alexa-smarthome',
+    };
+
+    // when
+    const actual = extractRangeFeatures([[endpoint, device]] as any);
+
+    // then
+    expect(actual).toStrictEqual({});
   });
 });

@@ -13,14 +13,14 @@ describe('mapAlexaDeviceToHomeKitAccessoryInfos', () => {
     // given
     const device = {
       id: '123',
+      endpointId: 'amzn1.alexa.endpoint.123',
       displayName: 'test light group',
-      description: 'test',
       supportedOperations: [],
-      providerData: {
-        enabled: true,
-        categoryType: 'APPLIANCE',
-        deviceType: 'OTHER',
-      },
+      enabled: true,
+      deviceType: 'OTHER',
+      serialNumber: 'Unknown',
+      model: 'Unknown',
+      manufacturer: 'homebridge-alexa-smarthome',
     };
     const platform = global.createPlatform();
 
@@ -58,14 +58,14 @@ describe('mapAlexaDeviceToHomeKitAccessoryInfos', () => {
     // given
     const device = {
       id: '123',
+      endpointId: 'amzn1.alexa.endpoint.123',
       displayName: 'test switch with brightness',
-      description: 'test',
       supportedOperations: ['turnOn', 'turnOff', 'setBrightness'],
-      providerData: {
-        enabled: true,
-        categoryType: 'APPLIANCE',
-        deviceType: 'SWITCH',
-      },
+      enabled: true,
+      deviceType: 'SWITCH',
+      serialNumber: 'Unknown',
+      model: 'Unknown',
+      manufacturer: 'homebridge-alexa-smarthome',
     };
     const platform = global.createPlatform();
 
@@ -92,14 +92,14 @@ describe('mapAlexaDeviceToHomeKitAccessoryInfos', () => {
     // given
     const device = {
       id: '123',
+      endpointId: 'amzn1.alexa.endpoint.123',
       displayName: 'test switch',
-      description: 'test',
       supportedOperations: ['turnOn', 'turnOff'],
-      providerData: {
-        enabled: true,
-        categoryType: 'APPLIANCE',
-        deviceType: 'SWITCH',
-      },
+      enabled: true,
+      deviceType: 'SWITCH',
+      serialNumber: 'Unknown',
+      model: 'Unknown',
+      manufacturer: 'homebridge-alexa-smarthome',
     };
     const platform = global.createPlatform();
 

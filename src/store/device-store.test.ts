@@ -1,17 +1,16 @@
 import { randomUUID } from 'crypto';
 import * as O from 'fp-ts/Option';
 import DeviceStore from './device-store';
-import { PluginLogger } from '../util/plugin-logger';
 
 describe('updateCacheValue', () => {
-  test('should update given device and namespace were previously cached', () => {
+  test('should update given device and feature were previously cached', () => {
     // given
     const deviceId = randomUUID();
-    const store = new DeviceStore(getPluginLogger());
+    const store = new DeviceStore();
     store.cache.states = {
       [deviceId]: [
         O.of({
-          namespace: 'Alexa.PowerController',
+          featureName: 'power',
           value: true,
         }),
       ],
@@ -19,7 +18,7 @@ describe('updateCacheValue', () => {
 
     // when
     const cache = store.updateCacheValue(deviceId, {
-      namespace: 'Alexa.PowerController',
+      featureName: 'power',
       value: false,
     });
 
@@ -30,14 +29,14 @@ describe('updateCacheValue', () => {
     ).toStrictEqual(O.of(false));
   });
 
-  test('should not update given no previous value', () => {
+  test('should add a new entry given no previous value for that feature', () => {
     // given
     const deviceId = randomUUID();
-    const store = new DeviceStore(getPluginLogger());
+    const store = new DeviceStore();
     store.cache.states = {
       [deviceId]: [
         O.of({
-          namespace: 'Alexa.PowerController',
+          featureName: 'power',
           value: true,
         }),
       ],
@@ -45,17 +44,17 @@ describe('updateCacheValue', () => {
 
     // when
     const cache = store.updateCacheValue(deviceId, {
-      namespace: 'Alexa.BrightnessController',
+      featureName: 'brightness',
       value: 100,
     });
 
     // then
-    expect(cache[deviceId].length).toBe(1);
+    expect(cache[deviceId].length).toBe(2);
     expect(
       O.Functor.map(cache[deviceId][0], ({ value }) => value),
     ).toStrictEqual(O.of(true));
+    expect(
+      O.Functor.map(cache[deviceId][1], ({ value }) => value),
+    ).toStrictEqual(O.of(100));
   });
 });
-
-const getPluginLogger = () =>
-  new PluginLogger(global.MockLogger, global.createPlatformConfig());

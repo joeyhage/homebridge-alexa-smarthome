@@ -110,10 +110,21 @@ export default class DeviceStore {
   updateCacheValue(deviceId: string, newState: CapabilityState) {
     pipe(
       this.getCacheValue(deviceId, newState),
-      O.tap((cs) => {
-        cs.value = newState.value;
-        return O.of(cs);
-      }),
+      O.match(
+        () => {
+          // No existing cache entry for this feature (e.g. Alexa's read API
+          // has never reported it, even though a set just succeeded). Add
+          // it so it's available as a fallback for a subsequent Get,
+          // instead of silently doing nothing.
+          this.cache.states[deviceId] = [
+            ...(this.cache.states[deviceId] ?? []),
+            O.of(newState),
+          ];
+        },
+        (cs) => {
+          cs.value = newState.value;
+        },
+      ),
     );
     return this.cache.states;
   }
