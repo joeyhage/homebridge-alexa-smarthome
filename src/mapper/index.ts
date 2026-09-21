@@ -8,6 +8,7 @@ import LightAccessory from '../accessory/light-accessory';
 import LockAccessory from '../accessory/lock-accessory';
 import OutletAccessory from '../accessory/outlet-accessory';
 import SwitchAccessory from '../accessory/switch-accessory';
+import AirConditionerAccessory from '../accessory/air-conditioner-accessory';
 import ThermostatAccessory from '../accessory/thermostat-accessory';
 import { SupportedActions } from '../domain/alexa';
 import * as airQuality from '../domain/alexa/air-quality-monitor';
@@ -147,6 +148,19 @@ const determineSupportedHomeKitAccessories = (
           {
             altDeviceName: O.none,
             deviceType: platform.Service.Thermostat.UUID,
+            uuid: generateUuid(platform, entityId, device.deviceType),
+          },
+        ]),
+    )
+    .when(
+      ([type, ops]) =>
+        type === 'AIR_CONDITIONER' &&
+        supportsRequiredActions(AirConditionerAccessory.requiredOperations, ops),
+      () =>
+        E.of([
+          {
+            altDeviceName: O.none,
+            deviceType: platform.Service.HeaterCooler.UUID,
             uuid: generateUuid(platform, entityId, device.deviceType),
           },
         ]),

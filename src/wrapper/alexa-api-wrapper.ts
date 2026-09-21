@@ -37,6 +37,7 @@ import SetDeviceStateResponse, {
 import DeviceStore from '../store/device-store';
 import { PluginLogger } from '../util/plugin-logger';
 import {
+  AirConditionerQuery,
   AirQualityQuery,
   EndpointsQuery,
   LightQuery,
@@ -129,6 +130,7 @@ export class AlexaApiWrapper {
   ): TaskEither<AlexaApiError, [boolean, CapabilityState[]]> {
     const {
       AirQualitySensor,
+      HeaterCooler,
       CarbonMonoxideSensor,
       HumiditySensor,
       Lightbulb,
@@ -153,6 +155,7 @@ export class AlexaApiWrapper {
                   .with(LockMechanism.UUID, constant(LockQuery))
                   .with(TemperatureSensor.UUID, constant(TempSensorQuery))
                   .with(Thermostat.UUID, constant(ThermostatQuery))
+                  .with(HeaterCooler.UUID, constant(AirConditionerQuery))
                   .with(
                     Pattern.union(
                       CarbonMonoxideSensor.UUID,
@@ -221,11 +224,13 @@ export class AlexaApiWrapper {
     featureName: SupportedFeatures,
     featureOperationName: SupportedActionsType,
     payload: Record<string, unknown> = {},
+    instance?: string,
   ): TaskEither<AlexaApiError, void> {
     const request = {
       endpointId,
       featureOperationName,
       featureName,
+      ...(instance !== undefined ? { instance } : {}),
       ...(Object.keys(payload).length > 0 ? { payload } : {}),
     };
     return pipe(
@@ -241,7 +246,27 @@ export class AlexaApiWrapper {
             }`,
           ),
       ),
-      TE.map(constVoid),
+      TE.tapIO((response) =>
+        this.log.debug(
+          `setEndpointFeatures response: ${JSON.stringify(response)}`,
+        ),
+      ),
+      TE.flatMap((response) => {
+        const errors = (
+          response as unknown as {
+            data?: { setEndpointFeatures?: { errors?: unknown[] } };
+          }
+        )?.data?.setEndpointFeatures?.errors;
+        return Array.isArray(errors) && errors.length > 0
+          ? TE.left<AlexaApiError, void>(
+              new HttpError(
+                `Error setting smart home device state. Reason: ${JSON.stringify(
+                  errors,
+                )}`,
+              ),
+            )
+          : TE.of<AlexaApiError, void>(constVoid());
+      }),
     );
   }
 
