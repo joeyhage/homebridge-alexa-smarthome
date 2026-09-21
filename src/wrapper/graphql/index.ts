@@ -1,3 +1,4 @@
+export * from './air_conditioner_features.graphql';
 export * from './air_quality_features.graphql';
 export * from './endpoints.graphql';
 export * from './light_features.graphql';

@@ -9,6 +9,7 @@ import {
 } from '../domain/alexa/errors';
 import { SmartHomeDevice } from '../domain/alexa/get-devices';
 import { AlexaSmartHomePlatform } from '../platform';
+import AirConditionerAccessory from './air-conditioner-accessory';
 import AirQualityAccessory from './air-quality-accessory';
 import BaseAccessory from './base-accessory';
 import CarbonMonoxideAccessory from './co-accessory';
@@ -47,6 +48,9 @@ export default class AccessoryFactory {
         )
         .with(platform.Service.Thermostat.UUID, () =>
           E.of(new ThermostatAccessory(platform, device, platAcc)),
+        )
+        .with(platform.Service.HeaterCooler.UUID, () =>
+          E.of(new AirConditionerAccessory(platform, device, platAcc)),
         )
         .with(platform.Service.AirQualitySensor.UUID, () =>
           E.of(new AirQualityAccessory(platform, device, platAcc)),
