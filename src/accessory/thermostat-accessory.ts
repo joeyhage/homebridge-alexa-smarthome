@@ -374,7 +374,7 @@ export default class ThermostatAccessory extends BaseAccessory {
         'setTargetSetpoint',
         {
           targetSetpoint: {
-            value: newTemp.toString(10),
+            value: newTemp,
             scale: units,
           },
         },
@@ -454,11 +454,11 @@ export default class ThermostatAccessory extends BaseAccessory {
         'setTargetSetpoint',
         {
           lowerSetpoint: {
-            value: heatTemp.value.toString(10),
+            value: heatTemp.value,
             scale: units,
           },
           upperSetpoint: {
-            value: newCoolTemp.toString(10),
+            value: newCoolTemp,
             scale: units,
           },
         },
@@ -538,11 +538,11 @@ export default class ThermostatAccessory extends BaseAccessory {
         'setTargetSetpoint',
         {
           lowerSetpoint: {
-            value: newHeatTemp.toString(10),
+            value: newHeatTemp,
             scale: units,
           },
           upperSetpoint: {
-            value: coolTemp.value.toString(10),
+            value: coolTemp.value,
             scale: units,
           },
         },
