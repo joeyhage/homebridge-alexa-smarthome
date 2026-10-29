@@ -1,3 +1,5 @@
+// Must load before alexa-remote2 so the login proxy picks up the fix for #287
+import './util/login-proxy-patch';
 import AlexaRemote, { type InitOptions } from 'alexa-remote2';
 import * as A from 'fp-ts/Array';
 import * as E from 'fp-ts/Either';
