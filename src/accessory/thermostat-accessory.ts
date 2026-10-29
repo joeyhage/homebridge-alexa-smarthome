@@ -374,7 +374,8 @@ export default class ThermostatAccessory extends BaseAccessory {
         'setTargetSetpoint',
         {
           targetSetpoint: {
-            value: newTemp.toString(10),
+            // Must be a number: Amazon rejects a string here with BAD_REQUEST
+            value: newTemp,
             scale: units,
           },
         },

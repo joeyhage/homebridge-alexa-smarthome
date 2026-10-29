@@ -32,6 +32,7 @@ import {
 } from '../domain/alexa/get-devices';
 import { extractRangeFeatures } from '../domain/alexa/save-device-capabilities';
 import SetDeviceStateResponse, {
+  validateGraphQlSetStateSuccessful,
   validateSetStateSuccessful,
 } from '../domain/alexa/set-device-state.js';
 import DeviceStore from '../store/device-store';
@@ -231,7 +232,7 @@ export class AlexaApiWrapper {
     return pipe(
       TE.tryCatch(
         () =>
-          this.executeGraphQlQuery<EndpointStateResponse>(SetEndpointFeatures, {
+          this.executeGraphQlQuery<unknown>(SetEndpointFeatures, {
             featureControlRequests: [request],
           }),
         (reason) =>
@@ -240,6 +241,9 @@ export class AlexaApiWrapper {
               (reason as Error).message
             }`,
           ),
+      ),
+      TE.flatMapEither((response) =>
+        validateGraphQlSetStateSuccessful(response),
       ),
       TE.map(constVoid),
     );
