@@ -454,12 +454,17 @@ export class AlexaSmartHomePlatform implements DynamicPlatformPlugin {
   ): IO.IO<PlatformAccessory[]> {
     return pipe(
       IO.of(
-        A.Functor.map(activeAccessories, ({ platformAcc: { UUID } }) => UUID),
+        new Set(
+          A.Functor.map(
+            activeAccessories,
+            ({ platformAcc: { UUID } }) => UUID,
+          ),
+        ),
       ),
       IO.map((activeAccessoryIds) =>
         A.Filterable.filter(
           this.cachedAccessories,
-          ({ UUID }) => !activeAccessoryIds.includes(UUID),
+          ({ UUID }) => !activeAccessoryIds.has(UUID),
         ),
       ),
     );

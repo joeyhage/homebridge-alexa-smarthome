@@ -1,6 +1,6 @@
 import * as E from 'fp-ts/Either';
 import * as hapNodeJs from 'hap-nodejs';
-import type { API } from 'homebridge';
+import type { API, PlatformAccessory } from 'homebridge';
 import { ValidationError } from './domain/homebridge/errors';
 import { AlexaSmartHomePlatform } from './platform';
 
@@ -28,6 +28,27 @@ test('should not initialize devices with invalid ids', async () => {
       new ValidationError("id: '123' is not a valid Smart Home device id"),
     ),
   );
+});
+
+test('should use the accessory UUID set to find stale cached accessories', () => {
+  // given
+  const platform = getPlatform();
+  const active = { UUID: 'active-uuid' } as PlatformAccessory;
+  const stale = { UUID: 'stale-uuid' } as PlatformAccessory;
+  platform.cachedAccessories = [active, stale];
+  const activeAccessory = { platformAcc: active };
+
+  // when
+  const actual = (
+    platform as unknown as {
+      findStaleAccessories: (
+        accessories: unknown[],
+      ) => () => PlatformAccessory[];
+    }
+  ).findStaleAccessories([activeAccessory])();
+
+  // then
+  expect(actual).toStrictEqual([stale]);
 });
 
 function getPlatform(): AlexaSmartHomePlatform {
