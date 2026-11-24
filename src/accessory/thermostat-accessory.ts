@@ -606,8 +606,9 @@ export default class ThermostatAccessory extends BaseAccessory {
 
   /**
    * Prefer live/cache GraphQL state. On InvalidResponse or empty extract, return
-   * the last HAP characteristic value so HomeKit Controller does not mark the
-   * accessory no-response (HA climate unavailable).
+   * the last HAP characteristic value (or a stable default) so HomeKit
+   * Controller does not mark the accessory no-response and Homebridge is not
+   * flooded with expected skill-null errors.
    */
   private readOrCachedHap<C>(
     label: string,
@@ -619,8 +620,6 @@ export default class ThermostatAccessory extends BaseAccessory {
       TE.match((e) => {
         const cached = this.getHapValue(characteristic);
         if (cached !== null && cached !== undefined) {
-          // Recovered misses are expected for skill thermostats. Do not spam
-          // Homebridge error logs on every poll.
           this.logWithContext(
             'debug',
             `${label} unavailable (${String(
@@ -629,10 +628,47 @@ export default class ThermostatAccessory extends BaseAccessory {
           );
           return cached as C;
         }
+        const fallback = this.defaultCharacteristicValue(characteristic);
+        if (fallback !== undefined) {
+          this.logWithContext(
+            'debug',
+            `${label} unavailable (${String(
+              (e as { message?: string }).message ?? e,
+            )}), using default ${fallback}`,
+          );
+          return fallback as C;
+        }
         this.logWithContext('errorT', label, e);
         throw this.serviceCommunicationError;
       }, identity),
     )();
+  }
+
+  private defaultCharacteristicValue(
+    characteristic: Parameters<Service['getCharacteristic']>[0],
+  ): number | undefined {
+    const { Characteristic } = this;
+    // Fenix / skill thermostats often omit current temp and heat/cool bounds.
+    // Stable defaults keep HomeKit happy without error spam.
+    if (characteristic === Characteristic.CurrentTemperature) {
+      return 0;
+    }
+    if (characteristic === Characteristic.TargetTemperature) {
+      return 20;
+    }
+    if (characteristic === Characteristic.HeatingThresholdTemperature) {
+      return 20;
+    }
+    if (characteristic === Characteristic.CoolingThresholdTemperature) {
+      return 24;
+    }
+    if (characteristic === Characteristic.TemperatureDisplayUnits) {
+      return Characteristic.TemperatureDisplayUnits.CELSIUS;
+    }
+    if (characteristic === Characteristic.TargetHeatingCoolingState) {
+      return Characteristic.TargetHeatingCoolingState.OFF;
+    }
+    return undefined;
   }
 
   private getAutoTempFromTargetTemp() {
