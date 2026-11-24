@@ -104,13 +104,11 @@ export default class ThermostatAccessory extends BaseAccessory {
       ),
     );
 
-    return pipe(
-      this.getStateGraphQl(determineCurrentTemp),
-      TE.match((e) => {
-        this.logWithContext('errorT', 'Get current temperature', e);
-        throw this.serviceCommunicationError;
-      }, identity),
-    )();
+    return this.readOrCachedHap(
+      'Get current temperature',
+      this.Characteristic.CurrentTemperature,
+      determineCurrentTemp,
+    );
   }
 
   async handleCurrentRelativeHumidityGet(asset: RangeFeature): Promise<number> {
@@ -156,13 +154,11 @@ export default class ThermostatAccessory extends BaseAccessory {
       ),
     );
 
-    return pipe(
-      this.getStateGraphQl(determineTempUnits),
-      TE.match((e) => {
-        this.logWithContext('errorT', 'Get temperature units', e);
-        throw this.serviceCommunicationError;
-      }, identity),
-    )();
+    return this.readOrCachedHap(
+      'Get temperature units',
+      this.Characteristic.TemperatureDisplayUnits,
+      determineTempUnits,
+    );
   }
 
   async handleTargetStateGet(): Promise<number> {
@@ -200,13 +196,11 @@ export default class ThermostatAccessory extends BaseAccessory {
       ),
     );
 
-    return pipe(
-      this.getStateGraphQl(determineTargetState),
-      TE.match((e) => {
-        this.logWithContext('errorT', 'Get target state', e);
-        throw this.serviceCommunicationError;
-      }, identity),
-    )();
+    return this.readOrCachedHap(
+      'Get target state',
+      this.Characteristic.TargetHeatingCoolingState,
+      determineTargetState,
+    );
   }
 
   async handleTargetStateSet(value: CharacteristicValue): Promise<void> {
@@ -343,15 +337,12 @@ export default class ThermostatAccessory extends BaseAccessory {
     const targetTempOnAuto = this.calculateTargetTemp();
     if (this.onInvalidOrAutoMode() && O.isSome(targetTempOnAuto)) {
       return targetTempOnAuto.value;
-    } else {
-      return pipe(
-        this.getStateGraphQl(determineTargetTemp),
-        TE.match((e) => {
-          this.logWithContext('errorT', 'Get target temperature', e);
-          throw this.serviceCommunicationError;
-        }, identity),
-      )();
     }
+    return this.readOrCachedHap(
+      'Get target temperature',
+      this.Characteristic.TargetTemperature,
+      determineTargetTemp,
+    );
   }
 
   async handleTargetTempSet(value: CharacteristicValue): Promise<void> {
@@ -418,16 +409,13 @@ export default class ThermostatAccessory extends BaseAccessory {
 
     const autoTemp = this.getAutoTempFromTargetTemp();
     if (this.onAutoMode() || O.isNone(autoTemp)) {
-      return pipe(
-        this.getStateGraphQl(determineCoolTemp),
-        TE.match((e) => {
-          this.logWithContext('errorT', 'Get cooling temperature', e);
-          throw this.serviceCommunicationError;
-        }, identity),
-      )();
-    } else {
-      return autoTemp.value;
+      return this.readOrCachedHap(
+        'Get cooling temperature',
+        this.Characteristic.CoolingThresholdTemperature,
+        determineCoolTemp,
+      );
     }
+    return autoTemp.value;
   }
 
   async handleCoolTempSet(value: CharacteristicValue): Promise<void> {
@@ -502,16 +490,13 @@ export default class ThermostatAccessory extends BaseAccessory {
 
     const autoTemp = this.getAutoTempFromTargetTemp();
     if (this.onAutoMode() || O.isNone(autoTemp)) {
-      return pipe(
-        this.getStateGraphQl(determineHeatTemp),
-        TE.match((e) => {
-          this.logWithContext('errorT', 'Get heating temperature', e);
-          throw this.serviceCommunicationError;
-        }, identity),
-      )();
-    } else {
-      return autoTemp.value;
+      return this.readOrCachedHap(
+        'Get heating temperature',
+        this.Characteristic.HeatingThresholdTemperature,
+        determineHeatTemp,
+      );
     }
+    return autoTemp.value;
   }
 
   async handleHeatTempSet(value: CharacteristicValue): Promise<void> {
@@ -579,7 +564,9 @@ export default class ThermostatAccessory extends BaseAccessory {
       this.getStateGraphQl(determinePowerState),
       TE.match((e) => {
         this.logWithContext('errorT', 'Get power', e);
-        throw this.serviceCommunicationError;
+        // Power is optional for many skill thermostats. Prefer "on" over failing
+        // the whole accessory when Alexa returns powerStateValue: null.
+        return true;
       }, identity),
     )();
   }
@@ -608,6 +595,33 @@ export default class ThermostatAccessory extends BaseAccessory {
           });
         },
       ),
+    )();
+  }
+
+  /**
+   * Prefer live/cache GraphQL state. On InvalidResponse or empty extract, return
+   * the last HAP characteristic value so HomeKit Controller does not mark the
+   * accessory no-response (HA climate unavailable).
+   */
+  private readOrCachedHap<C>(
+    label: string,
+    characteristic: Parameters<Service['getCharacteristic']>[0],
+    toCharacteristicStateFn: (fa: ThermostatState[]) => Option<C>,
+  ): Promise<C> {
+    return pipe(
+      this.getStateGraphQl(toCharacteristicStateFn),
+      TE.match((e) => {
+        this.logWithContext('errorT', label, e);
+        const cached = this.getHapValue(characteristic);
+        if (cached !== null && cached !== undefined) {
+          this.logWithContext(
+            'debug',
+            `${label} falling back to cached HAP value: ${cached}`,
+          );
+          return cached as C;
+        }
+        throw this.serviceCommunicationError;
+      }, identity),
     )();
   }
 

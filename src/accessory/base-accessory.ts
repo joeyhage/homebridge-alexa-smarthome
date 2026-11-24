@@ -124,6 +124,13 @@ export default abstract class BaseAccessory {
       TE.map(([fromCache, states]) => {
         if (!fromCache) {
           this.lastUpdated = new Date();
+          // Empty live extract (e.g. powerStateValue: null) must not replace a
+          // good cache. Fall back to last known states. See PR #267 / #263.
+          if (states.length === 0) {
+            return this.platform.deviceStore.getCacheStatesForDevice(
+              this.device.id,
+            ) as unknown as S[];
+          }
         }
         return states;
       }),
