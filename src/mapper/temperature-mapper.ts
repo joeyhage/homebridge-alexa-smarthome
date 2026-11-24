@@ -9,7 +9,9 @@ import {
 } from '../domain/alexa/temperature';
 import * as util from '../util';
 
-export const mapAlexaTempToHomeKit = (state: CapabilityState['value']) => {
+export const mapAlexaTempToHomeKit = (
+  state: CapabilityState['value'] | null | undefined,
+) => {
   if (isTemperatureValue(state)) {
     const value =
       typeof state.value === 'number' ? state.value : parseFloat(state.value);
@@ -27,7 +29,7 @@ export const mapHomeKitTempToAlexa = (temp: number, units: TemperatureScale) =>
   units.toLowerCase() === 'celsius' ? temp : Math.round(temp * 1.8 + 32);
 
 export const mapAlexaTempUnitsToHomeKit = (
-  state: CapabilityState['value'],
+  state: CapabilityState['value'] | null | undefined,
   characteristic: typeof Characteristic,
 ) => {
   if (isTemperatureValue(state)) {

@@ -104,13 +104,11 @@ export default class ThermostatAccessory extends BaseAccessory {
       ),
     );
 
-    return pipe(
-      this.getStateGraphQl(determineCurrentTemp),
-      TE.match((e) => {
-        this.logWithContext('errorT', 'Get current temperature', e);
-        throw this.serviceCommunicationError;
-      }, identity),
-    )();
+    return this.readOrCachedHap(
+      'Get current temperature',
+      this.Characteristic.CurrentTemperature,
+      determineCurrentTemp,
+    );
   }
 
   async handleCurrentRelativeHumidityGet(asset: RangeFeature): Promise<number> {
@@ -156,13 +154,11 @@ export default class ThermostatAccessory extends BaseAccessory {
       ),
     );
 
-    return pipe(
-      this.getStateGraphQl(determineTempUnits),
-      TE.match((e) => {
-        this.logWithContext('errorT', 'Get temperature units', e);
-        throw this.serviceCommunicationError;
-      }, identity),
-    )();
+    return this.readOrCachedHap(
+      'Get temperature units',
+      this.Characteristic.TemperatureDisplayUnits,
+      determineTempUnits,
+    );
   }
 
   async handleTargetStateGet(): Promise<number> {
@@ -200,13 +196,11 @@ export default class ThermostatAccessory extends BaseAccessory {
       ),
     );
 
-    return pipe(
-      this.getStateGraphQl(determineTargetState),
-      TE.match((e) => {
-        this.logWithContext('errorT', 'Get target state', e);
-        throw this.serviceCommunicationError;
-      }, identity),
-    )();
+    return this.readOrCachedHap(
+      'Get target state',
+      this.Characteristic.TargetHeatingCoolingState,
+      determineTargetState,
+    );
   }
 
   async handleTargetStateSet(value: CharacteristicValue): Promise<void> {
@@ -343,15 +337,12 @@ export default class ThermostatAccessory extends BaseAccessory {
     const targetTempOnAuto = this.calculateTargetTemp();
     if (this.onInvalidOrAutoMode() && O.isSome(targetTempOnAuto)) {
       return targetTempOnAuto.value;
-    } else {
-      return pipe(
-        this.getStateGraphQl(determineTargetTemp),
-        TE.match((e) => {
-          this.logWithContext('errorT', 'Get target temperature', e);
-          throw this.serviceCommunicationError;
-        }, identity),
-      )();
     }
+    return this.readOrCachedHap(
+      'Get target temperature',
+      this.Characteristic.TargetTemperature,
+      determineTargetTemp,
+    );
   }
 
   async handleTargetTempSet(value: CharacteristicValue): Promise<void> {
@@ -418,16 +409,13 @@ export default class ThermostatAccessory extends BaseAccessory {
 
     const autoTemp = this.getAutoTempFromTargetTemp();
     if (this.onAutoMode() || O.isNone(autoTemp)) {
-      return pipe(
-        this.getStateGraphQl(determineCoolTemp),
-        TE.match((e) => {
-          this.logWithContext('errorT', 'Get cooling temperature', e);
-          throw this.serviceCommunicationError;
-        }, identity),
-      )();
-    } else {
-      return autoTemp.value;
+      return this.readOrCachedHap(
+        'Get cooling temperature',
+        this.Characteristic.CoolingThresholdTemperature,
+        determineCoolTemp,
+      );
     }
+    return autoTemp.value;
   }
 
   async handleCoolTempSet(value: CharacteristicValue): Promise<void> {
@@ -502,16 +490,13 @@ export default class ThermostatAccessory extends BaseAccessory {
 
     const autoTemp = this.getAutoTempFromTargetTemp();
     if (this.onAutoMode() || O.isNone(autoTemp)) {
-      return pipe(
-        this.getStateGraphQl(determineHeatTemp),
-        TE.match((e) => {
-          this.logWithContext('errorT', 'Get heating temperature', e);
-          throw this.serviceCommunicationError;
-        }, identity),
-      )();
-    } else {
-      return autoTemp.value;
+      return this.readOrCachedHap(
+        'Get heating temperature',
+        this.Characteristic.HeatingThresholdTemperature,
+        determineHeatTemp,
+      );
     }
+    return autoTemp.value;
   }
 
   async handleHeatTempSet(value: CharacteristicValue): Promise<void> {
@@ -578,8 +563,16 @@ export default class ThermostatAccessory extends BaseAccessory {
     return pipe(
       this.getStateGraphQl(determinePowerState),
       TE.match((e) => {
-        this.logWithContext('errorT', 'Get power', e);
-        throw this.serviceCommunicationError;
+        // Thermostat GraphQL often omits power, or returns powerStateValue: null.
+        // Disable further power polls for this accessory and treat as on.
+        this.isPowerSupported = false;
+        this.logWithContext(
+          'debug',
+          `Get power unavailable (${String(
+            (e as { message?: string }).message ?? e,
+          )}), disabling power checks`,
+        );
+        return true;
       }, identity),
     )();
   }
@@ -609,6 +602,73 @@ export default class ThermostatAccessory extends BaseAccessory {
         },
       ),
     )();
+  }
+
+  /**
+   * Prefer live/cache GraphQL state. On InvalidResponse or empty extract, return
+   * the last HAP characteristic value (or a stable default) so HomeKit
+   * Controller does not mark the accessory no-response and Homebridge is not
+   * flooded with expected skill-null errors.
+   */
+  private readOrCachedHap<C>(
+    label: string,
+    characteristic: Parameters<Service['getCharacteristic']>[0],
+    toCharacteristicStateFn: (fa: ThermostatState[]) => Option<C>,
+  ): Promise<C> {
+    return pipe(
+      this.getStateGraphQl(toCharacteristicStateFn),
+      TE.match((e) => {
+        const cached = this.getHapValue(characteristic);
+        if (cached !== null && cached !== undefined) {
+          this.logWithContext(
+            'debug',
+            `${label} unavailable (${String(
+              (e as { message?: string }).message ?? e,
+            )}), using cached HAP value: ${cached}`,
+          );
+          return cached as C;
+        }
+        const fallback = this.defaultCharacteristicValue(characteristic);
+        if (fallback !== undefined) {
+          this.logWithContext(
+            'debug',
+            `${label} unavailable (${String(
+              (e as { message?: string }).message ?? e,
+            )}), using default ${fallback}`,
+          );
+          return fallback as C;
+        }
+        this.logWithContext('errorT', label, e);
+        throw this.serviceCommunicationError;
+      }, identity),
+    )();
+  }
+
+  private defaultCharacteristicValue(
+    characteristic: Parameters<Service['getCharacteristic']>[0],
+  ): number | undefined {
+    const { Characteristic } = this;
+    // Fenix / skill thermostats often omit current temp and heat/cool bounds.
+    // Stable defaults keep HomeKit happy without error spam.
+    if (characteristic === Characteristic.CurrentTemperature) {
+      return 0;
+    }
+    if (characteristic === Characteristic.TargetTemperature) {
+      return 20;
+    }
+    if (characteristic === Characteristic.HeatingThresholdTemperature) {
+      return 20;
+    }
+    if (characteristic === Characteristic.CoolingThresholdTemperature) {
+      return 24;
+    }
+    if (characteristic === Characteristic.TemperatureDisplayUnits) {
+      return Characteristic.TemperatureDisplayUnits.CELSIUS;
+    }
+    if (characteristic === Characteristic.TargetHeatingCoolingState) {
+      return Characteristic.TargetHeatingCoolingState.OFF;
+    }
+    return undefined;
   }
 
   private getAutoTempFromTargetTemp() {

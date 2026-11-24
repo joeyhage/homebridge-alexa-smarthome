@@ -1,61 +1,106 @@
 import { randomUUID } from 'crypto';
 import * as O from 'fp-ts/Option';
 import DeviceStore from './device-store';
-import { PluginLogger } from '../util/plugin-logger';
 
-describe('updateCacheValue', () => {
-  test('should update given device and namespace were previously cached', () => {
-    // given
+describe('mergeCacheStates', () => {
+  test('merges partial thermostat updates without wiping last-known setpoints', () => {
     const deviceId = randomUUID();
-    const store = new DeviceStore(getPluginLogger());
-    store.cache.states = {
-      [deviceId]: [
-        O.of({
-          namespace: 'Alexa.PowerController',
-          value: true,
+    const store = new DeviceStore({ cacheTTL: 30 });
+    store.mergeCacheStates(deviceId, [
+      {
+        featureName: 'thermostat',
+        name: 'targetSetpoint',
+        value: { value: 23, scale: 'CELSIUS' },
+      },
+      {
+        featureName: 'thermostat',
+        name: 'thermostatMode',
+        value: 'OFF',
+      },
+    ]);
+
+    // Live poll returns only mode (setpoint omitted / was null and filtered out).
+    const merged = store.mergeCacheStates(deviceId, [
+      {
+        featureName: 'thermostat',
+        name: 'thermostatMode',
+        value: 'HEAT',
+      },
+    ]);
+
+    expect(merged).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'thermostatMode',
+          value: 'HEAT',
         }),
-      ],
-    };
-
-    // when
-    const cache = store.updateCacheValue(deviceId, {
-      namespace: 'Alexa.PowerController',
-      value: false,
-    });
-
-    // then
-    expect(cache[deviceId].length).toBe(1);
-    expect(
-      O.Functor.map(cache[deviceId][0], ({ value }) => value),
-    ).toStrictEqual(O.of(false));
+        expect.objectContaining({
+          name: 'targetSetpoint',
+          value: { value: 23, scale: 'CELSIUS' },
+        }),
+      ]),
+    );
   });
 
-  test('should not update given no previous value', () => {
-    // given
+  test('empty incoming leaves existing cache untouched', () => {
     const deviceId = randomUUID();
-    const store = new DeviceStore(getPluginLogger());
-    store.cache.states = {
-      [deviceId]: [
-        O.of({
-          namespace: 'Alexa.PowerController',
-          value: true,
-        }),
-      ],
-    };
+    const store = new DeviceStore({ cacheTTL: 30 });
+    store.mergeCacheStates(deviceId, [
+      {
+        featureName: 'thermostat',
+        name: 'thermostatMode',
+        value: 'OFF',
+      },
+    ]);
 
-    // when
-    const cache = store.updateCacheValue(deviceId, {
-      namespace: 'Alexa.BrightnessController',
-      value: 100,
-    });
-
-    // then
-    expect(cache[deviceId].length).toBe(1);
-    expect(
-      O.Functor.map(cache[deviceId][0], ({ value }) => value),
-    ).toStrictEqual(O.of(true));
+    expect(store.mergeCacheStates(deviceId, [])).toEqual([
+      expect.objectContaining({ name: 'thermostatMode', value: 'OFF' }),
+    ]);
   });
 });
 
-const getPluginLogger = () =>
-  new PluginLogger(global.MockLogger, global.createPlatformConfig());
+describe('updateCacheValue', () => {
+  test('updates an existing feature value', () => {
+    const deviceId = randomUUID();
+    const store = new DeviceStore({ cacheTTL: 30 });
+    store.cache.states = {
+      [deviceId]: [
+        O.of({
+          featureName: 'power',
+          value: 'ON',
+        }),
+      ],
+    };
+
+    const cache = store.updateCacheValue(deviceId, {
+      featureName: 'power',
+      value: 'OFF',
+    });
+
+    expect(cache[deviceId].length).toBe(1);
+    expect(
+      O.Functor.map(cache[deviceId][0], ({ value }) => value),
+    ).toStrictEqual(O.of('OFF'));
+  });
+
+  test('inserts when the feature was not previously cached', () => {
+    const deviceId = randomUUID();
+    const store = new DeviceStore({ cacheTTL: 30 });
+    store.cache.states = {
+      [deviceId]: [
+        O.of({
+          featureName: 'power',
+          value: 'ON',
+        }),
+      ],
+    };
+
+    const cache = store.updateCacheValue(deviceId, {
+      featureName: 'thermostat',
+      name: 'targetSetpoint',
+      value: { value: 21, scale: 'CELSIUS' },
+    });
+
+    expect(cache[deviceId].length).toBe(2);
+  });
+});

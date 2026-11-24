@@ -152,23 +152,32 @@ export const extractStates = (
           },
           (_) =>
             match(_.properties[0].name)
-              .with('thermostatMode', () =>
-                O.of({
-                  ...withCommonProps(_),
-                  value: _.properties[0].thermostatModeValue,
-                } as CapabilityState),
-              )
+              .with('thermostatMode', () => {
+                const mode = _.properties[0].thermostatModeValue;
+                return typeof mode === 'string'
+                  ? O.of({
+                      ...withCommonProps(_),
+                      value: mode,
+                    } as CapabilityState)
+                  : O.none;
+              })
               .with(
                 Pattern.union(
                   'targetSetpoint',
                   'upperSetpoint',
                   'lowerSetpoint',
                 ),
-                () =>
-                  O.of({
-                    ...withCommonProps(_),
-                    value: _.properties[0].value,
-                  } as CapabilityState),
+                () => {
+                  const setpoint = _.properties[0].value;
+                  // Alexa often returns null setpoints for skill thermostats.
+                  // Caching null poisons HAP reads (see isTemperatureValue).
+                  return setpoint != null
+                    ? O.of({
+                        ...withCommonProps(_),
+                        value: setpoint,
+                      } as CapabilityState)
+                    : O.none;
+                },
               )
               .otherwise(constant(O.none)),
         )

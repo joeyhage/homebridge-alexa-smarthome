@@ -123,6 +123,19 @@ export default abstract class BaseAccessory {
       ),
       TE.map(([fromCache, states]) => {
         if (!fromCache) {
+          // Empty live extract (e.g. powerStateValue: null) must not replace a
+          // good cache. Fall back to last known states. See PR #267 / #263.
+          if (states.length === 0) {
+            const cached = this.platform.deviceStore.getCacheStatesForDevice(
+              this.device.id,
+            ) as unknown as S[];
+            // Only start the TTL clock when we have something usable. An empty
+            // Alexa reply must not block retries for the full cacheTTL window.
+            if (cached.length > 0) {
+              this.lastUpdated = new Date();
+            }
+            return cached;
+          }
           this.lastUpdated = new Date();
         }
         return states;

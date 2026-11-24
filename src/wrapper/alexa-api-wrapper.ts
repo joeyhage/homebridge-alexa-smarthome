@@ -110,9 +110,10 @@ export class AlexaApiWrapper {
               2,
             )}`,
           );
-          this.deviceStore.updateCache([d.id], {
-            [d.id]: O.of(states.map(E.right)),
-          });
+          // Merge non-empty extracts. Empty skips so null props do not wipe state.
+          if (states.length > 0) {
+            this.deviceStore.mergeCacheStates(d.id, states);
+          }
         });
         return this.log.debug(
           'Successfully obtained devices and their capabilities',
@@ -185,9 +186,15 @@ export class AlexaApiWrapper {
               ),
               TE.map((_) => extractStates(_.data.endpoint.features)),
               TE.map((states) => {
-                this.deviceStore.updateCache([device.id], {
-                  [device.id]: O.of(states.map(E.right)),
-                });
+                if (states.length > 0) {
+                  // Merge into cache, then read back so callers see last-known
+                  // values for features omitted from this partial Alexa reply.
+                  const merged = this.deviceStore.mergeCacheStates(
+                    device.id,
+                    states,
+                  );
+                  return [false, merged] as [boolean, CapabilityState[]];
+                }
                 return [false, states] as [boolean, CapabilityState[]];
               }),
             ),
