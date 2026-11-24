@@ -26,6 +26,9 @@ export const ThermostatQuery = `query getThermostatStates(
         ... on ThermostatMode {
           thermostatModeValue
         }
+        ... on Power {
+          powerStateValue
+        }
       }
       configuration {
         ... on RangeConfiguration {

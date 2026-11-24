@@ -49,8 +49,8 @@ global.createPlatformConfig = (): AlexaPlatformConfig => ({
   },
   performance: {
     cacheTTL: 30,
-    backgroundRefresh: false,
   },
+  disabledOperations: [],
   debug: true,
 });
 

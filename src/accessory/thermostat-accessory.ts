@@ -563,9 +563,15 @@ export default class ThermostatAccessory extends BaseAccessory {
     return pipe(
       this.getStateGraphQl(determinePowerState),
       TE.match((e) => {
-        this.logWithContext('errorT', 'Get power', e);
-        // Power is optional for many skill thermostats. Prefer "on" over failing
-        // the whole accessory when Alexa returns powerStateValue: null.
+        // Thermostat GraphQL often omits power, or returns powerStateValue: null.
+        // Disable further power polls for this accessory and treat as on.
+        this.isPowerSupported = false;
+        this.logWithContext(
+          'debug',
+          `Get power unavailable (${String(
+            (e as { message?: string }).message ?? e,
+          )}), disabling power checks`,
+        );
         return true;
       }, identity),
     )();
@@ -611,15 +617,19 @@ export default class ThermostatAccessory extends BaseAccessory {
     return pipe(
       this.getStateGraphQl(toCharacteristicStateFn),
       TE.match((e) => {
-        this.logWithContext('errorT', label, e);
         const cached = this.getHapValue(characteristic);
         if (cached !== null && cached !== undefined) {
+          // Recovered misses are expected for skill thermostats. Do not spam
+          // Homebridge error logs on every poll.
           this.logWithContext(
             'debug',
-            `${label} falling back to cached HAP value: ${cached}`,
+            `${label} unavailable (${String(
+              (e as { message?: string }).message ?? e,
+            )}), using cached HAP value: ${cached}`,
           );
           return cached as C;
         }
+        this.logWithContext('errorT', label, e);
         throw this.serviceCommunicationError;
       }, identity),
     )();

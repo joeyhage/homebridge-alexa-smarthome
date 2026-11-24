@@ -107,13 +107,47 @@ export default class DeviceStore {
     return this.cache.states;
   }
 
+  /**
+   * Merge newly extracted states into the device cache. Skill thermostats often
+   * return a partial feature set (e.g. mode + target, null current temp). A full
+   * replace would wipe last-known values for omitted features.
+   */
+  mergeCacheStates(
+    deviceId: string,
+    incoming: CapabilityState[],
+  ): CapabilityState[] {
+    if (incoming.length === 0) {
+      return this.getCacheStatesForDevice(deviceId);
+    }
+    const keyOf = (s: CapabilityState) =>
+      `${s.featureName}|${s.name ?? ''}|${s.instance ?? ''}`;
+    const merged = new Map(
+      this.getCacheStatesForDevice(deviceId).map((s) => [keyOf(s), s]),
+    );
+    for (const state of incoming) {
+      merged.set(keyOf(state), state);
+    }
+    const next = Array.from(merged.values());
+    this.cache.states[deviceId] = next.map(O.of);
+    this.cache.lastUpdated = new Date();
+    return next;
+  }
+
   updateCacheValue(deviceId: string, newState: CapabilityState) {
     pipe(
       this.getCacheValue(deviceId, newState),
-      O.tap((cs) => {
-        cs.value = newState.value;
-        return O.of(cs);
-      }),
+      O.match(
+        () => {
+          // Insert when the feature was never cached (setters / first report).
+          const existing = this.cache.states[deviceId] ?? [];
+          this.cache.states[deviceId] = [...existing, O.of(newState)];
+          return O.none;
+        },
+        (cs) => {
+          cs.value = newState.value;
+          return O.of(cs);
+        },
+      ),
     );
     return this.cache.states;
   }
